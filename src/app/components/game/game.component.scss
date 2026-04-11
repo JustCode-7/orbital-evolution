@@ -1,0 +1,50 @@
+.game-container {
+  position: relative; width: 100vw; height: 100vh;
+  background: #05080c; overflow: hidden; color: white;
+  font-family: 'Segoe UI', sans-serif; touch-action: none;
+}
+canvas { display: block; width: 100%; height: 100%; }
+
+.hud { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 12px; pointer-events: none; }
+
+.main-stats .score { font-size: 1.3rem; font-weight: bold; color: #ffcc00; }
+.main-stats .ep { font-size: 1rem; color: #00fbff; }
+
+.left-panels { margin-top: 15px; }
+.bar-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.65rem; }
+.bar-row label { width: 50px; }
+.progress { width: 100px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; }
+.fill { height: 100%; transition: width 0.3s; }
+.fill.cyan { background: #00fbff; box-shadow: 0 0 8px #00fbff; }
+
+.log-overlay { margin-top: 15px; max-width: 200px; }
+.log-item { font-size: 0.7rem; margin-bottom: 3px; padding: 3px 6px; background: rgba(0,0,0,0.3); border-radius: 3px; }
+.log-item.event { color: #ffae00; border-left: 2px solid #ffae00; }
+.log-item.research { color: #00ff88; border-left: 2px solid #00ff88; }
+
+/* Kompakteres Bottom-UI */
+.bottom-controls { margin-top: auto; padding-bottom: 8px; pointer-events: none; }
+.action-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  pointer-events: auto; max-width: 500px; margin: 0 auto;
+}
+
+button {
+  background: #0f172a; border: 1px solid #1e293b; color: white;
+  border-radius: 5px; padding: 6px 2px; font-size: 0.7rem; font-weight: bold;
+  cursor: pointer; display: flex; flex-direction: column; align-items: center;
+}
+button span { font-size: 0.55rem; color: #64748b; }
+button:disabled { opacity: 0.4; }
+
+.marine-btn { position: relative; }
+.cooldown-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; }
+.cooldown-bar { width: 4px; height: 60%; background: rgba(255,255,255,0.2); position: relative; }
+.cooldown-bar .fill { width: 100%; background: #ffcc00; position: absolute; bottom: 0; }
+
+.menu-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal-content { text-align: center; padding: 30px; border: 1px solid #00fbff; background: #020617; border-radius: 12px; }
+.scores { margin: 15px 0; }
+.score-display { margin: 5px 0; color: #64748b; font-size: 0.9rem; }
+.score-display.high { color: #ffcc00; font-weight: bold; font-size: 1.1rem; }
+.start-btn { background: #00fbff; color: black; padding: 10px 25px; border: none; font-size: 1rem; border-radius: 5px; margin-top: 15px; cursor: pointer; }

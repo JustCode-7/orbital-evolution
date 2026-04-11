@@ -1,0 +1,62 @@
+<div class="game-container">
+  <canvas #gameCanvas
+          (mousedown)="onDown($event)" (touchstart)="onDown($event)"
+          (mouseup)="onUp()" (touchend)="onUp()" (mouseleave)="onUp()">
+  </canvas>
+
+  @if (gameActive && !winState) {
+    <div class="hud">
+      <div class="top-row">
+        <div class="main-stats">
+          <div class="score">SCORE: {{ score }}</div>
+          <div class="ep">EP: {{ ep | number:'1.0-0' }}</div>
+        </div>
+      </div>
+
+      <div class="left-panels">
+        @if (shieldActive) {
+          <div class="bar-row">
+            <label>SHIELD</label>
+            <div class="progress"><div class="fill cyan" [style.width.%]="shieldHp"></div></div>
+          </div>
+        }
+        <div class="log-overlay">
+          @for (entry of scienceLog; track entry.timestamp) {
+            <div [class]="entry.type" class="log-item">
+              {{ entry.type === 'research' ? '🔬' : '⚠️' }} {{ entry.text }}
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="bottom-controls">
+        <div class="action-grid">
+          <button (click)="buy('shield')" [disabled]="ep < 100">🛡️ Shield<span>(100)</span></button>
+          <button (click)="buy('sats')" [disabled]="ep < 150">🛰️ Sats<span>(150)</span></button>
+          <button class="marine-btn" (click)="buy('marines')" [disabled]="ep < 250 || marinesCooldownProgress < 100">
+            <div class="marine-content">🎖️ Marines<span>(250)</span></div>
+            @if (marinesCooldownProgress < 100) {
+              <div class="cooldown-overlay">
+                <div class="cooldown-bar"><div class="fill" [style.height.%]="marinesCooldownProgress"></div></div>
+              </div>
+            }
+          </button>
+          <button (click)="buy('research')" [disabled]="ep < 200">🔬 Lvl {{researchLevel}}<span>(200)</span></button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (!gameActive || winState) {
+    <div class="menu-modal">
+      <div class="modal-content">
+        <h1>ORBITAL EVOLUTION</h1>
+        <div class="scores">
+          <p class="score-display">Letzter Score: {{ lastScore }}</p>
+          <p class="score-display high">Bester Score: {{ highScore }}</p>
+        </div>
+        <button class="start-btn" (click)="startGame()">START</button>
+      </div>
+    </div>
+  }
+</div>
