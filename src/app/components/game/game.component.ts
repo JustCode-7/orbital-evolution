@@ -1,5 +1,6 @@
-import { Component, ElementRef, OnInit, ViewChild, OnDestroy, HostListener } from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild, OnDestroy, HostListener, inject} from '@angular/core';
 import {DecimalPipe} from '@angular/common';
+import {ToggleFullscreenService} from '../../service/toggle-fullscreen.service';
 
 interface Asteroid {
   x: number; y: number;
@@ -45,6 +46,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private spawnInterval: any;
   private animFrame: any;
+  protected readonly fullscreenService = inject(ToggleFullscreenService);
 
   ngOnInit() {
     this.ctx = this.canvas.nativeElement.getContext('2d')!;
@@ -85,6 +87,8 @@ export class GameComponent implements OnInit, OnDestroy {
   onUp() { this.isPressing = false; }
 
   startGame() {
+    this.fullscreenService.initDisplayAlwaysOnMode();
+    this.fullscreenService.toggleTabFullScreenModeGame();
     this.cleanup();
     this.gameActive = true; this.winState = false;
     this.score = 0; this.ep = 100; this.researchLevel = 1;

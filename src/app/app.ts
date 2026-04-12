@@ -1,15 +1,24 @@
-import { Component, inject, signal } from '@angular/core';
+import {Component, inject, OnDestroy, signal} from '@angular/core';
 import { PwaInstallService } from './service/pwa-install.service';
 import {GameComponent} from './components/game/game.component';
+import {ToggleFullscreenService} from './service/toggle-fullscreen.service';
+import {RouterOutlet} from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [GameComponent],
+  imports: [GameComponent, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   standalone: true,
 })
-export class App {
+export class App implements OnDestroy{
+
   protected readonly title = signal('orbital-evolution');
   private pwaInstallService = inject(PwaInstallService);
+  protected readonly fullscreenService = inject(ToggleFullscreenService);
+
+
+  ngOnDestroy(): void {
+    this.fullscreenService.releaseDisplayAlwaysOnMode()
+  }
 }

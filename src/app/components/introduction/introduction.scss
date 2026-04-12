@@ -1,0 +1,167 @@
+:host {
+  display: block;
+  background: #000;
+  min-height: 100vh;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', 'Courier New', monospace;
+}
+
+.intro-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+/* Header */
+.main-header h1 {
+  color: #00fbff;
+  font-size: 3.5rem;
+  letter-spacing: 5px;
+  margin-bottom: 0;
+  text-shadow: 0 0 15px rgba(0, 251, 255, 0.7);
+}
+.tagline { color: #ffcc00; margin-top: 5px; font-weight: bold; }
+
+/* Story */
+.story-section {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 20px;
+  border-radius: 8px;
+  margin: 30px 0;
+  border: 1px solid #222;
+}
+.story-section h2 { color: #fff; margin-top: 0; }
+.story-section p { line-height: 1.6; color: #ccc; max-width: 700px; margin: 0 auto; }
+
+/* Schematische Grafik - Zentriert */
+.graphic-section { margin: 40px 0; }
+
+.schema-container {
+  position: relative;
+  width: 100%;
+  height: 350px;
+  background: radial-gradient(circle at center, #111 0%, #000 70%);
+  border: 1px solid #333;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Sonne - Zentrum */
+.sun {
+  position: absolute;
+  width: 60px; height: 60px;
+  background: radial-gradient(circle, #fff, #ffcc00, #ff8800);
+  border-radius: 50%;
+  box-shadow: 0 0 30px #ffaa00;
+  z-index: 10;
+}
+
+/* Orbits - Zentriert mit flex */
+.orbit {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.danger-zone { width: 100px; height: 100px; border: 2px solid rgba(255, 0, 0, 0.3); background: rgba(255, 0, 0, 0.05); }
+.research-zone { width: 220px; height: 220px; border: 4px solid rgba(0, 255, 100, 0.2); }
+.points-orbit { width: 320px; height: 320px; border: 1px solid rgba(0, 251, 255, 0.2); }
+
+/* Orbit Labels */
+.orbit-label { font-size: 11px; margin-top: -18px; white-space: nowrap; font-weight: bold; }
+.label-red { color: #f44; }
+.label-green { color: #8f8; }
+.label-cyan { color: #00fbff; }
+
+/* Raumschiff-Icon */
+.spaceship-icon {
+  position: absolute;
+  width: 20px; height: 20px;
+  /* Platziert das Schiff schematisch auf dem Punkte-Orbit */
+  transform: translate(150px, -50px) rotate(45deg);
+  z-index: 20;
+}
+
+.ship-body {
+  width: 0; height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 20px solid #00fbff; /* Cyanfarbenes Dreieck */
+  filter: drop-shadow(0 0 5px #00fbff);
+}
+
+/* Info-Karten */
+.info-section { margin: 40px 0; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; }
+.info-card { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; border-left: 4px solid #444; }
+.info-card h3 { margin-top: 0; color: #00fbff; }
+.info-card ul { padding-left: 20px; }
+.control-hint { font-size: 0.9rem; color: #aaa; font-style: italic; border-top: 1px solid #333; padding-top: 10px; }
+
+.info-card.special { border-left-color: #00ff6a; background: rgba(0, 255, 106, 0.03); }
+.info-card.evolution { border-left-color: #ffcc00; background: rgba(255, 204, 0, 0.03); }
+.win-condition { color: #ffcc00; font-weight: bold; margin-top: 10px; }
+
+/* Start-Button */
+.start-button {
+  padding: 18px 50px;
+  background: transparent;
+  color: #00fbff;
+  border: 2px solid #00fbff;
+  font-size: 1.4rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 0 10px rgba(0, 251, 255, 0.3);
+}
+
+.start-button:hover {
+  background: #00fbff;
+  color: #000;
+  box-shadow: 0 0 25px rgba(0, 251, 255, 0.8);
+}
+
+/* Responsivität */
+@media (max-width: 700px) {
+  .info-grid { grid-template-columns: 1fr; }
+  .main-header h1 { font-size: 2.5rem; }
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+/* Icon-Farben & Glow */
+.icon-cyan { color: #00fbff; filter: drop-shadow(0 0 5px #00fbff); }
+.icon-blue { color: #0077ff; filter: drop-shadow(0 0 5px #0077ff); }
+.icon-green { color: #00ff6a; filter: drop-shadow(0 0 5px #00ff6a); }
+.icon-red { color: #ff4444; filter: drop-shadow(0 0 5px #ff4444); }
+.icon-yellow { color: #ffcc00; filter: drop-shadow(0 0 5px #ffcc00); }
+
+.info-card h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+}
+
+/* Hover-Effekt für die Karten */
+.info-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  transition: all 0.2s ease-in-out;
+}
