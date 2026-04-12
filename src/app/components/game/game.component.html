@@ -6,6 +6,16 @@
 
   @if (gameActive && !winState) {
     <div class="hud">
+
+      @if (researchLevel >= 10 && !isJumping) {
+        <div class="top-right-controls">
+          <button class="jump-btn" (mousedown)="triggerOrbitalJump()" (touchstart)="triggerOrbitalJump()">
+            🌌 Orbitalsprung
+            <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
+          </button>
+        </div>
+      }
+
       <div class="top-row">
         <div class="main-stats">
           <div class="score">SCORE: {{ score }}</div>
@@ -17,7 +27,9 @@
         @if (shieldActive) {
           <div class="bar-row">
             <label>SHIELD</label>
-            <div class="progress"><div class="fill cyan" [style.width.%]="shieldHp"></div></div>
+            <div class="progress">
+              <div class="fill cyan" [style.width.%]="shieldHp"></div>
+            </div>
           </div>
         }
         <div class="log-overlay">
@@ -40,12 +52,14 @@
             🎖️ Marines<span>(250 EP)</span>
             @if (marinesCooldownProgress < 100) {
               <div class="cooldown-overlay">
-                <div class="cooldown-bar"><div class="fill" [style.height.%]="marinesCooldownProgress"></div></div>
+                <div class="cooldown-bar">
+                  <div class="fill" [style.height.%]="marinesCooldownProgress"></div>
+                </div>
               </div>
             }
           </button>
           <button (mousedown)="buy('research', $event)" (touchstart)="buy('research', $event)"
-                  [disabled]="ep < 200">🔬 Lvl {{researchLevel}}<span>(200 EP)</span></button>
+                  [disabled]="ep < 200">🔬 Lvl {{ researchLevel }}<span>(200 EP)</span></button>
         </div>
       </div>
     </div>
@@ -54,12 +68,15 @@
   @if (!gameActive || winState) {
     <div class="menu-modal">
       <div class="modal-content">
-        <h1>ORBITAL EVOLUTION</h1>
+        <h1>{{ winState ? 'MISSION ERFOLGREICH' : 'ORBITAL EVOLUTION' }}</h1>
+        @if (winState) {
+          <p style="color: #00fbff; margin-bottom: 15px;">Du bist sicher in den Hyperraum gesprungen!</p>
+        }
         <div class="scores">
           <p class="score-display">Letzter Score: {{ lastScore }}</p>
           <p class="score-display high">Bester Score: {{ highScore }}</p>
         </div>
-        <button class="start-btn" (click)="startGame()">START</button>
+        <button class="start-btn" (click)="startGame()">{{ winState ? 'NEUER START' : 'START' }}</button>
       </div>
     </div>
   }
