@@ -109,12 +109,22 @@ export class GameComponent implements OnInit, OnDestroy {
     this.shieldActive = false; this.shieldHp = 0;
 
     this.addLog("Orbitale Verteidigung aktiviert.", 'event');
-    this.spawnInterval = setInterval(() => this.spawnAsteroid(), 1500);
+    this.startSpawning();
+  }
+
+  private startSpawning() {
+    this.cleanup();
+    const interval = Math.max(400, 1500 - Math.floor((this.researchLevel - 1) / 3) * 250);
+    this.spawnInterval = setInterval(() => this.spawnAsteroid(), interval);
   }
 
   buy(item: string, e?: Event) {
     if (e) {
       this.onDown(e);
+      // Sofort wieder loslassen, wenn es ein Klick auf einen Button war,
+      // da die Buttons oft das mouseup/touchend Event schlucken oder
+      // der User den Button verlässt bevor er loslässt.
+      setTimeout(() => this.onUp(), 50);
     }
     if (item === 'shield' && this.ep >= 100) { this.ep -= 100; this.shieldActive = true; this.shieldHp = 100; }
     else if (item === 'sats' && this.ep >= 150) { this.ep -= 150; this.satellitesCount++; }
@@ -126,7 +136,13 @@ export class GameComponent implements OnInit, OnDestroy {
       this.marinesReadyTime = Date.now() + this.marinesCooldown;
     }
     else if (item === 'research' && this.ep >= 200) {
+      const oldThreshold = Math.floor((this.researchLevel - 1) / 3);
       this.ep -= 200; this.researchLevel++;
+      const newThreshold = Math.floor((this.researchLevel - 1) / 3);
+      if (newThreshold > oldThreshold) {
+        this.startSpawning();
+        this.addLog(`Gefahrenstufe erhöht! Asteroiden-Frequenz gesteigert.`, 'event');
+      }
       this.addLog(`Technologie-Level ${this.researchLevel} erreicht.`, 'research');
     }
   }

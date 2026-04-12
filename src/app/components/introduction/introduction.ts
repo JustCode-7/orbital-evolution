@@ -1,14 +1,21 @@
-import {Component, inject, OnInit} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {RouterLink} from '@angular/router';
+import {PwaInstallService} from '../../service/pwa-install.service';
+import {AsyncPipe} from '@angular/common';
 
 @Component({
   selector: 'app-introduction',
   imports: [
-    RouterLink
+    RouterLink,
+    AsyncPipe,
   ],
   templateUrl: './introduction.html',
   styleUrl: './introduction.scss',
 })
 export class Introduction {
+  protected readonly pwaService = inject(PwaInstallService);
 
+  protected installApp() {
+    this.pwaService.askToInstall();
+  }
 }

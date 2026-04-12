@@ -32,12 +32,12 @@
       <div class="bottom-controls">
         <div class="action-grid">
           <button (mousedown)="buy('shield', $event)" (touchstart)="buy('shield', $event)"
-                  [disabled]="ep < 100">🛡️ Shield<span>(100)</span></button>
+                  [disabled]="ep < 100">🛡️ Shield<span>(100 EP)</span></button>
           <button (mousedown)="buy('sats', $event)" (touchstart)="buy('sats', $event)"
-                  [disabled]="ep < 150">🛰️ Sats<span>(150)</span></button>
+                  [disabled]="ep < 150">🛰️ Sats<span>(150 EP)</span></button>
           <button class="marine-btn" (mousedown)="buy('marines', $event)" (touchstart)="buy('marines', $event)"
                   [disabled]="ep < 250 || marinesCooldownProgress < 100">
-            <div class="marine-content">🎖️ Marines<span>(250)</span></div>
+            🎖️ Marines<span>(250 EP)</span>
             @if (marinesCooldownProgress < 100) {
               <div class="cooldown-overlay">
                 <div class="cooldown-bar"><div class="fill" [style.height.%]="marinesCooldownProgress"></div></div>
@@ -45,7 +45,7 @@
             }
           </button>
           <button (mousedown)="buy('research', $event)" (touchstart)="buy('research', $event)"
-                  [disabled]="ep < 200">🔬 Lvl {{researchLevel}}<span>(200)</span></button>
+                  [disabled]="ep < 200">🔬 Lvl {{researchLevel}}<span>(200 EP)</span></button>
         </div>
       </div>
     </div>

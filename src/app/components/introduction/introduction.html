@@ -83,10 +83,15 @@
 
     </div>
   </section>
-
   <footer>
     <button class="start-button" routerLink="game">MISSION STARTEN</button>
     <p class="control-hint">Das Spiel ist für die Mobilnutzung optimiert und bietet als installierte App die beste Nutzungserfahrung</p>
+    @if (pwaService.canInstall$ | async) {
+      <button class="start-button" (click)="installApp()">
+        App installieren ?
+      </button>
+    }
+
   </footer>
 
 </div>
