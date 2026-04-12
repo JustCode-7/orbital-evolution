@@ -32,6 +32,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   playerR = 350; playerAngle = 0; playerRotation = 0;
   shipDirection = 0;
+  isRecovering = false;
   shieldActive = false; shieldHp = 0;
   satellitesCount = 0;
 
@@ -86,7 +87,14 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onDown(e: Event) { this.isPressing = true; e.preventDefault(); }
+  @HostListener('window:mouseup')
+  @HostListener('window:touchend')
   onUp() { this.isPressing = false; }
+
+  @HostListener('contextmenu', ['$event'])
+  onContextMenu(e: Event) {
+    e.preventDefault();
+  }
 
   startGame() {
     this.fullscreenService.initDisplayAlwaysOnMode();
@@ -96,6 +104,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.score = 0; this.ep = 100; this.researchLevel = 1;
     this.playerR = 350; this.asteroids = []; this.scienceLog = [];
     this.projectiles = []; this.marinesActive = false;
+    this.isRecovering = false;
     this.satellitesCount = 0; this.marinesReadyTime = 0;
     this.shieldActive = false; this.shieldHp = 0;
 
@@ -103,7 +112,10 @@ export class GameComponent implements OnInit, OnDestroy {
     this.spawnInterval = setInterval(() => this.spawnAsteroid(), 1500);
   }
 
-  buy(item: string) {
+  buy(item: string, e?: Event) {
+    if (e) {
+      this.onDown(e);
+    }
     if (item === 'shield' && this.ep >= 100) { this.ep -= 100; this.shieldActive = true; this.shieldHp = 100; }
     else if (item === 'sats' && this.ep >= 150) { this.ep -= 150; this.satellitesCount++; }
     else if (item === 'marines' && this.ep >= 250 && Date.now() >= this.marinesReadyTime) {
@@ -156,7 +168,23 @@ export class GameComponent implements OnInit, OnDestroy {
     const remaining = this.marinesReadyTime - now;
     this.marinesCooldownProgress = remaining > 0 ? ((this.marinesCooldown - remaining) / this.marinesCooldown) * 100 : 100;
 
-    const dr = this.isPressing ? 4.5 : -2.0;
+    // Out-of-bounds recovery mechanic
+    const s = Math.min(window.innerWidth, window.innerHeight) / 900;
+    const maxVisibleR = (Math.max(window.innerWidth, window.innerHeight) / 2) / s;
+
+    if (this.playerR > maxVisibleR + 50) {
+      this.isRecovering = true;
+    }
+
+    let dr = this.isPressing ? 4.5 : -2.0;
+
+    if (this.isRecovering) {
+      dr = -6.0; // Schnelles Sinken zurück ins Feld
+      if (this.playerR < maxVisibleR - 50) {
+        this.isRecovering = false;
+      }
+    }
+
     this.playerR += dr;
     const da = 0.015;
     this.playerAngle += da;
@@ -204,6 +232,12 @@ export class GameComponent implements OnInit, OnDestroy {
 
       ast.x += ast.vx;
       ast.y += ast.vy;
+
+      const distToSun = Math.hypot(ast.x, ast.y);
+      if (distToSun < 60) {
+        this.asteroids.splice(i, 1);
+        continue;
+      }
 
       const dist = Math.hypot(px - ast.x, py - ast.y);
       if (dist < ast.size + 15) {
@@ -261,6 +295,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   handleHit() {
+    if (this.isRecovering) return; // Unsterblich während der Rückkehr
     if (this.shieldActive && this.shieldHp > 0) {
       this.shieldHp -= 34;
       if(this.shieldHp <= 0) { this.shieldHp = 0; this.shieldActive = false; }
@@ -295,11 +330,35 @@ export class GameComponent implements OnInit, OnDestroy {
     });
 
     // Zonen
-    const zones = [{ r: 150, w: 80, c: 'rgba(255, 0, 0, 0.08)' }, { r: 250, w: 100, c: 'rgba(255, 165, 0, 0.05)' }, { r: 360, w: 120, c: 'rgba(0, 255, 100, 0.12)' }];
+    const zones = [
+      { r: 150, w: 80, c: 'rgba(255, 0, 0, 0.08)' },
+      { r: 250, w: 100, c: 'rgba(255, 165, 0, 0.05)' }
+    ];
     zones.forEach(z => {
       this.ctx.beginPath(); this.ctx.arc(cx, cy, z.r*s, 0, Math.PI*2);
       this.ctx.strokeStyle = z.c; this.ctx.lineWidth = z.w*s; this.ctx.stroke();
     });
+
+    // Forschungszone (Nebeleffekt)
+    const resR = 360 * s;
+    const resW = 120 * s;
+    const innerR = resR - resW/2;
+    const outerR = resR + resW/2;
+
+    const resGradient = this.ctx.createRadialGradient(cx, cy, innerR, cx, cy, outerR);
+    resGradient.addColorStop(0, 'rgba(0, 255, 100, 0)');
+    resGradient.addColorStop(0.3, 'rgba(0, 255, 100, 0.15)');
+    resGradient.addColorStop(0.5, 'rgba(0, 255, 100, 0.25)');
+    resGradient.addColorStop(0.7, 'rgba(0, 255, 100, 0.15)');
+    resGradient.addColorStop(1, 'rgba(0, 255, 100, 0)');
+
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.arc(cx, cy, resR, 0, Math.PI * 2);
+    this.ctx.strokeStyle = resGradient;
+    this.ctx.lineWidth = resW;
+    this.ctx.stroke();
+    this.ctx.restore();
 
     // Sonne
     const sunR = 55 * s;
