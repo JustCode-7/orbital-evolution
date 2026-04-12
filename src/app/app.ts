@@ -1,12 +1,11 @@
 import {Component, inject, OnDestroy, signal} from '@angular/core';
 import { PwaInstallService } from './service/pwa-install.service';
-import {GameComponent} from './components/game/game.component';
 import {ToggleFullscreenService} from './service/toggle-fullscreen.service';
 import {RouterOutlet} from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [GameComponent, RouterOutlet],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   standalone: true,
