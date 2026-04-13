@@ -24,7 +24,6 @@ canvas {
   pointer-events: none;
 }
 
-/* Neu: Styles für den Orbitalsprung */
 .top-right-controls {
   position: absolute;
   top: 15px;
@@ -69,11 +68,25 @@ canvas {
   font-size: 1.3rem;
   font-weight: bold;
   color: #ffcc00;
+  transition: all 0.3s;
+}
+
+.score-active {
+  padding-left: 12%;
+  color: #e16a16 !important;
+  transform: scale(1.0);
 }
 
 .main-stats .ep {
   font-size: 1rem;
   color: #00fbff;
+  transition: all 0.3s;
+}
+
+.ep-active {
+  padding-left: 12%;
+  color: #00ff66 !important;
+  transform: scale(1.0);
 }
 
 .left-panels {
@@ -241,4 +254,84 @@ button:disabled {
   border-radius: 5px;
   margin-top: 15px;
   cursor: pointer;
+}
+
+.pause-control {
+  padding-top: 2rem;
+  padding-left: 7rem;
+  pointer-events: auto;
+  z-index: 100;
+}
+
+.pause-btn {
+  width: 45px;
+  height: 45px;
+  background: rgba(255, 255, 255, 0.1) !important; /* Durchsichtiger Hintergrund */
+  border: 2px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 50% !important; /* Kreisform */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0 !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: white !important;
+    transform: scale(1.05);
+  }
+
+  /* Das Pause-Zeichen (zwei vertikale Balken) */
+  .pause-icon {
+    width: 14px;
+    height: 18px;
+    border-left: 5px solid white;
+    border-right: 5px solid white;
+    box-sizing: border-box;
+    display: inline-block;
+  }
+}
+
+/* Der Countdown-Text sollte groß und zentral sein */
+.countdown-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 200;
+  pointer-events: none;
+
+  .countdown-number {
+    font-size: 10rem;
+    font-weight: 800;
+    color: #00fbff;
+    text-shadow: 0 0 30px rgba(0, 251, 255, 0.8);
+    animation: pulseCount 1s ease-in-out infinite;
+  }
+}
+
+.resume-btn {
+  background: #22c55e !important;
+  color: white;
+  padding: 15px 30px !important;
+  font-size: 1.1rem !important;
+  margin-top: 20px;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+@keyframes pulseCount {
+  0% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
 }

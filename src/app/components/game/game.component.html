@@ -7,19 +7,37 @@
   @if (gameActive && !winState) {
     <div class="hud">
 
-      @if (researchLevel >= 10 && !isJumping) {
-        <div class="top-right-controls">
+      @if (resumeCountdown() > 0) {
+        <div class="countdown-overlay">
+          <div class="countdown-number">{{ resumeCountdown() }}</div>
+        </div>
+      }
+
+      <div class="top-right-controls">
+        @if (researchLevel >= 10 && !isJumping) {
+
           <button class="jump-btn" (mousedown)="triggerOrbitalJump()" (touchstart)="triggerOrbitalJump()">
             🌌 Orbitalsprung
             <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
           </button>
-        </div>
-      }
+        }
+        @if (isPaused) {
+          <button class="resume-btn" (click)="resumeGame()">WEITER SPIELEN</button>
+        } @else {
+          <div class="pause-control">
+            <button class="pause-btn" (click)="togglePause($event)">
+              <div class="pause-icon"></div>
+            </button>
+          </div>
+        }
+      </div>
 
       <div class="top-row">
         <div class="main-stats">
-          <div class="score">SCORE: {{ score }}</div>
-          <div class="ep">EP: {{ ep | number:'1.0-0' }}</div>
+          <div class="score" [class.score-active]="isScoreZone">SCORE: {{ score }}</div>
+          <div class="ep" [class.ep-active]="isInsideHabitableZone">
+            EP: {{ ep | number:'1.0-0' }}
+          </div>
         </div>
       </div>
 
@@ -33,7 +51,7 @@
           </div>
         }
         <div class="log-overlay">
-          @for (entry of scienceLog; track entry.timestamp) {
+          @for (entry of scienceLog; track $index) {
             <div [class]="entry.type" class="log-item">
               {{ entry.type === 'research' ? '🔬' : '⚠️' }} {{ entry.text }}
             </div>

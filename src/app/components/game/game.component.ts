@@ -1,6 +1,25 @@
-import {Component, ElementRef, HostListener, inject, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild
+} from '@angular/core';
 import {DecimalPipe} from '@angular/common';
 import {ToggleFullscreenService} from '../../service/toggle-fullscreen.service';
+
+interface Comet {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  hue: number;
+  tail: { x: number, y: number }[]; // NEU: Schweif-Positionen
+}
 
 interface Asteroid {
   x: number;
@@ -12,6 +31,7 @@ interface Asteroid {
   size: number;
   color: string;
   points: { x: number, y: number }[];
+  hp: number;
 }
 
 interface LogEntry {
@@ -45,6 +65,7 @@ interface Projectile {
 export class GameComponent implements OnInit, OnDestroy {
   @ViewChild('gameCanvas', {static: true}) canvas!: ElementRef<HTMLCanvasElement>;
   private ctx!: CanvasRenderingContext2D;
+  private cdr = inject(ChangeDetectorRef);
 
   score = 0;
   ep = 0;
@@ -75,6 +96,12 @@ export class GameComponent implements OnInit, OnDestroy {
   asteroids: Asteroid[] = [];
   scienceLog: LogEntry[] = [];
   stars: Star[] = [];
+  comets: Comet[] = [];
+  isScoreZone = false;
+  isInsideHabitableZone = false;
+  isPaused = false;
+  resumeCountdown = signal(0);
+  private playerImg = new Image();
 
   private spawnInterval: any;
   private animFrame: any;
@@ -82,6 +109,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.ctx = this.canvas.nativeElement.getContext('2d')!;
+    this.playerImg.src = 'assets/ship.svg';
     this.resize();
     this.initStars();
     this.gameLoop();
@@ -166,6 +194,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.marinesReadyTime = 0;
     this.shieldActive = false;
     this.shieldHp = 0;
+    this.comets = [];
+    this.isInsideHabitableZone = false;
 
     this.addLog("Orbitale Verteidigung aktiviert.", 'event');
     this.startSpawning();
@@ -199,6 +229,11 @@ export class GameComponent implements OnInit, OnDestroy {
       const oldThreshold = Math.floor((this.researchLevel - 1) / 3);
       this.ep -= 200;
       this.researchLevel++;
+      if (this.researchLevel % 3 === 0) {
+        this.spawnComet();
+        this.addLog(`Seltener Energie-Komet gesichtet!`, 'research');
+      }
+
       const newThreshold = Math.floor((this.researchLevel - 1) / 3);
       if (newThreshold > oldThreshold) {
         this.startSpawning();
@@ -212,8 +247,23 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
+  private spawnComet() {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 1000;
+
+    this.comets.push({
+      x: Math.cos(angle) * dist,
+      y: Math.sin(angle) * dist,
+      vx: -Math.cos(angle) * 5,
+      vy: -Math.sin(angle) * 5,
+      hue: Math.random() * 360,
+      tail: []
+    });
+    this.addLog("Ein Komet nähert sich der Sonne!", 'event');
+  }
+
   private spawnAsteroid() {
-    if (!this.gameActive || this.winState) return;
+    if (this.isPaused || this.resumeCountdown() > 0 || !this.gameActive) return;
     const angle = Math.random() * Math.PI * 2;
     const vx = -Math.cos(angle) * (2 + Math.random() * 2.5);
     const vy = -Math.sin(angle) * (2 + Math.random() * 2.5);
@@ -221,6 +271,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const size = 12 + Math.random() * 15;
     const points = [];
     const numPoints = 7 + Math.floor(Math.random() * 5);
+    const hp = Math.ceil(size / 3);
     for (let i = 0; i < numPoints; i++) {
       const a = (i / numPoints) * Math.PI * 2;
       const r = size * (0.8 + Math.random() * 0.4);
@@ -228,22 +279,21 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     this.asteroids.push({
-      x: Math.cos(angle) * 900,
-      y: Math.sin(angle) * 900,
+      x: Math.cos(angle) * 900, y: Math.sin(angle) * 900,
       vx, vy, ovx: vx, ovy: vy,
-      size, color: '#888',
-      points
+      size, color: '#888', points, hp
     });
   }
 
   private gameLoop() {
     this.update();
     this.draw();
+    this.cdr.detectChanges();
     this.animFrame = requestAnimationFrame(() => this.gameLoop());
   }
 
   private update() {
-    if (!this.gameActive || this.winState) return;
+    if (!this.gameActive || this.winState || this.isPaused || this.resumeCountdown() > 0) return;
 
     const now = Date.now();
     const remaining = this.marinesReadyTime - now;
@@ -276,13 +326,17 @@ export class GameComponent implements OnInit, OnDestroy {
       }
 
       // EP Gewinnung in der Habitablen Zone
-      if (this.playerR > 300 && this.playerR < 420) {
+      this.isInsideHabitableZone = (this.playerR > 300 && this.playerR < 420);
+
+      if (this.isInsideHabitableZone) {
+        this.isScoreZone = false;
         this.ep += 0.25;
-        if (this.score > 0) this.score -= 1;
       } else {
+        this.isScoreZone = true
         this.score += Math.floor(1000 / Math.max(1, this.playerR));
       }
     }
+
 
     this.playerR += dr;
     const da = 0.015;
@@ -300,6 +354,34 @@ export class GameComponent implements OnInit, OnDestroy {
 
     const px = Math.cos(this.playerAngle) * this.playerR;
     const py = Math.sin(this.playerAngle) * this.playerR;
+
+    // KOMETEN LOGIK
+    for (let i = this.comets.length - 1; i >= 0; i--) {
+      const c = this.comets[i];
+      const distToSun = Math.hypot(c.x, c.y);
+
+      // Gravitation: Verlangsamen in Sonnennähe (Faktor 0.4 bis 1.0)
+      const gravitySlowdown = Math.max(0.4, Math.min(1, distToSun / 500));
+
+      c.x += c.vx * gravitySlowdown;
+      c.y += c.vy * gravitySlowdown;
+      c.hue = (c.hue + 1) % 360;
+
+      // Schweif-Management
+      c.tail.unshift({x: c.x, y: c.y});
+      if (c.tail.length > 20) c.tail.pop();
+
+      // Kollision mit Spieler
+      const px = Math.cos(this.playerAngle) * this.playerR;
+      const py = Math.sin(this.playerAngle) * this.playerR;
+      if (Math.hypot(px - c.x, py - c.y) < 40) {
+        this.score += 3000;
+        this.addLog("+3000 EP durch Kometen-Staub!", 'research');
+        this.comets.splice(i, 1);
+        continue;
+      }
+      if (distToSun > 1200) this.comets.splice(i, 1);
+    }
 
     if (this.marinesActive && now - this.lastShotTime > 350) {
       this.fireMarines(px, py);
@@ -365,16 +447,26 @@ export class GameComponent implements OnInit, OnDestroy {
       p.x += p.vx;
       p.y += p.vy;
 
-      for (let j = 0; j < this.asteroids.length; j++) {
+      for (let j = this.asteroids.length - 1; j >= 0; j--) {
         const a = this.asteroids[j];
         if (Math.hypot(p.x - a.x, p.y - a.y) < a.size + 6) {
+          // 1. Verlangsamen (wie bisher)
           a.vx *= impactFactor;
           a.vy *= impactFactor;
+
+          // 2. Schaden zufügen
+          a.hp--;
+
+          // 3. Zerstören bei 0 HP
+          if (a.hp <= 0) {
+            this.score += Math.floor(a.size * 10);
+            this.asteroids.splice(j, 1);
+          }
+
           this.projectiles.splice(i, 1);
           break;
         }
       }
-      if (p && Math.hypot(p.x, p.y) > 1500) this.projectiles.splice(i, 1);
     }
   }
 
@@ -409,6 +501,40 @@ export class GameComponent implements OnInit, OnDestroy {
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+    const ringAlpha = this.isInsideHabitableZone ? 0.4 : 0.15;
+    const ringWidth = (this.isInsideHabitableZone ? 130 : 120) * s;
+
+    this.ctx.strokeStyle = `rgba(0, 255, 136, ${ringAlpha})`;
+    this.ctx.lineWidth = ringWidth;
+    this.ctx.beginPath();
+    this.ctx.arc(cx, cy, 360 * s, 0, Math.PI * 2);
+    this.ctx.stroke();
+
+    if (this.isInsideHabitableZone) {
+      // Zweiter dünner, heller Kern-Ring für Glow-Effekt ohne Performance-Verlust
+      this.ctx.strokeStyle = `rgba(150, 255, 200, 0.6)`;
+      this.ctx.lineWidth = 4 * s;
+      this.ctx.stroke();
+    }
+
+
+    // KOMET ZEICHNEN
+    this.comets.forEach(c => {
+      // Schweif
+      this.ctx.beginPath();
+      c.tail.forEach((pos, idx) => {
+        const alpha = 1 - (idx / c.tail.length);
+        this.ctx.fillStyle = `hsla(${c.hue}, 100%, 70%, ${alpha * 0.5})`;
+        this.ctx.arc(cx + pos.x * s, cy + pos.y * s, (8 - idx * 0.3) * s, 0, Math.PI * 2);
+        this.ctx.fill();
+      });
+      // Kopf
+      this.ctx.fillStyle = `white`;
+      this.ctx.beginPath();
+      this.ctx.arc(cx + c.x * s, cy + c.y * s, 10 * s, 0, Math.PI * 2);
+      this.ctx.fill();
+    });
 
     this.stars.forEach(st => {
       this.ctx.fillStyle = `rgba(255,255,255,${st.opacity})`;
@@ -455,6 +581,7 @@ export class GameComponent implements OnInit, OnDestroy {
     sunGradient.addColorStop(0.5, '#ff6600');
     sunGradient.addColorStop(1, '#ff3300');
 
+
     this.ctx.save();
     this.ctx.shadowBlur = 40 * s;
     this.ctx.shadowColor = '#ff6600';
@@ -476,15 +603,21 @@ export class GameComponent implements OnInit, OnDestroy {
     this.ctx.translate(px, py);
     this.ctx.rotate(this.shipDirection + Math.PI / 2);
 
-    this.ctx.fillStyle = '#2277ff';
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, -shipSize);
-    this.ctx.lineTo(-shipSize * 0.8, shipSize);
-    this.ctx.lineTo(0, shipSize * 0.6);
-    this.ctx.lineTo(shipSize * 0.8, shipSize);
-    this.ctx.closePath();
-    this.ctx.fill();
 
+    if (this.playerImg.complete) {
+      // Zentriert zeichnen (-shipSize)
+      this.ctx.drawImage(this.playerImg, -shipSize, -shipSize, shipSize * 2, shipSize * 2);
+    } else {
+      // Fallback falls Bild noch lädt
+      this.ctx.fillStyle = '#2277ff';
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, -shipSize);
+      this.ctx.lineTo(-shipSize * 0.8, shipSize);
+      this.ctx.lineTo(0, shipSize * 0.6);
+      this.ctx.lineTo(shipSize * 0.8, shipSize);
+      this.ctx.closePath();
+      this.ctx.fill();
+    }
     this.ctx.fillStyle = '#88ccff';
     this.ctx.beginPath();
     this.ctx.arc(0, -shipSize * 0.2, shipSize * 0.3, 0, Math.PI * 2);
@@ -550,8 +683,9 @@ export class GameComponent implements OnInit, OnDestroy {
       this.ctx.stroke();
     }
 
+    // ASTEROIDEN (mit Treffer-Feedback)
     this.asteroids.forEach(a => {
-      this.ctx.fillStyle = '#777';
+      this.ctx.fillStyle = a.hp === 1 ? '#4a3333' : '#777';
       this.ctx.beginPath();
       this.ctx.moveTo(cx + (a.x + a.points[0].x) * s, cy + (a.y + a.points[0].y) * s);
       for (let i = 1; i < a.points.length; i++) {
@@ -566,8 +700,32 @@ export class GameComponent implements OnInit, OnDestroy {
     });
   }
 
+
   private addLog(text: string, type: 'research' | 'event') {
     this.scienceLog.unshift({text, timestamp: Date.now(), type});
     if (this.scienceLog.length > 4) this.scienceLog.pop();
+  }
+
+  // Methode zum Pausieren
+  togglePause(e?: Event) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    if (!this.gameActive || this.winState || this.resumeCountdown() > 0) return;
+    this.isPaused = true;
+  }
+
+  // Methode zum Fortsetzen mit Countdown
+  resumeGame() {
+    this.isPaused = false;
+    this.resumeCountdown.set(3);
+
+    const interval = setInterval(() => {
+      this.resumeCountdown.set(this.resumeCountdown() - 1);
+      if (this.resumeCountdown() <= 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
   }
 }
