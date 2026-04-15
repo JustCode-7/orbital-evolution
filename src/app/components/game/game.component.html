@@ -33,7 +33,7 @@
 
       <div class="top-row">
         <div class="main-stats">
-          <div class="score" [class.score-active]="isScoreZone">SCORE: {{ score }}</div>
+          <div class="score" [class.score-active]="isScoreZone">SCORE: {{ scoreFromated }}</div>
           <div class="ep" [class.ep-active]="isInsideHabitableZone">
             EP: {{ ep | number:'1.0-0' }}
           </div>
@@ -98,7 +98,7 @@
       <div class="modal-content">
         <h1>{{ winState ? 'MISSION ERFOLGREICH' : 'ORBITAL EVOLUTION' }}</h1>
         @if (winState) {
-          <p style="color: #00fbff; margin-bottom: 15px;">Du bist sicher in den Hyperraum gesprungen!</p>
+          <p class="hyper-jump-text">Du bist sicher in den Hyperraum gesprungen!</p>
         }
         <div class="scores">
           <p class="score-display">Letzter Score: {{ lastScore }}</p>

@@ -1,7 +1,8 @@
 import {Component, inject, OnDestroy, signal} from '@angular/core';
-import { PwaInstallService } from './service/pwa-install.service';
+import {PwaInstallService} from './service/pwa-install.service';
 import {ToggleFullscreenService} from './service/toggle-fullscreen.service';
 import {RouterOutlet} from '@angular/router';
+import {UpdatePwa} from './service/update-pwa';
 
 @Component({
   selector: 'app-root',
@@ -10,11 +11,12 @@ import {RouterOutlet} from '@angular/router';
   styleUrl: './app.scss',
   standalone: true,
 })
-export class App implements OnDestroy{
+export class App implements OnDestroy {
 
   protected readonly title = signal('orbital-evolution');
   private pwaInstallService = inject(PwaInstallService);
   protected readonly fullscreenService = inject(ToggleFullscreenService);
+  private readonly updateService = inject(UpdatePwa);
 
 
   ngOnDestroy(): void {

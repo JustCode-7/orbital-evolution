@@ -25,6 +25,8 @@ canvas {
 }
 
 .top-right-controls {
+  display: flex;
+  gap: 10px;
   position: absolute;
   top: 15px;
   right: 15px;
@@ -330,11 +332,15 @@ button:disabled {
 .resume-btn {
   background: #22c55e !important;
   color: white;
-  padding: 15px 30px !important;
+  padding: 10px 20px;
   font-size: 1.1rem !important;
-  margin-top: 20px;
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
   border-radius: 5px;
+}
+
+.hyper-jump-text {
+  color: #00fbff;
+  margin-bottom: 15px;
 }
 
 @keyframes pulseCount {

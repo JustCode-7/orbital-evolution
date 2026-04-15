@@ -18,6 +18,7 @@ interface Comet {
   vx: number;
   vy: number;
   hue: number;
+  lifespan: number;
   tail: { x: number, y: number }[]; // NEU: Schweif-Positionen
 }
 
@@ -161,24 +162,32 @@ export class GameComponent implements OnInit, OnDestroy {
     e.preventDefault();
   }
 
+  get scoreFromated(): number {
+    return Math.floor(this.score);
+  }
+
   get jumpBounsLevel(): number {
     return Math.floor(this.researchLevel / 10);
   }
 
-  // Neu: Berechnet die Extrapunkte anhand der Stufe (alle 10 Stufen x1 Multiplikator)
   get jumpBonus(): number {
-    const multiplier = Math.floor(this.researchLevel / 10);
-    // Bonus: Dein Score erhöht sich um 5% pro Research Level
-    const missionSuccessBonus = this.score * (this.researchLevel * 0.05);
-    return multiplier * missionSuccessBonus;
+    if (this.researchLevel < 10) return 0;
+
+    // Wir nehmen 5% pro Research-Level als Basis
+    // Level 10 -> 0.5 (50%)
+    // Level 20 -> 1.0 (100%)
+    const percentage = this.researchLevel * 0.05;
+
+    return Math.floor(this.score * percentage);
   }
 
-  // Neu: Startet den Orbitalsprung
   triggerOrbitalJump() {
     if (this.researchLevel >= 10 && !this.isJumping) {
+      const finalBonus = this.jumpBonus;
       this.isJumping = true;
-      this.score += this.jumpBonus;
-      this.addLog(`Orbitalsprung initiiert! (+${this.jumpBonus} PTS)`, 'event');
+
+      this.score += finalBonus;
+      this.addLog(`Orbitalsprung initiiert! (+${finalBonus.toLocaleString()} Punkte)`, 'event');
     }
   }
 
@@ -319,13 +328,15 @@ export class GameComponent implements OnInit, OnDestroy {
     const targetY = (Math.random() - 0.5) * offset;
 
     const angleToTarget = Math.atan2(targetY - startY, targetX - startX);
-    const speed = 4 + Math.random() * 3;
+    //Geschwindigkeit zwischen 1.5 und 3.5
+    const speed = 1.5 + Math.random() * 2;
 
     this.comets.push({
       x: startX, y: startY,
       vx: Math.cos(angleToTarget) * speed,
       vy: Math.sin(angleToTarget) * speed,
       hue: Math.random() * 360,
+      lifespan: 0,
       tail: []
     });
     this.addLog("Ein Komet nähert sich der Sonne!", 'event');
@@ -430,27 +441,22 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.isInsideHabitableZone) {
       this.isScoreZone = false;
 
-      // EP Farming im Nebel (mit Satelliten-Bonus)
       const baseEp = 0.25;
       const epMultiplier = 1 + (this.satellitesCount * 0.1);
       this.ep += baseEp * epMultiplier;
 
-    } else {
-      // 2. Wir sind außerhalb -> Score-Logik
+    } else if (this.playerR <= 300) {
       this.isScoreZone = true;
 
-      // Research-Multiplikator
       const resMultiplier = 1 + (this.researchLevel * 0.1);
 
-      // Quadrierung für Risiko-Belohnung:
-      // Wir nehmen (1000 / R) ins Quadrat.
-      // Die "Halbierung", die du wolltest, wenden wir direkt auf das Ergebnis an (0.5).
       const distanceFactor = Math.pow(1000 / Math.max(1, this.playerR), 2);
+      const pointsThisTick = (distanceFactor * 0.25) * resMultiplier;
 
-      // Finale Berechnung: (Faktor * 0.5) * Forschung
-      const pointsThisTick = (distanceFactor * 0.5) * resMultiplier;
+      this.score += pointsThisTick;
 
-      this.score += Math.floor(pointsThisTick);
+    } else {
+      this.isScoreZone = false;
     }
   }
 
@@ -477,9 +483,21 @@ export class GameComponent implements OnInit, OnDestroy {
 
     for (let i = this.comets.length - 1; i >= 0; i--) {
       const c = this.comets[i];
-      const distToSun = Math.hypot(c.x, c.y);
+      const dx = 0 - c.x;
+      const dy = 0 - c.y;
+      const distToSun = Math.hypot(dx, dy);
 
-      // 4. Position aktualisieren
+      // 2. Anziehungskraft berechnen
+      // Je näher an der Sonne, desto stärker der Zug (aber gedeckelt, damit er nicht wegschießt)
+      const gravityStrength = 0.3; // Wie stark soll die Kurve sein?
+      const force = gravityStrength * (100 / Math.max(50, distToSun));
+
+      // 3. Geschwindigkeit anpassen (Der "Kurven"-Effekt)
+      c.vx += (dx / distToSun) * force;
+      c.vy += (dy / distToSun) * force;
+      // ----------------------------------
+
+      // Position mit der neuen, leicht gebogenen Geschwindigkeit aktualisieren
       c.x += c.vx;
       c.y += c.vy;
 
@@ -487,6 +505,15 @@ export class GameComponent implements OnInit, OnDestroy {
       c.hue = (c.hue + 1) % 360;
       c.tail.unshift({x: c.x, y: c.y});
       if (c.tail.length > 25) c.tail.pop();
+
+      // Zähler hochzählen
+      c.lifespan++;
+
+      // Wenn der Komet zu alt ist, löschen wir ihn
+      if (c.lifespan > 1800) {
+        this.comets.splice(i, 1);
+        continue;
+      }
 
       // Kollisionsprüfung (Spieler)
       if (Math.hypot(px - c.x, py - c.y) < 40) {
@@ -628,10 +655,10 @@ export class GameComponent implements OnInit, OnDestroy {
   endGame(win: boolean) {
     this.gameActive = false;
     this.winState = win;
-    this.lastScore = this.score;
+    this.lastScore = Math.floor(this.score);
     localStorage.setItem('orbital_last_score', this.lastScore.toString());
     if (this.score > this.highScore) {
-      this.highScore = this.score;
+      this.highScore = Math.floor(this.score);
       localStorage.setItem('orbital_hs', this.highScore.toString());
     }
   }
@@ -764,13 +791,25 @@ export class GameComponent implements OnInit, OnDestroy {
     this.ctx.fill();
 
     // Triebwerke
-    if (this.isPressing || this.isJumping) {
-      this.ctx.fillStyle = this.isJumping ? '#00ffff' : '#ffaa00';
+    if (this.isPressing) {
+      this.ctx.fillStyle = '#ffaa00';
       this.ctx.beginPath();
       this.ctx.moveTo(-shipSize * 0.4, shipSize * 0.7);
-      this.ctx.lineTo(0, shipSize * (this.isJumping ? 3.0 : 1.5));
+      this.ctx.lineTo(0, shipSize * (1.5));
       this.ctx.lineTo(shipSize * 0.4, shipSize * 0.7);
       this.ctx.fill();
+    }
+
+    if (this.isJumping) {
+      this.ctx.fillStyle = '#00ffff';
+      this.ctx.beginPath();
+      this.ctx.moveTo(-shipSize * 0.6, shipSize * 0.7);
+      this.ctx.lineTo(0, shipSize * 5.0);
+      this.ctx.lineTo(shipSize * 0.6, shipSize * 0.7);
+      this.ctx.fill();
+
+      this.ctx.shadowBlur = 20 * s;
+      this.ctx.shadowColor = '#00ffff';
     }
     this.ctx.restore();
   }
