@@ -6,6 +6,7 @@
   overflow: hidden;
   font-family: 'Segoe UI', sans-serif;
   touch-action: none;
+  color: white;
 }
 
 canvas {
@@ -237,7 +238,6 @@ button:disabled {
 }
 
 .modal-content {
-  color: #e0e0e0;
   text-align: center;
   padding: 30px;
   border: 1px solid #00fbff;
