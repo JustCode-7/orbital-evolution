@@ -37,7 +37,7 @@ interface Asteroid {
 interface LogEntry {
   text: string;
   timestamp: number;
-  type: 'research' | 'event';
+  type: 'research' | 'event' | 'system';
 }
 
 interface Star {
@@ -81,7 +81,7 @@ export class GameComponent implements OnInit, OnDestroy {
   playerRotation = 0;
   shipDirection = 0;
   isRecovering = false;
-  isJumping = false; // Neu: Flag für den Orbitalsprung
+  isJumping = false;
   shieldActive = false;
   shieldHp = 0;
   satellitesCount = 0;
@@ -92,6 +92,8 @@ export class GameComponent implements OnInit, OnDestroy {
   marinesCooldownProgress = 100;
   projectiles: Projectile[] = [];
   lastShotTime = 0;
+  // In den Klassen-Eigenschaften (State)
+  private flightDirection = 1; // 1 = Uhrzeigersinn, -1 = gegen den Uhrzeigersinn
 
   asteroids: Asteroid[] = [];
   scienceLog: LogEntry[] = [];
@@ -159,10 +161,16 @@ export class GameComponent implements OnInit, OnDestroy {
     e.preventDefault();
   }
 
+  get jumpBounsLevel(): number {
+    return Math.floor(this.researchLevel / 10);
+  }
+
   // Neu: Berechnet die Extrapunkte anhand der Stufe (alle 10 Stufen x1 Multiplikator)
   get jumpBonus(): number {
     const multiplier = Math.floor(this.researchLevel / 10);
-    return multiplier * 50000;
+    // Bonus: Dein Score erhöht sich um 5% pro Research Level
+    const missionSuccessBonus = this.score * (this.researchLevel * 0.05);
+    return multiplier * missionSuccessBonus;
   }
 
   // Neu: Startet den Orbitalsprung
@@ -212,50 +220,111 @@ export class GameComponent implements OnInit, OnDestroy {
       this.onDown(e);
       setTimeout(() => this.onUp(), 50);
     }
-    if (item === 'shield' && this.ep >= 100) {
+
+    // Delegation an die spezifischen Methoden
+    switch (item) {
+      case 'shield':
+        this.buyShield();
+        break;
+      case 'sats':
+        this.handleSatelliteAction();
+        break; // Geänderter Name für neue Logik
+      case 'marines':
+        this.buyMarines();
+        break;
+      case 'research':
+        this.buyResearch();
+        break;
+    }
+  }
+
+  private buyShield() {
+    if (this.ep >= 100) {
       this.ep -= 100;
       this.shieldActive = true;
       this.shieldHp = 100;
-    } else if (item === 'sats' && this.ep >= 150) {
+      this.addLog("Schilde aktiviert!", "system");
+    }
+  }
+
+  private handleSatelliteAction() {
+    // Wenn bereits 10 Satelliten da sind: Richtungswechsel (kostenlos)
+    if (this.satellitesCount >= 10) {
+      this.flightDirection *= -1;
+      const dirText = this.flightDirection === 1 ? "Uhrzeigersinn" : "Gegen Uhrzeigersinn";
+      this.addLog(`Orbit-Umkehr: Flugrichtung nun ${dirText}`, "system");
+      return;
+    }
+
+    // Ansonsten: Satellit kaufen
+    if (this.ep >= 150) {
       this.ep -= 150;
       this.satellitesCount++;
-    } else if (item === 'marines' && this.ep >= 250 && Date.now() >= this.marinesReadyTime) {
-      this.ep -= 250;
-      this.marinesActive = true;
-      this.addLog("Marines Einsatzgruppe gestartet!", 'event');
-      setTimeout(() => this.marinesActive = false, 10000);
-      this.marinesReadyTime = Date.now() + this.marinesCooldown;
-    } else if (item === 'research' && this.ep >= 200) {
-      const oldThreshold = Math.floor((this.researchLevel - 1) / 3);
-      this.ep -= 200;
-      this.researchLevel++;
-      if (this.researchLevel % 3 === 0) {
-        this.spawnComet();
-        this.addLog(`Seltener Energie-Komet gesichtet!`, 'research');
-      }
+      this.addLog(`Satellit ${this.satellitesCount}/10 online.`, "system");
 
-      const newThreshold = Math.floor((this.researchLevel - 1) / 3);
-      if (newThreshold > oldThreshold) {
-        this.startSpawning();
-        this.addLog(`Gefahrenstufe erhöht! Asteroiden-Frequenz gesteigert.`, 'event');
-      }
-      this.addLog(`Technologie-Level ${this.researchLevel} erreicht.`, 'research');
-
-      if (this.researchLevel === 10) {
-        this.addLog(`ANTIGRAVITATIONSANTRIEB BEREIT ZUM SPRUNG!`, 'event');
+      if (this.satellitesCount === 10) {
+        this.addLog("MAXIMALE SATELLITEN: Orbit-Umkehr freigeschaltet!", "event");
       }
     }
   }
 
+  private buyMarines() {
+    const now = Date.now();
+    if (this.ep >= 250 && now >= this.marinesReadyTime) {
+      this.ep -= 250;
+      this.marinesActive = true;
+      this.addLog("Marines Einsatzgruppe gestartet!", 'event');
+
+      setTimeout(() => (this.marinesActive = false), 10000);
+      this.marinesReadyTime = now + this.marinesCooldown;
+    }
+  }
+
+  private buyResearch() {
+    if (this.ep < 200) return;
+
+    const oldThreshold = Math.floor((this.researchLevel - 1) / 3);
+    this.ep -= 200;
+    this.researchLevel++;
+
+    // Logik für Kometen-Spawn
+    if (this.researchLevel % 3 === 0) {
+      this.spawnComet();
+      this.addLog(`Seltener Energie-Komet gesichtet!`, 'research');
+    }
+
+    // Logik für Asteroiden-Intensität
+    const newThreshold = Math.floor((this.researchLevel - 1) / 3);
+    if (newThreshold > oldThreshold) {
+      this.startSpawning();
+      this.addLog(`Gefahrenstufe erhöht! Asteroiden-Frequenz gesteigert.`, 'event');
+    }
+
+    this.addLog(`Technologie-Level ${this.researchLevel} erreicht.`, 'research');
+
+    if (this.researchLevel === 10) {
+      this.addLog(`ANTIGRAVITATIONSANTRIEB BEREIT ZUM SPRUNG!`, 'event');
+    }
+  }
+
   private spawnComet() {
-    const angle = Math.random() * Math.PI * 2;
-    const dist = 1000;
+    // In deiner spawnComet() Methode:
+    const spawnAngle = Math.random() * Math.PI * 2;
+    const startX = Math.cos(spawnAngle) * 1000;
+    const startY = Math.sin(spawnAngle) * 1000;
+
+    // ZIELE NICHT AUF 0/0, SONDERN ETWAS DANEBEN
+    const offset = (Math.random() - 0.5) * 400; // 400 Einheiten Streuung
+    const targetX = (Math.random() - 0.5) * offset;
+    const targetY = (Math.random() - 0.5) * offset;
+
+    const angleToTarget = Math.atan2(targetY - startY, targetX - startX);
+    const speed = 4 + Math.random() * 3;
 
     this.comets.push({
-      x: Math.cos(angle) * dist,
-      y: Math.sin(angle) * dist,
-      vx: -Math.cos(angle) * 5,
-      vy: -Math.sin(angle) * 5,
+      x: startX, y: startY,
+      vx: Math.cos(angleToTarget) * speed,
+      vy: Math.sin(angleToTarget) * speed,
       hue: Math.random() * 360,
       tail: []
     });
@@ -296,124 +365,195 @@ export class GameComponent implements OnInit, OnDestroy {
     if (!this.gameActive || this.winState || this.isPaused || this.resumeCountdown() > 0) return;
 
     const now = Date.now();
+
+    // 1. Zeitliche Abläufe & Cooldowns
+    this.updateCooldowns(now);
+
+    // 2. Spieler-Radius berechnen (dr = Delta Radius)
+    const dr = this.calculatePlayerRadiusDelta();
+
+    // 3. Transformationen (Position, Winkel, Richtung)
+    this.applyPlayerPhysics(dr);
+
+    // 4. Weltraum-Hintergrund & Neutrale Objekte
+    const px = Math.cos(this.playerAngle) * this.playerR;
+    const py = Math.sin(this.playerAngle) * this.playerR;
+
+    this.updateStars();
+    this.updateComets(px, py);
+
+    // 5. Kampf & Abwehr
+    this.updateCombat(now, px, py);
+
+    // 6. Gefahrenprüfung
+    this.checkDeathConditions();
+  }
+
+// --- HELPER METHODS ---
+
+  private updateCooldowns(now: number) {
     const remaining = this.marinesReadyTime - now;
-    this.marinesCooldownProgress = remaining > 0 ? ((this.marinesCooldown - remaining) / this.marinesCooldown) * 100 : 100;
+    this.marinesCooldownProgress = remaining > 0
+      ? ((this.marinesCooldown - remaining) / this.marinesCooldown) * 100
+      : 100;
+  }
 
-    let dr = 0;
-
+  private calculatePlayerRadiusDelta(): number {
     if (this.isJumping) {
-      // Wenn der Orbitalsprung aktiv ist, fliege rasant nach außen
-      dr = 15.0;
-      if (this.playerR > 1500) {
-        this.endGame(true); // Spiel erfolgreich beenden, wenn weit genug weg
-      }
-    } else {
-      // Normale Spiel-Logik (nur wenn nicht gesprungen wird)
-      const s = Math.min(window.innerWidth, window.innerHeight) / 900;
-      const maxVisibleR = (Math.max(window.innerWidth, window.innerHeight) / 2) / s;
-
-      if (this.playerR > maxVisibleR + 50) {
-        this.isRecovering = true;
-      }
-
-      dr = this.isPressing ? 4.5 : -2.0;
-
-      if (this.isRecovering) {
-        dr = -6.0;
-        if (this.playerR < maxVisibleR - 50) {
-          this.isRecovering = false;
-        }
-      }
-
-      // EP Gewinnung in der Habitablen Zone
-      this.isInsideHabitableZone = (this.playerR > 300 && this.playerR < 420);
-
-      if (this.isInsideHabitableZone) {
-        this.isScoreZone = false;
-        this.ep += 0.25;
-      } else {
-        this.isScoreZone = true
-        this.score += Math.floor(1000 / Math.max(1, this.playerR));
-      }
+      if (this.playerR > 1500) this.endGame(true);
+      return 15.0; // Sprung-Geschwindigkeit
     }
 
+    // Normale Bewegung & Recovery-Logik
+    const s = Math.min(window.innerWidth, window.innerHeight) / 900;
+    const maxVisibleR = (Math.max(window.innerWidth, window.innerHeight) / 2) / s;
 
+    if (this.playerR > maxVisibleR + 50) this.isRecovering = true;
+
+    let dr = this.isPressing ? 4.5 : -2.0;
+
+    if (this.isRecovering) {
+      dr = -6.0;
+      if (this.playerR < maxVisibleR - 50) this.isRecovering = false;
+    }
+
+    // Zone Check & Belohnung
+    this.updateZonesAndScoring();
+
+    return dr;
+  }
+
+  private updateZonesAndScoring() {
+    // 1. Check: Sind wir im Nebel?
+    this.isInsideHabitableZone = (this.playerR > 300 && this.playerR < 420);
+
+    if (this.isInsideHabitableZone) {
+      this.isScoreZone = false;
+
+      // EP Farming im Nebel (mit Satelliten-Bonus)
+      const baseEp = 0.25;
+      const epMultiplier = 1 + (this.satellitesCount * 0.1);
+      this.ep += baseEp * epMultiplier;
+
+    } else {
+      // 2. Wir sind außerhalb -> Score-Logik
+      this.isScoreZone = true;
+
+      // Research-Multiplikator
+      const resMultiplier = 1 + (this.researchLevel * 0.1);
+
+      // Quadrierung für Risiko-Belohnung:
+      // Wir nehmen (1000 / R) ins Quadrat.
+      // Die "Halbierung", die du wolltest, wenden wir direkt auf das Ergebnis an (0.5).
+      const distanceFactor = Math.pow(1000 / Math.max(1, this.playerR), 2);
+
+      // Finale Berechnung: (Faktor * 0.5) * Forschung
+      const pointsThisTick = (distanceFactor * 0.5) * resMultiplier;
+
+      this.score += Math.floor(pointsThisTick);
+    }
+  }
+
+  private applyPlayerPhysics(dr: number) {
+    const da = 0.015 * this.flightDirection;
     this.playerR += dr;
-    const da = 0.015;
     this.playerAngle += da;
-    this.playerRotation += 0.08;
+    this.playerRotation += 0.08 * this.flightDirection;
 
+    // Richtungs-Vektor berechnen für die Schiff-Rotation (ShipDirection)
     const shipVx = dr * Math.cos(this.playerAngle) - this.playerR * Math.sin(this.playerAngle) * da;
     const shipVy = dr * Math.sin(this.playerAngle) + this.playerR * Math.cos(this.playerAngle) * da;
     this.shipDirection = Math.atan2(shipVy, shipVx);
+  }
 
+  private updateStars() {
     this.stars.forEach(st => {
       st.x += 0.5;
       if (st.x > window.innerWidth) st.x = -10;
     });
+  }
 
-    const px = Math.cos(this.playerAngle) * this.playerR;
-    const py = Math.sin(this.playerAngle) * this.playerR;
+  private updateComets(px: number, py: number) {
 
-    // KOMETEN LOGIK
     for (let i = this.comets.length - 1; i >= 0; i--) {
       const c = this.comets[i];
       const distToSun = Math.hypot(c.x, c.y);
 
-      // Gravitation: Verlangsamen in Sonnennähe (Faktor 0.4 bis 1.0)
-      const gravitySlowdown = Math.max(0.4, Math.min(1, distToSun / 500));
+      // 4. Position aktualisieren
+      c.x += c.vx;
+      c.y += c.vy;
 
-      c.x += c.vx * gravitySlowdown;
-      c.y += c.vy * gravitySlowdown;
+      // Schweif & Optik
       c.hue = (c.hue + 1) % 360;
-
-      // Schweif-Management
       c.tail.unshift({x: c.x, y: c.y});
-      if (c.tail.length > 20) c.tail.pop();
+      if (c.tail.length > 25) c.tail.pop();
 
-      // Kollision mit Spieler
-      const px = Math.cos(this.playerAngle) * this.playerR;
-      const py = Math.sin(this.playerAngle) * this.playerR;
+      // Kollisionsprüfung (Spieler)
       if (Math.hypot(px - c.x, py - c.y) < 40) {
-        this.score += 3000;
-        this.addLog("+3000 EP durch Kometen-Staub!", 'research');
+        const cometValue = Math.floor(100 * this.researchLevel * 50)
+        this.score += cometValue;
+        this.addLog("+" + cometValue.toString() + " Pts: Kometen-Staub extrahiert!", 'research');
         this.comets.splice(i, 1);
         continue;
       }
-      if (distToSun > 1200) this.comets.splice(i, 1);
-    }
 
+      // Cleanup: weit im All verschwunden
+      if (distToSun > 1500) {
+        this.comets.splice(i, 1);
+      }
+    }
+  }
+
+  private updateCombat(now: number, px: number, py: number) {
+    // Marines Feuerbefehl
     if (this.marinesActive && now - this.lastShotTime > 350) {
       this.fireMarines(px, py);
       this.lastShotTime = now;
     }
 
     this.updateProjectiles();
+    this.updateAsteroids(px, py);
+  }
 
+  private updateAsteroids(px: number, py: number) {
     const recoveryRate = 0.012;
+
     for (let i = this.asteroids.length - 1; i >= 0; i--) {
       const ast = this.asteroids[i];
+
+      // Recovery & Movement
       ast.vx += (ast.ovx - ast.vx) * recoveryRate;
       ast.vy += (ast.ovy - ast.vy) * recoveryRate;
       ast.x += ast.vx;
       ast.y += ast.vy;
 
       const distToSun = Math.hypot(ast.x, ast.y);
+
+      // In die Sonne geflogen
       if (distToSun < 60) {
         this.asteroids.splice(i, 1);
         continue;
       }
 
-      const dist = Math.hypot(px - ast.x, py - ast.y);
-      if (dist < ast.size + 15) {
+      // Kollision Spieler
+      const distToPlayer = Math.hypot(px - ast.x, py - ast.y);
+      if (distToPlayer < ast.size + 15) {
         this.asteroids.splice(i, 1);
         this.handleHit();
+        continue;
       }
-      if (Math.hypot(ast.x, ast.y) > 1200) this.asteroids.splice(i, 1);
-    }
 
-    // In die Sonne gefallen
-    if (this.playerR < 65) this.endGame(false);
+      // Aus dem Bildschirm
+      if (Math.hypot(ast.x, ast.y) > 1200) {
+        this.asteroids.splice(i, 1);
+      }
+    }
+  }
+
+  private checkDeathConditions() {
+    if (this.playerR < 65) {
+      this.endGame(false);
+    }
   }
 
   private fireMarines(px: number, py: number) {
@@ -500,52 +640,69 @@ export class GameComponent implements OnInit, OnDestroy {
     const s = Math.min(window.innerWidth, window.innerHeight) / 900;
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;
+
+    // Hintergrund & Basis
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    this.drawStars(s);
+    this.drawEnvironmentZones(s, cx, cy);
+    this.drawSun(s, cx, cy);
+    this.drawComets(s, cx, cy);
 
-    const ringAlpha = this.isInsideHabitableZone ? 0.4 : 0.15;
-    const ringWidth = (this.isInsideHabitableZone ? 130 : 120) * s;
+    // Spieler-System berechnen
+    const px = cx + Math.cos(this.playerAngle) * (this.playerR * s);
+    const py = cy + Math.sin(this.playerAngle) * (this.playerR * s);
 
-    this.ctx.strokeStyle = `rgba(0, 255, 136, ${ringAlpha})`;
-    this.ctx.lineWidth = ringWidth;
-    this.ctx.beginPath();
-    this.ctx.arc(cx, cy, 360 * s, 0, Math.PI * 2);
-    this.ctx.stroke();
+    // Spieler & Einheiten
+    this.drawPlayerShip(s, px, py);
+    this.drawSatellites(s, px, py);
+    this.drawMarines(s, px, py);
+    this.drawShield(s, px, py);
 
-    if (this.isInsideHabitableZone) {
-      // Zweiter dünner, heller Kern-Ring für Glow-Effekt ohne Performance-Verlust
-      this.ctx.strokeStyle = `rgba(150, 255, 200, 0.6)`;
-      this.ctx.lineWidth = 4 * s;
-      this.ctx.stroke();
-    }
+    // Kampf-Objekte
+    this.drawProjectiles(s, cx, cy);
+    this.drawAsteroids(s, cx, cy);
+  }
 
+// --- PRIVATE HELPER METHODS ---
 
-    // KOMET ZEICHNEN
-    this.comets.forEach(c => {
-      // Schweif
-      this.ctx.beginPath();
-      c.tail.forEach((pos, idx) => {
-        const alpha = 1 - (idx / c.tail.length);
-        this.ctx.fillStyle = `hsla(${c.hue}, 100%, 70%, ${alpha * 0.5})`;
-        this.ctx.arc(cx + pos.x * s, cy + pos.y * s, (8 - idx * 0.3) * s, 0, Math.PI * 2);
-        this.ctx.fill();
-      });
-      // Kopf
-      this.ctx.fillStyle = `white`;
-      this.ctx.beginPath();
-      this.ctx.arc(cx + c.x * s, cy + c.y * s, 10 * s, 0, Math.PI * 2);
-      this.ctx.fill();
-    });
-
+  private drawStars(s: number) {
     this.stars.forEach(st => {
       this.ctx.fillStyle = `rgba(255,255,255,${st.opacity})`;
       this.ctx.beginPath();
       this.ctx.arc(st.x, st.y, st.size, 0, Math.PI * 2);
       this.ctx.fill();
     });
+  }
 
+  private drawSun(s: number, cx: number, cy: number) {
+    const sunR = 55 * s;
+    const sunGradient = this.ctx.createRadialGradient(cx, cy, sunR * 0.2, cx, cy, sunR);
+    sunGradient.addColorStop(0, '#fffbe6');
+    sunGradient.addColorStop(0.2, '#ffcc00');
+    sunGradient.addColorStop(0.5, '#ff6600');
+    sunGradient.addColorStop(1, '#ff3300');
+
+    this.ctx.save();
+    this.ctx.shadowBlur = 40 * s;
+    this.ctx.shadowColor = '#ff6600';
+    this.ctx.fillStyle = sunGradient;
+    this.ctx.beginPath();
+    this.ctx.arc(cx, cy, sunR, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Äußerer Sonnen-Corona-Ring
+    this.ctx.shadowBlur = 80 * s;
+    this.ctx.strokeStyle = 'rgba(255, 102, 0, 0.3)';
+    this.ctx.lineWidth = 10 * s;
+    this.ctx.stroke();
+    this.ctx.restore();
+  }
+
+  private drawEnvironmentZones(s: number, cx: number, cy: number) {
+    // 1. Statische Gefahr-Zonen (Rot/Orange)
     const zones = [
-      {r: 150, w: 80, c: 'rgba(255, 0, 0, 0.08)'},
-      {r: 250, w: 100, c: 'rgba(255, 165, 0, 0.05)'}
+      {r: 150, w: 80, c: 'rgba(255,0,0,0.16)'},
+      {r: 250, w: 100, c: 'rgba(255,165,0,0.16)'}
     ];
     zones.forEach(z => {
       this.ctx.beginPath();
@@ -555,75 +712,58 @@ export class GameComponent implements OnInit, OnDestroy {
       this.ctx.stroke();
     });
 
+    // 2. Habitable Zone (Gasnebel-Effekt)
     const resR = 360 * s;
-    const resW = 120 * s;
+    // Den Nebel bei Betreten etwas "aufblähen"
+    const resW = (this.isInsideHabitableZone ? 150 : 120) * s;
+    const ringAlpha = this.isInsideHabitableZone ? 0.4 : 0.15;
+    //
     const innerR = resR - resW / 2;
     const outerR = resR + resW / 2;
     const resGradient = this.ctx.createRadialGradient(cx, cy, innerR, cx, cy, outerR);
-    resGradient.addColorStop(0, 'rgba(0, 255, 100, 0)');
-    resGradient.addColorStop(0.3, 'rgba(0, 255, 100, 0.15)');
-    resGradient.addColorStop(0.5, 'rgba(0, 255, 100, 0.25)');
-    resGradient.addColorStop(0.7, 'rgba(0, 255, 100, 0.15)');
-    resGradient.addColorStop(1, 'rgba(0, 255, 100, 0)');
+
+    // Mehrstufige Farbstopps für die Gasdichte
+    resGradient.addColorStop(0, 'rgba(0, 255, 100, 0)');               // Innen transparent
+    resGradient.addColorStop(0.5, `rgba(0, 255, 150, ${ringAlpha})`);       // Dichtester Kern des Nebels
+    resGradient.addColorStop(1, 'rgba(0, 255, 100, 0)');               // Außen transparent
 
     this.ctx.save();
+
     this.ctx.beginPath();
     this.ctx.arc(cx, cy, resR, 0, Math.PI * 2);
     this.ctx.strokeStyle = resGradient;
     this.ctx.lineWidth = resW;
     this.ctx.stroke();
+
     this.ctx.restore();
+  }
 
-    const sunR = 55 * s;
-    const sunGradient = this.ctx.createRadialGradient(cx, cy, sunR * 0.2, cx, cy, sunR);
-    sunGradient.addColorStop(0, '#fffbe6');
-    sunGradient.addColorStop(0.2, '#ffcc00');
-    sunGradient.addColorStop(0.5, '#ff6600');
-    sunGradient.addColorStop(1, '#ff3300');
-
-
-    this.ctx.save();
-    this.ctx.shadowBlur = 40 * s;
-    this.ctx.shadowColor = '#ff6600';
-    this.ctx.fillStyle = sunGradient;
-    this.ctx.beginPath();
-    this.ctx.arc(cx, cy, sunR, 0, Math.PI * 2);
-    this.ctx.fill();
-    this.ctx.shadowBlur = 80 * s;
-    this.ctx.strokeStyle = 'rgba(255, 102, 0, 0.3)';
-    this.ctx.lineWidth = 10 * s;
-    this.ctx.stroke();
-    this.ctx.restore();
-
-    const px = cx + Math.cos(this.playerAngle) * (this.playerR * s);
-    const py = cy + Math.sin(this.playerAngle) * (this.playerR * s);
-    const shipSize = 15 * s;
-
+  private drawPlayerShip(s: number, px: number, py: number) {
+    const shipSize = 20 * s;
     this.ctx.save();
     this.ctx.translate(px, py);
     this.ctx.rotate(this.shipDirection + Math.PI / 2);
 
-
     if (this.playerImg.complete) {
-      // Zentriert zeichnen (-shipSize)
       this.ctx.drawImage(this.playerImg, -shipSize, -shipSize, shipSize * 2, shipSize * 2);
     } else {
-      // Fallback falls Bild noch lädt
+      // Fallback: Dreieck-Schiff
       this.ctx.fillStyle = '#2277ff';
       this.ctx.beginPath();
       this.ctx.moveTo(0, -shipSize);
       this.ctx.lineTo(-shipSize * 0.8, shipSize);
       this.ctx.lineTo(0, shipSize * 0.6);
       this.ctx.lineTo(shipSize * 0.8, shipSize);
-      this.ctx.closePath();
       this.ctx.fill();
     }
+
+    // Cockpit
     this.ctx.fillStyle = '#88ccff';
     this.ctx.beginPath();
     this.ctx.arc(0, -shipSize * 0.2, shipSize * 0.3, 0, Math.PI * 2);
     this.ctx.fill();
 
-    // Stärkere Triebwerke beim Sprung
+    // Triebwerke
     if (this.isPressing || this.isJumping) {
       this.ctx.fillStyle = this.isJumping ? '#00ffff' : '#ffaa00';
       this.ctx.beginPath();
@@ -633,57 +773,67 @@ export class GameComponent implements OnInit, OnDestroy {
       this.ctx.fill();
     }
     this.ctx.restore();
+  }
 
+  private drawSatellites(s: number, px: number, py: number) {
     for (let i = 0; i < this.satellitesCount; i++) {
       const a = (Math.PI * 2 / this.satellitesCount) * i + (this.playerAngle * 0.5);
       const sx = px + Math.cos(a) * 30 * s;
       const sy = py + Math.sin(a) * 30 * s;
+
       this.ctx.save();
       this.ctx.translate(sx, sy);
       this.ctx.rotate(this.playerRotation);
       this.ctx.fillStyle = '#aaa';
       this.ctx.fillRect(-4 * s, -2 * s, 8 * s, 4 * s);
-      this.ctx.fillStyle = '#44f';
+      this.ctx.fillStyle = '#44f'; // Solarpanele
       this.ctx.fillRect(-6 * s, -4 * s, 2 * s, 8 * s);
       this.ctx.fillRect(4 * s, -4 * s, 2 * s, 8 * s);
       this.ctx.restore();
     }
+  }
 
-    if (this.marinesActive) {
-      for (let i = 0; i < 3; i++) {
-        const a = this.playerAngle + (i * (Math.PI * 2 / 3));
-        const mx = px + Math.cos(a) * 42 * s;
-        const my = py + Math.sin(a) * 42 * s;
-        this.ctx.save();
-        this.ctx.translate(mx, my);
-        this.ctx.rotate(a + Math.PI / 2);
-        this.ctx.fillStyle = '#ffcc00';
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, -6 * s);
-        this.ctx.lineTo(-5 * s, 6 * s);
-        this.ctx.lineTo(5 * s, 6 * s);
-        this.ctx.closePath();
-        this.ctx.fill();
-        this.ctx.restore();
-      }
-    }
+  private drawMarines(s: number, px: number, py: number) {
+    if (!this.marinesActive) return;
 
-    this.ctx.fillStyle = '#ffff00';
-    this.projectiles.forEach(p => {
+    for (let i = 0; i < 3; i++) {
+      const a = this.playerAngle + (i * (Math.PI * 2 / 3));
+      const mx = px + Math.cos(a) * 42 * s;
+      const my = py + Math.sin(a) * 42 * s;
+
+      this.ctx.save();
+      this.ctx.translate(mx, my);
+      this.ctx.rotate(a + Math.PI / 2);
+      this.ctx.fillStyle = '#ffcc00';
       this.ctx.beginPath();
-      this.ctx.arc(cx + p.x * s, cy + p.y * s, 3 * s, 0, Math.PI * 2);
+      this.ctx.moveTo(0, -6 * s);
+      this.ctx.lineTo(-5 * s, 6 * s);
+      this.ctx.lineTo(5 * s, 6 * s);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.restore();
+    }
+  }
+
+  private drawComets(s: number, cx: number, cy: number) {
+    this.comets.forEach(c => {
+      // Schweif (Tail)
+      c.tail.forEach((pos, idx) => {
+        const alpha = 1 - (idx / c.tail.length);
+        this.ctx.fillStyle = `hsla(${c.hue}, 100%, 70%, ${alpha * 0.5})`;
+        this.ctx.beginPath();
+        this.ctx.arc(cx + pos.x * s, cy + pos.y * s, (8 - idx * 0.3) * s, 0, Math.PI * 2);
+        this.ctx.fill();
+      });
+      // Kometenkopf
+      this.ctx.fillStyle = `white`;
+      this.ctx.beginPath();
+      this.ctx.arc(cx + c.x * s, cy + c.y * s, 10 * s, 0, Math.PI * 2);
       this.ctx.fill();
     });
+  }
 
-    if (this.shieldActive) {
-      this.ctx.strokeStyle = `rgba(0, 255, 255, ${this.shieldHp / 100})`;
-      this.ctx.lineWidth = 3 * s;
-      this.ctx.beginPath();
-      this.ctx.arc(px, py, shipSize * 2, 0, Math.PI * 2);
-      this.ctx.stroke();
-    }
-
-    // ASTEROIDEN (mit Treffer-Feedback)
+  private drawAsteroids(s: number, cx: number, cy: number) {
     this.asteroids.forEach(a => {
       this.ctx.fillStyle = a.hp === 1 ? '#4a3333' : '#777';
       this.ctx.beginPath();
@@ -693,6 +843,8 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       this.ctx.closePath();
       this.ctx.fill();
+
+      // Krater-Details
       this.ctx.fillStyle = '#555';
       this.ctx.beginPath();
       this.ctx.arc(cx + (a.x + a.size * 0.2) * s, cy + (a.y - a.size * 0.2) * s, a.size * 0.3 * s, 0, Math.PI * 2);
@@ -700,8 +852,27 @@ export class GameComponent implements OnInit, OnDestroy {
     });
   }
 
+  private drawProjectiles(s: number, cx: number, cy: number) {
+    this.ctx.fillStyle = '#ffff00';
+    this.projectiles.forEach(p => {
+      this.ctx.beginPath();
+      this.ctx.arc(cx + p.x * s, cy + p.y * s, 3 * s, 0, Math.PI * 2);
+      this.ctx.fill();
+    });
+  }
 
-  private addLog(text: string, type: 'research' | 'event') {
+  private drawShield(s: number, px: number, py: number) {
+    if (!this.shieldActive) return;
+    const shipSize = 15 * s;
+    this.ctx.strokeStyle = `rgba(0, 255, 255, ${this.shieldHp / 100})`;
+    this.ctx.lineWidth = 3 * s;
+    this.ctx.beginPath();
+    this.ctx.arc(px, py, shipSize * 2, 0, Math.PI * 2);
+    this.ctx.stroke();
+  }
+
+
+  private addLog(text: string, type: 'research' | 'event' | 'system') {
     this.scienceLog.unshift({text, timestamp: Date.now(), type});
     if (this.scienceLog.length > 4) this.scienceLog.pop();
   }

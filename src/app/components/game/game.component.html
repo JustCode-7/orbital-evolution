@@ -12,17 +12,16 @@
           <div class="countdown-number">{{ resumeCountdown() }}</div>
         </div>
       }
-
       <div class="top-right-controls">
         @if (researchLevel >= 10 && !isJumping) {
 
           <button class="jump-btn" (mousedown)="triggerOrbitalJump()" (touchstart)="triggerOrbitalJump()">
-            🌌 Orbitalsprung
+            🌌 Orbitalsprung LV {{ jumpBounsLevel | number:'1.0-0' }}
             <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
           </button>
         }
         @if (isPaused) {
-          <button class="resume-btn" (click)="resumeGame()">WEITER SPIELEN</button>
+          <button class="resume-btn" (click)="resumeGame()">WEITER</button>
         } @else {
           <div class="pause-control">
             <button class="pause-btn" (click)="togglePause($event)">
@@ -61,11 +60,22 @@
 
       <div class="bottom-controls">
         <div class="action-grid">
-          <button (mousedown)="buy('shield', $event)" (touchstart)="buy('shield', $event)"
+          <button class="power-up-button" (mousedown)="buy('shield', $event)" (touchstart)="buy('shield', $event)"
                   [disabled]="ep < 100">🛡️ Shield<span>(100 EP)</span></button>
-          <button (mousedown)="buy('sats', $event)" (touchstart)="buy('sats', $event)"
-                  [disabled]="ep < 150">🛰️ Sats<span>(150 EP)</span></button>
-          <button class="marine-btn" (mousedown)="buy('marines', $event)" (touchstart)="buy('marines', $event)"
+          @if (satellitesCount >= 10) {
+            <button class="orbit-direction-change-btn-color" (mousedown)="buy('sats', $event)"
+                    (touchstart)="buy('sats', $event)">
+              ⇄<br>Orbit Umkehren
+            </button>
+          } @else {
+            <button class="power-up-button" (mousedown)="buy('sats', $event)" (touchstart)="buy('sats', $event)"
+                    [disabled]="ep < 150">
+              🛰️ Sats {{ satellitesCount }}<span>(150 EP)</span>
+            </button>
+          }
+
+          <button class="power-up-button marine-btn" (mousedown)="buy('marines', $event)"
+                  (touchstart)="buy('marines', $event)"
                   [disabled]="ep < 250 || marinesCooldownProgress < 100">
             🎖️ Marines<span>(250 EP)</span>
             @if (marinesCooldownProgress < 100) {
@@ -76,7 +86,7 @@
               </div>
             }
           </button>
-          <button (mousedown)="buy('research', $event)" (touchstart)="buy('research', $event)"
+          <button class="power-up-button" (mousedown)="buy('research', $event)" (touchstart)="buy('research', $event)"
                   [disabled]="ep < 200">🔬 Lvl {{ researchLevel }}<span>(200 EP)</span></button>
         </div>
       </div>

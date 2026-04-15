@@ -159,7 +159,21 @@ canvas {
   margin: 0 auto;
 }
 
-button {
+.orbit-direction-change-btn-color {
+  background: #9a29d3 !important;
+  border: 1px solid #1e293b;
+  color: white;
+  border-radius: 5px;
+  padding: 6px 2px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.power-up-button {
   background: #0f172a;
   border: 1px solid #1e293b;
   color: white;
@@ -194,7 +208,7 @@ button:disabled {
   background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: end;
 }
 
 .cooldown-bar {
@@ -320,6 +334,7 @@ button:disabled {
   font-size: 1.1rem !important;
   margin-top: 20px;
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+  border-radius: 5px;
 }
 
 @keyframes pulseCount {

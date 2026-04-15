@@ -1,7 +1,7 @@
 <div class="intro-wrapper">
 
   <header class="main-header">
-    <h1>ORBITAL EVOLUTION 0.4</h1>
+    <h1>ORBITAL EVOLUTION 0.5</h1>
     <p class="tagline">Mission: Solar Harvest</p>
   </header>
 
@@ -14,14 +14,8 @@
   </section>
 
   <section class="graphic-section">
-    <div class="schema-container">
-      <div class="sun"></div>
-      <div class="orbit danger-zone"><span class="orbit-label label-red">Todeszone</span></div>
-      <div class="orbit research-zone"><span class="orbit-label label-green">Forschungszone (EP)</span></div>
-      <div class="orbit points-orbit"><span class="orbit-label label-cyan">Punkte-Orbit</span></div>
-      <div class="spaceship-icon">
-        <div class="ship-body"></div>
-      </div>
+    <div class="preview-container">
+      <img src="assets/introduction-animation.gif" alt="Gameplay Preview" class="game-gif">
     </div>
   </section>
 
@@ -63,7 +57,7 @@
           </svg>
           <h3>Schilde</h3>
         </div>
-        <p>Absorbieren Asteroiden-Einschläge. Ohne Schild verlierst du Satelliten oder das gesamte Schiff.</p>
+        <p>Absorbieren Asteroiden-Einschläge. Ohne Schild verlierst du Satelliten oder das gesamte Schiff!</p>
       </div>
 
       <div class="info-card special">
@@ -74,7 +68,8 @@
           </svg>
           <h3>Satelliten</h3>
         </div>
-        <p>Erhöhen die Punkt-Gewinnrate massiv, solange sie aktiv sind. Sie fangen außerdem Asterioden ab, werden aber
+        <p>Erhöhen die EP-Gewinnrate massiv, solange sie aktiv sind (max. 10). Sie fangen außerdem Asterioden ab, werden
+          aber
           dabei zerstört.</p>
       </div>
 
@@ -96,16 +91,15 @@
           </svg>
           <h3>Forschung</h3>
         </div>
-        <p>Erhöhe deine Stufe bis 10, um den <strong>Anti-Gravitation-Antrieb</strong> für die finale Flucht (+50.000
-          Pkt), den OrbitalSprung, aus dem Sonnensystem zu aktivieren. Doch ist das schon das Ende ...?</p>
+        <p>Erhöhe deine Stufe mindestens bis auf 10, um den <strong>Anti-Gravitation-Antrieb</strong> für den
+          OrbitalSprung aus dem Sonnensystem zu aktivieren. Doch ist das schon das Ende ...?</p>
       </div>
-
     </div>
   </section>
   <footer>
     <button class="start-button" routerLink="game">MISSION STARTEN</button>
     <p class="control-hint">Das Spiel ist für die Mobilnutzung optimiert und bietet als installierte App die beste
-      Nutzungserfahrung</p>
+      Nutzungserfahrung, am besten im Querformat.</p>
     @if (pwaService.canInstall$ | async) {
       <button class="start-button" (click)="installApp()">
         App installieren ?

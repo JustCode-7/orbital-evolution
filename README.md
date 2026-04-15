@@ -1,2 +1,3 @@
 # orbital-evolution
-Kleines Gelegenheitsspiel, vollständig mit KI generiert
+
+Kleines Gelegenheitsspiel, Entwicklung von KI unterstützt.
