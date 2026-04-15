@@ -14,21 +14,20 @@
       }
       <div class="top-right-controls">
         @if (researchLevel >= 10 && !isJumping) {
-
           <button class="jump-btn" (mousedown)="triggerOrbitalJump()" (touchstart)="triggerOrbitalJump()">
             🌌 Orbitalsprung LV {{ jumpBounsLevel | number:'1.0-0' }}
             <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
           </button>
         }
-        @if (isPaused) {
-          <button class="resume-btn" (click)="resumeGame()">WEITER</button>
-        } @else {
-          <div class="pause-control">
+        <div class="pause-control">
+          @if (isPaused) {
+            <button class="resume-btn" (click)="resumeGame()">WEITER</button>
+          } @else {
             <button class="pause-btn" (click)="togglePause($event)">
               <div class="pause-icon"></div>
             </button>
-          </div>
-        }
+          }
+        </div>
       </div>
 
       <div class="top-row">
