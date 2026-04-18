@@ -200,7 +200,10 @@ canvas {
   .action-side {
     display: flex;
     flex-direction: column; // Stapelt die zwei Buttons übereinander
-    gap: 15px;
+    @media (orientation: landscape) {
+      flex-direction: row; // Stapelt die zwei Buttons nebeneinander
+    }
+    gap: 10px;
     pointer-events: auto; // Buttons fangen Klicks wieder ab
 
     &.left {
@@ -214,8 +217,8 @@ canvas {
 }
 
 .power-up-button {
-  width: 140px;
-  height: 55px;
+  width: 120px;
+  height: 50px;
   font-size: 0.9rem;
   position: relative;
   background: #0f172a;

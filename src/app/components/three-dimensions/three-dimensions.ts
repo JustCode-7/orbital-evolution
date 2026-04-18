@@ -18,17 +18,17 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
   @ViewChild('threeDimensionsCanvas', {static: true}) canvasRef!: ElementRef<HTMLCanvasElement>;
 
   @HostListener('window:resize')
+  @HostListener('window:orientationchange')
   onWindowResize() {
-    if (!this.camera || !this.renderer || !this.canvasRef) {
-      return;
-    }
+    if (!this.camera) return;
 
-    const canvas = this.canvasRef.nativeElement;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-
-    this.renderer.setSize(width, height, false);
+    // 1. Sofortiger Resize für ein flüssiges Gefühl
     this.updateCameraPosition();
+
+    // 2. Erneuter Check nach 100ms, falls sich die UI-Leisten des Handys noch bewegen
+    setTimeout(() => {
+      this.updateCameraPosition();
+    }, 100);
   }
 
   private renderer!: THREE.WebGLRenderer;
@@ -46,7 +46,7 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
     this.initThree();
     this.createRealisticSun(); // Aktualisierte Methode
     this.startAnimation();
-    setTimeout(() => this.onWindowResize(), 100);
+    setTimeout(() => this.onWindowResize(), 50);
   }
 
   ngOnDestroy(): void {
@@ -83,23 +83,26 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
   }
 
   private updateCameraPosition(): void {
-    if (!this.camera) return;
+    if (!this.camera || !this.renderer) return;
 
     const canvas = this.canvasRef.nativeElement;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+    // Wir nehmen die Fenstergröße als Fallback, falls das Canvas noch nicht resized wurde
+    const width = canvas.clientWidth || window.innerWidth;
+    const height = canvas.clientHeight || window.innerHeight;
 
     const fov = 75;
     const vFov = (fov * Math.PI) / 180;
-    const desiredUnits = 900; // Dein Referenzwert für die Zonen
+    const desiredUnits = 900;
 
+    // Renderer Größe synchron zum Canvas setzen
+    this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
 
     if (width > height) {
-      // Landscape: Fokus auf vertikale Höhe
+      // Landscape
       this.camera.position.z = desiredUnits / (2 * Math.tan(vFov / 2));
     } else {
-      // Portrait: Fokus auf horizontale Breite (hFOV berechnen)
+      // Portrait
       const hFov = 2 * Math.atan(Math.tan(vFov / 2) * this.camera.aspect);
       this.camera.position.z = desiredUnits / (2 * Math.tan(hFov / 2));
     }

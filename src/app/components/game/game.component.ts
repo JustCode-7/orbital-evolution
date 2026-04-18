@@ -262,7 +262,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private buyShield() {
-    if (this.ep >= 100) {
+    if (this.ep >= 100 && this.shieldHp < 100) {
       this.ep -= 100;
       this.shieldActive = true;
       this.shieldHp = 100;

@@ -57,7 +57,7 @@
               </button>
             } @else {
               <button class="power-up-button" (mousedown)="buy('sats', $event)" (touchstart)="buy('sats', $event)"
-                      [disabled]="ep < 150">🛰️ Sats {{ satellitesCount }}
+                      [disabled]="ep < 150">🛰️ Sats {{ satellitesCount }}<span>(150 EP)</span>
               </button>
             }
           </div>
@@ -66,7 +66,7 @@
             <button class="power-up-button marine-btn" (mousedown)="buy('marines', $event)"
                     (touchstart)="buy('marines', $event)"
                     [disabled]="ep < 250 || marinesCooldownProgress < 100">
-              🎖️ Marines
+              🎖️ Marines <span>(250 EP)</span>
               @if (marinesCooldownProgress < 100) {
                 <div class="cooldown-overlay-mini">
                   <div class="fill" [style.height.%]="marinesCooldownProgress"></div>
@@ -75,7 +75,7 @@
             </button>
 
             <button class="power-up-button" (mousedown)="buy('research', $event)" (touchstart)="buy('research', $event)"
-                    [disabled]="ep < 200">🔬 Lvl {{ researchLevel }}
+                    [disabled]="ep < 200">🔬 Lvl {{ researchLevel }} <span>(200 EP)</span>
             </button>
           </div>
         </div>
