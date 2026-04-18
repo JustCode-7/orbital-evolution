@@ -160,6 +160,9 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onDown(e: Event) {
+    if (!this.fullscreenService.isFullScreen().valueOf()) {
+      this.fullscreenService.toggleTabFullScreenModeGame()
+    }
     this.isPressing = true;
     e.preventDefault();
   }
@@ -979,6 +982,14 @@ export class GameComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
+  getShieldDashOffset(): number {
+    // Umfang des Buttons (2x Breite + 2x Höhe)
+    // Basierend auf den SCSS Werten (150px Breite, 60px Höhe)
+    const pathLength = 420;
+    const progress = this.shieldHp / 100;
+    // Offset berechnet, wie viel vom Rand "leer" bleibt
+    return pathLength * (1 - progress);
+  }
 
   protected clearHighScore() {
     localStorage.removeItem('orbital_last_score')

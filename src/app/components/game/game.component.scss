@@ -222,7 +222,7 @@ canvas {
   font-size: 0.9rem;
   position: relative;
   background: #0f172a;
-  border: 1px solid #1e293b;
+  //border: 1px solid #1e293b;
   color: white;
   border-radius: 5px;
   padding: 6px 2px;
@@ -231,6 +231,14 @@ canvas {
   display: flex;
   flex-direction: column;
   align-items: center;
+  border: 2px solid transparent; // P
+  //border: 2px solid transparent; // Platzhalter für den Rahmen
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+
+  &.shield-active-border {
+    // Ein leichter Glow-Effekt passend zur Rahmenfarbe
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+  }
 }
 
 .orbit-direction-change-btn-color {
@@ -418,5 +426,56 @@ button:disabled {
   100% {
     transform: scale(0.8);
     opacity: 0;
+  }
+}
+
+.shield-button-container {
+  position: relative;
+  transition: all 0.3s ease;
+
+  &.shield-active {
+    animation: shield-glow-pulse 2s infinite ease-in-out;
+
+    // Wenn das Schild fast leer ist, soll es schneller und rötlicher pulsieren
+    &.critical {
+      animation: shield-glow-pulse 0.5s infinite ease-in-out;
+      border-color: rgba(255, 0, 0, 0.5) !important;
+    }
+  }
+}
+
+.shield-border-svg {
+  position: absolute;
+  top: -2px; // Etwas größer als der Button für den Rahmen-Look
+  left: -2px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  pointer-events: none; // Klicks gehen durch zum Button
+  fill: none;
+
+  .shield-rect {
+    width: 100%;
+    height: 100%;
+    stroke-width: 4px;
+    // Der Dasharray muss dem Umfang entsprechen (150+150+60+60)
+    stroke-dasharray: 420;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
+    filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.5));
+  }
+}
+
+@keyframes shield-glow-pulse {
+  0% {
+    filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.4));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+    transform: scale(1.02); // Ganz leichtes Aufpumpen
+  }
+  100% {
+    filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.4));
+    transform: scale(1);
   }
 }

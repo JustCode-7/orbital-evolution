@@ -1,19 +1,18 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject} from "rxjs";
+import {Injectable, signal} from '@angular/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ToggleFullscreenService {
   private wakeLock: WakeLockSentinel | null = null;
-  isFullScreen = new BehaviorSubject(false)
+  isFullScreen = signal(false)
 
   constructor() {
     document.addEventListener("fullscreenchange", () => {
       if (document.fullscreenElement) {
-        this.isFullScreen.next(true)
+        this.isFullScreen.set(true)
       } else {
-        this.isFullScreen.next(false)
+        this.isFullScreen.set(false)
       }
     });
   }
@@ -21,7 +20,7 @@ export class ToggleFullscreenService {
   toggleTabFullScreenModeGame() {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().then(() => {
-        this.isFullScreen.next(true)
+        this.isFullScreen.set(true)
         this.initDisplayAlwaysOnMode().then(() => {
           console.log('full screen and display always on mode requested');
         })
@@ -35,7 +34,7 @@ export class ToggleFullscreenService {
   toggleTabFullScreenModeMenue() {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().then(() => {
-        this.isFullScreen.next(true)
+        this.isFullScreen.set(true)
         this.initDisplayAlwaysOnMode().then(() => {
           console.log('full screen and display always on mode requested');
         })
