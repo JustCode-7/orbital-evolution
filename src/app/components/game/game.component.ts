@@ -11,6 +11,10 @@ import {
 } from '@angular/core';
 import {DecimalPipe} from '@angular/common';
 import {ToggleFullscreenService} from '../../service/toggle-fullscreen.service';
+import {ThreeDimensions} from '../three-dimensions/three-dimensions';
+import {MatIcon} from '@angular/material/icon';
+import {MatIconButton} from '@angular/material/button';
+import {RouterLink} from '@angular/router';
 
 interface Comet {
   x: number;
@@ -59,7 +63,11 @@ interface Projectile {
   selector: 'app-game',
   templateUrl: './game.component.html',
   imports: [
-    DecimalPipe
+    DecimalPipe,
+    ThreeDimensions,
+    MatIcon,
+    MatIconButton,
+    RouterLink,
   ],
   styleUrls: ['./game.component.scss']
 })
@@ -95,12 +103,17 @@ export class GameComponent implements OnInit, OnDestroy {
   lastShotTime = 0;
   // In den Klassen-Eigenschaften (State)
   private flightDirection = 1; // 1 = Uhrzeigersinn, -1 = gegen den Uhrzeigersinn
+  private lastTimestamp: number = 0;
+  private lastDelta: number = 0;
 
   asteroids: Asteroid[] = [];
   scienceLog: LogEntry[] = [];
   stars: Star[] = [];
   comets: Comet[] = [];
   isScoreZone = false;
+  isInsideYellowZone = false;  // Die äußere Gefahrenzone (Gelb/Orange)
+  isInsideRedZone = false;     // Die mittlere Gefahrenzone (Rot)
+  isInsideCoronaZone = false;  // Direkt vor der Sonne (Extrem)
   isInsideHabitableZone = false;
   isPaused = false;
   resumeCountdown = signal(0);
@@ -195,6 +208,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.fullscreenService.initDisplayAlwaysOnMode();
     this.fullscreenService.toggleTabFullScreenModeGame();
     this.cleanup();
+    this.lastTimestamp = performance.now()
     this.gameActive = true;
     this.winState = false;
     this.score = 0;
@@ -366,6 +380,17 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private gameLoop() {
+    const now = performance.now();
+    if (this.lastTimestamp === 0) this.lastTimestamp = now;
+
+    // Zeit seit dem letzten Frame in Sekunden (z.B. 0.0166 bei 60 FPS)
+    this.lastDelta = (now - this.lastTimestamp) / 1000;
+    this.lastTimestamp = now;
+
+    // Falls das Spiel durch einen Tab-Wechsel pausiert war,
+    // begrenzen wir das Delta, damit man nicht plötzlich Milliarden Punkte kriegt
+    if (this.lastDelta > 0.1) this.lastDelta = 0.1;
+
     this.update();
     this.draw();
     this.cdr.detectChanges();
@@ -435,15 +460,25 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private updateZonesAndScoring() {
-    // 1. Check: Sind wir im Nebel?
+    // 1. Habitable Zone (Grüner Nebel)
     this.isInsideHabitableZone = (this.playerR > 300 && this.playerR < 420);
+
+    // 2. Gelbe/Orange Zone (r: 250, Breite: 100 -> Bereich 200 bis 300)
+    this.isInsideYellowZone = (this.playerR > 200 && this.playerR <= 300);
+
+    // 3. Rote Zone (r: 150, Breite: 80 -> Bereich 110 bis 190)
+    this.isInsideRedZone = (this.playerR > 110 && this.playerR <= 190);
+
+    // 4. Corona/Extreme Zone (Direkt vor der Sonne, r: 85, Breite: 40 -> Bereich 65 bis 105)
+    // 65 ist dein Todes-Radius
+    this.isInsideCoronaZone = (this.playerR >= 65 && this.playerR <= 110);
 
     if (this.isInsideHabitableZone) {
       this.isScoreZone = false;
 
-      const baseEp = 0.25;
-      const epMultiplier = 1 + (this.satellitesCount * 0.1);
-      this.ep += baseEp * epMultiplier;
+      // EP Gewinn: ca. 15 EP pro Sekunde als Basis
+      const epPerSecond = 15 * (1 + (this.satellitesCount * 0.1));
+      this.ep += epPerSecond * this.lastDelta;
 
     } else if (this.playerR <= 300) {
       this.isScoreZone = true;
@@ -451,9 +486,22 @@ export class GameComponent implements OnInit, OnDestroy {
       const resMultiplier = 1 + (this.researchLevel * 0.1);
 
       const distanceFactor = Math.pow(1000 / Math.max(1, this.playerR), 2);
-      const pointsThisTick = (distanceFactor * 0.25) * resMultiplier;
 
-      this.score += pointsThisTick;
+      // NEU: Aufsteigender Zonen-Bonus
+      let zoneMultiplier = 1.0; // Standard (Gelbe Zone oder Gaps)
+
+      if (this.isInsideCoronaZone) {
+        zoneMultiplier = 1.5; // +50% in der Corona
+      } else if (this.isInsideRedZone) {
+        zoneMultiplier = 1.25; // +25% in der Roten Zone
+      } else if (this.isInsideYellowZone) {
+        zoneMultiplier = 1.1; // +10% in der Gelben Zone
+      }
+
+      // KORREKTUR: Multipliziere mit der vergangenen Zeit (this.lastDelta)
+      // So skalieren die Punkte mit der echten Zeit, nicht mit der Frame-Anzahl.
+      const pointsPerSecond = (distanceFactor * 0.25) * resMultiplier * zoneMultiplier;
+      this.score += pointsPerSecond * this.lastDelta;
 
     } else {
       this.isScoreZone = false;
@@ -672,7 +720,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     this.drawStars(s);
     this.drawEnvironmentZones(s, cx, cy);
-    this.drawSun(s, cx, cy);
+    // this.drawSun(s, cx, cy);
     this.drawComets(s, cx, cy);
 
     // Spieler-System berechnen
@@ -726,10 +774,22 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private drawEnvironmentZones(s: number, cx: number, cy: number) {
-    // 1. Statische Gefahr-Zonen (Rot/Orange)
     const zones = [
-      {r: 150, w: 80, c: 'rgba(255,0,0,0.16)'},
-      {r: 250, w: 100, c: 'rgba(255,165,0,0.16)'}
+      {
+        name: 'Yellow',
+        r: 250, w: (this.isInsideYellowZone ? 110 : 100),
+        c: this.isInsideYellowZone ? 'rgba(100, 165, 0, 0.25)' : 'rgba(100, 165, 0, 0.10)'
+      },
+      {
+        name: 'Red',
+        r: 150, w: (this.isInsideRedZone ? 90 : 80),
+        c: this.isInsideRedZone ? 'rgba(255, 0, 0, 0.3)' : 'rgba(255, 0, 0, 0.16)'
+      },
+      {
+        name: 'Corona',
+        r: 85, w: (this.isInsideCoronaZone ? 50 : 40),
+        c: this.isInsideCoronaZone ? '#fb9331' : 'rgba(255, 200, 0, 0.2)'
+      }
     ];
     zones.forEach(z => {
       this.ctx.beginPath();
@@ -938,4 +998,10 @@ export class GameComponent implements OnInit, OnDestroy {
       }
     }, 1000);
   }
+
+
+  protected clearHighScore() {
+    localStorage.removeItem('orbital_last_score')
+  }
+
 }

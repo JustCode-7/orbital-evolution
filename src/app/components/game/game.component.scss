@@ -9,6 +9,44 @@
   color: white;
 }
 
+// Der 3D-Sonnen-Layer liegt GANZ HINTEN
+.sun-3d-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; // Niedriger Z-Index
+}
+
+// Dein 2D-Canvas liegt DARÜBER
+#gameCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10; // Hoher Z-Index
+  pointer-events: none; // Klicks gehen "durch" auf den Container
+  background: transparent; // WICHTIG: Kein Hintergrund!
+}
+
+//UI Overlays liegen ganz oben
+.ui-overlay {
+  position: absolute; // Sicherstellen, dass es absolut positioniert ist
+  inset: 0; // Den ganzen Bildschirm füllen
+  z-index: 20;
+  pointer-events: none; // WICHTIG: Der Overlay-Container selbst ignoriert Klicks...
+
+  // ...ABER alle interaktiven Elemente darin fangen Klicks wieder ab:
+  .top-right-controls,
+  .bottom-controls,
+  .pause-control,
+  .menu-modal {
+    pointer-events: auto;
+  }
+}
+
 canvas {
   display: block;
   width: 100%;
@@ -26,7 +64,6 @@ canvas {
 
 .top-right-controls {
   display: table-row;
-  gap: 10px;
   position: absolute;
   top: 15px;
   right: 15px;
@@ -42,6 +79,7 @@ canvas {
   border-radius: 8px;
   box-shadow: 0 0 15px #a855f7;
   animation: pulse-glow 1.5s infinite;
+  opacity: 80%;
 }
 
 .jump-btn span {
@@ -147,18 +185,48 @@ canvas {
 }
 
 .bottom-controls {
-  margin-top: auto;
-  padding-bottom: 8px;
-  pointer-events: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 0 30px 30px 30px; // Abstand zu den Ecken
+  display: flex;
+  justify-content: space-between; // Schiebt die Gruppen nach links und rechts
+  align-items: flex-end;
+  z-index: 30;
+  pointer-events: none; // Klicks gehen in der Mitte durch
+
+  .action-side {
+    display: flex;
+    flex-direction: column; // Stapelt die zwei Buttons übereinander
+    gap: 15px;
+    pointer-events: auto; // Buttons fangen Klicks wieder ab
+
+    &.left {
+      align-items: flex-start;
+    }
+
+    &.right {
+      align-items: flex-end;
+    }
+  }
 }
 
-.action-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  pointer-events: auto;
-  max-width: 500px;
-  margin: 0 auto;
+.power-up-button {
+  width: 140px;
+  height: 55px;
+  font-size: 0.9rem;
+  position: relative;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  color: white;
+  border-radius: 5px;
+  padding: 6px 2px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .orbit-direction-change-btn-color {
@@ -173,20 +241,7 @@ canvas {
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.power-up-button {
-  background: #0f172a;
-  border: 1px solid #1e293b;
-  color: white;
-  border-radius: 5px;
-  padding: 6px 2px;
-  font-size: 0.7rem;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  opacity: 70%;
 }
 
 button span {
@@ -330,7 +385,6 @@ button:disabled {
 }
 
 .resume-btn {
-  display: flex;
   background: #22c55e !important;
   color: white;
   padding: 10px 20px;

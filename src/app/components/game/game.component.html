@@ -1,110 +1,125 @@
-<div class="game-container">
-  <canvas #gameCanvas
-          (mousedown)="onDown($event)" (touchstart)="onDown($event)"
-          (mouseup)="onUp()" (touchend)="onUp()" (mouseleave)="onUp()">
+<div class="game-container" (mousedown)="onDown($event)" (touchstart)="onDown($event)"
+     (mouseup)="onUp()" (touchend)="onUp()" (mouseleave)="onUp()">
+
+  <div class="sun-3d-layer">
+    <app-3d></app-3d>
+  </div>
+
+  <canvas #gameCanvas id="gameCanvas"
+  >
   </canvas>
+  <div class="ui-overlay top-left p-3 text-white">
 
-  @if (gameActive && !winState) {
-    <div class="hud">
 
-      @if (resumeCountdown() > 0) {
-        <div class="countdown-overlay">
-          <div class="countdown-number">{{ resumeCountdown() }}</div>
-        </div>
-      }
-      <div class="top-right-controls">
-        @if (researchLevel >= 10 && !isJumping) {
-          <button class="jump-btn" (mousedown)="triggerOrbitalJump()" (touchstart)="triggerOrbitalJump()">
-            🌌 Orbitalsprung LV {{ jumpBounsLevel | number:'1.0-0' }}
-            <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
-          </button>
-        }
-        <div class="pause-control">
-          @if (isPaused) {
-            <button class="resume-btn" (click)="resumeGame()">WEITER</button>
-          } @else {
-            <button class="pause-btn" (click)="togglePause($event)">
-              <div class="pause-icon"></div>
-            </button>
-          }
-        </div>
-      </div>
+    @if (gameActive && !winState) {
+      <div class="hud">
 
-      <div class="top-row">
-        <div class="main-stats">
-          <div class="score" [class.score-active]="isScoreZone">SCORE: {{ scoreFromated }}</div>
-          <div class="ep" [class.ep-active]="isInsideHabitableZone">
-            EP: {{ ep | number:'1.0-0' }}
-          </div>
-        </div>
-      </div>
-
-      <div class="left-panels">
-        @if (shieldActive) {
-          <div class="bar-row">
-            <label>SHIELD</label>
-            <div class="progress">
-              <div class="fill cyan" [style.width.%]="shieldHp"></div>
-            </div>
+        @if (resumeCountdown() > 0) {
+          <div class="countdown-overlay">
+            <div class="countdown-number">{{ resumeCountdown() }}</div>
           </div>
         }
-        <div class="log-overlay">
-          @for (entry of scienceLog; track $index) {
-            <div [class]="entry.type" class="log-item">
-              {{ entry.type === 'research' ? '🔬' : '⚠️' }} {{ entry.text }}
+        <div class="top-right-controls">
+          <div class="pause-control d-flex flex-column gap-2 align-items-end">
+            @if (researchLevel >= 10 && !isJumping) {
+              <button class="jump-btn" (mousedown)="triggerOrbitalJump()" (touchstart)="triggerOrbitalJump()">
+                🌌 Orbitalsprung LV {{ jumpBounsLevel | number:'1.0-0' }}
+                <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
+              </button>
+            }
+            @if (isPaused) {
+              <button class="resume-btn" (click)="resumeGame()">WEITER</button>
+            } @else {
+              <button class="pause-btn float-end" (click)="togglePause($event)">
+                <div class="pause-icon"></div>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="top-row">
+          <div class="main-stats">
+            <div class="score" [class.score-active]="isScoreZone">SCORE: {{ scoreFromated }}</div>
+            <div class="ep" [class.ep-active]="isInsideHabitableZone">
+              EP: {{ ep | number:'1.0-0' }}
+            </div>
+          </div>
+        </div>
+
+        <div class="left-panels">
+          @if (shieldActive) {
+            <div class="bar-row">
+              <label>SHIELD</label>
+              <div class="progress">
+                <div class="fill cyan" [style.width.%]="shieldHp"></div>
+              </div>
             </div>
           }
-        </div>
-      </div>
-
-      <div class="bottom-controls">
-        <div class="action-grid">
-          <button class="power-up-button" (mousedown)="buy('shield', $event)" (touchstart)="buy('shield', $event)"
-                  [disabled]="ep < 100">🛡️ Shield<span>(100 EP)</span></button>
-          @if (satellitesCount >= 10) {
-            <button class="orbit-direction-change-btn-color" (mousedown)="buy('sats', $event)"
-                    (touchstart)="buy('sats', $event)">
-              ⇄<br>Orbit Umkehren
-            </button>
-          } @else {
-            <button class="power-up-button" (mousedown)="buy('sats', $event)" (touchstart)="buy('sats', $event)"
-                    [disabled]="ep < 150">
-              🛰️ Sats {{ satellitesCount }}<span>(150 EP)</span>
-            </button>
-          }
-
-          <button class="power-up-button marine-btn" (mousedown)="buy('marines', $event)"
-                  (touchstart)="buy('marines', $event)"
-                  [disabled]="ep < 250 || marinesCooldownProgress < 100">
-            🎖️ Marines<span>(250 EP)</span>
-            @if (marinesCooldownProgress < 100) {
-              <div class="cooldown-overlay">
-                <div class="cooldown-bar">
-                  <div class="fill" [style.height.%]="marinesCooldownProgress"></div>
-                </div>
+          <div class="log-overlay">
+            @for (entry of scienceLog; track $index) {
+              <div [class]="entry.type" class="log-item">
+                {{ entry.type === 'research' ? '🔬' : '⚠️' }} {{ entry.text }}
               </div>
             }
-          </button>
-          <button class="power-up-button" (mousedown)="buy('research', $event)" (touchstart)="buy('research', $event)"
-                  [disabled]="ep < 200">🔬 Lvl {{ researchLevel }}<span>(200 EP)</span></button>
+          </div>
         </div>
-      </div>
-    </div>
-  }
 
-  @if (!gameActive || winState) {
-    <div class="menu-modal">
-      <div class="modal-content">
-        <h1>{{ winState ? 'MISSION ERFOLGREICH' : 'ORBITAL EVOLUTION' }}</h1>
-        @if (winState) {
-          <p class="hyper-jump-text">Du bist sicher in den Hyperraum gesprungen!</p>
-        }
-        <div class="scores">
-          <p class="score-display">Letzter Score: {{ lastScore }}</p>
-          <p class="score-display high">Bester Score: {{ highScore }}</p>
+        <div class="bottom-controls">
+          <div class="action-side left">
+            <button class="power-up-button" (mousedown)="buy('shield', $event)" (touchstart)="buy('shield', $event)"
+                    [disabled]="ep < 100">🛡️ Shield<span>(100 EP)</span></button>
+
+            @if (satellitesCount >= 10) {
+              <button class="orbit-direction-change-btn-color jump-btn" (mousedown)="buy('sats', $event)"
+                      (touchstart)="buy('sats', $event)">⇄<br>Orbit
+              </button>
+            } @else {
+              <button class="power-up-button" (mousedown)="buy('sats', $event)" (touchstart)="buy('sats', $event)"
+                      [disabled]="ep < 150">🛰️ Sats {{ satellitesCount }}
+              </button>
+            }
+          </div>
+
+          <div class="action-side right">
+            <button class="power-up-button marine-btn" (mousedown)="buy('marines', $event)"
+                    (touchstart)="buy('marines', $event)"
+                    [disabled]="ep < 250 || marinesCooldownProgress < 100">
+              🎖️ Marines
+              @if (marinesCooldownProgress < 100) {
+                <div class="cooldown-overlay-mini">
+                  <div class="fill" [style.height.%]="marinesCooldownProgress"></div>
+                </div>
+              }
+            </button>
+
+            <button class="power-up-button" (mousedown)="buy('research', $event)" (touchstart)="buy('research', $event)"
+                    [disabled]="ep < 200">🔬 Lvl {{ researchLevel }}
+            </button>
+          </div>
         </div>
-        <button class="start-btn" (click)="startGame()">{{ winState ? 'NEUER START' : 'START' }}</button>
       </div>
-    </div>
-  }
+    }
+
+    @if (!gameActive || winState) {
+      <div class="menu-modal">
+        <div class="modal-content">
+          <h1>{{ winState ? 'MISSION ERFOLGREICH' : 'ORBITAL EVOLUTION' }}</h1>
+          @if (winState) {
+            <p class="hyper-jump-text">Du bist sicher in den Hyperraum gesprungen!</p>
+          }
+          <div class="scores">
+            <p class="score-display">Letzter Score: {{ lastScore }}</p>
+            <p class="score-display high">Bester Score: {{ highScore }}</p>
+          </div>
+          <div class="d-flex justify-content-evenly">
+            <button class="start-btn fw-bold" (click)="startGame()">{{ winState ? 'NEUER START' : 'START' }}</button>
+            <button class="start-btn fw-bold" routerLink="">INTRO</button>
+            <button class="mt-2" mat-icon-button (click)="clearHighScore()">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
 </div>
