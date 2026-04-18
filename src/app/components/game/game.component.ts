@@ -463,13 +463,13 @@ export class GameComponent implements OnInit, OnDestroy {
     // 1. Habitable Zone (Grüner Nebel)
     this.isInsideHabitableZone = (this.playerR > 300 && this.playerR < 420);
 
-    // 2. Gelbe/Orange Zone (r: 250, Breite: 100 -> Bereich 200 bis 300)
+    // 1. Gelbe/Orange Zone (r: 250, Breite: 100 -> Bereich 200 bis 300)
     this.isInsideYellowZone = (this.playerR > 200 && this.playerR <= 300);
 
-    // 3. Rote Zone (r: 150, Breite: 80 -> Bereich 110 bis 190)
+    // 1. Rote Zone (r: 150, Breite: 80 -> Bereich 110 bis 190)
     this.isInsideRedZone = (this.playerR > 110 && this.playerR <= 190);
 
-    // 4. Corona/Extreme Zone (Direkt vor der Sonne, r: 85, Breite: 40 -> Bereich 65 bis 105)
+    // 1. Corona/Extreme Zone (Direkt vor der Sonne, r: 85, Breite: 40 -> Bereich 65 bis 105)
     // 65 ist dein Todes-Radius
     this.isInsideCoronaZone = (this.playerR >= 65 && this.playerR <= 110);
 
@@ -483,24 +483,28 @@ export class GameComponent implements OnInit, OnDestroy {
     } else if (this.playerR <= 300) {
       this.isScoreZone = true;
 
-      const resMultiplier = 1 + (this.researchLevel * 0.1);
+      // 2. Der Potenzielle Score (Basis ist die Nähe)
+      // Die '10' ist ein Skalierungswert, damit die Zahlen im HUD gut aussehen
+      const basisSkalierung = 10
+      const potentialPoints = Math.pow(1000 / Math.max(1, this.playerR), 2) * basisSkalierung;
 
-      const distanceFactor = Math.pow(1000 / Math.max(1, this.playerR), 2);
-
-      // NEU: Aufsteigender Zonen-Bonus
-      let zoneMultiplier = 1.0; // Standard (Gelbe Zone oder Gaps)
+      // 3. Effizienz-Faktor basierend auf der Zone
+      let efficiency = 0.4; // Standardwert außerhalb der Zonen (Fallback)
 
       if (this.isInsideCoronaZone) {
-        zoneMultiplier = 1.5; // +50% in der Corona
+        efficiency = 1.0; // 100% der Punkte ganz nah dran
       } else if (this.isInsideRedZone) {
-        zoneMultiplier = 1.25; // +25% in der Roten Zone
+        efficiency = 0.8; // 80% der Punkte in der mittleren Zone
       } else if (this.isInsideYellowZone) {
-        zoneMultiplier = 1.1; // +10% in der Gelben Zone
+        efficiency = 0.6; // 60% der Punkte in der äußeren Zone
       }
 
-      // KORREKTUR: Multipliziere mit der vergangenen Zeit (this.lastDelta)
-      // So skalieren die Punkte mit der echten Zeit, nicht mit der Frame-Anzahl.
-      const pointsPerSecond = (distanceFactor * 0.25) * resMultiplier * zoneMultiplier;
+      // 4. Forschung bleibt ein zusätzlicher Bonus obendrauf
+      const resMultiplier = 1 + (this.researchLevel * 0.1);
+
+      // Finale Berechnung
+      const pointsPerSecond = potentialPoints * efficiency * resMultiplier;
+
       this.score += pointsPerSecond * this.lastDelta;
 
     } else {
