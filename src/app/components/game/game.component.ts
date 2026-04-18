@@ -718,7 +718,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // Hintergrund & Basis
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    this.drawStars(s);
+    this.drawStars();
     this.drawEnvironmentZones(s, cx, cy);
     // this.drawSun(s, cx, cy);
     this.drawComets(s, cx, cy);
@@ -740,7 +740,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
 // --- PRIVATE HELPER METHODS ---
 
-  private drawStars(s: number) {
+  private drawStars() {
     this.stars.forEach(st => {
       this.ctx.fillStyle = `rgba(255,255,255,${st.opacity})`;
       this.ctx.beginPath();
@@ -749,41 +749,17 @@ export class GameComponent implements OnInit, OnDestroy {
     });
   }
 
-  private drawSun(s: number, cx: number, cy: number) {
-    const sunR = 55 * s;
-    const sunGradient = this.ctx.createRadialGradient(cx, cy, sunR * 0.2, cx, cy, sunR);
-    sunGradient.addColorStop(0, '#fffbe6');
-    sunGradient.addColorStop(0.2, '#ffcc00');
-    sunGradient.addColorStop(0.5, '#ff6600');
-    sunGradient.addColorStop(1, '#ff3300');
-
-    this.ctx.save();
-    this.ctx.shadowBlur = 40 * s;
-    this.ctx.shadowColor = '#ff6600';
-    this.ctx.fillStyle = sunGradient;
-    this.ctx.beginPath();
-    this.ctx.arc(cx, cy, sunR, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    // Äußerer Sonnen-Corona-Ring
-    this.ctx.shadowBlur = 80 * s;
-    this.ctx.strokeStyle = 'rgba(255, 102, 0, 0.3)';
-    this.ctx.lineWidth = 10 * s;
-    this.ctx.stroke();
-    this.ctx.restore();
-  }
-
   private drawEnvironmentZones(s: number, cx: number, cy: number) {
     const zones = [
       {
         name: 'Yellow',
         r: 250, w: (this.isInsideYellowZone ? 110 : 100),
-        c: this.isInsideYellowZone ? 'rgba(100, 165, 0, 0.25)' : 'rgba(100, 165, 0, 0.10)'
+        c: this.isInsideYellowZone ? 'rgb(255, 230, 100, 0.4)' : 'rgba(255, 255, 150, 0.15)'
       },
       {
         name: 'Red',
         r: 150, w: (this.isInsideRedZone ? 90 : 80),
-        c: this.isInsideRedZone ? 'rgba(255, 0, 0, 0.3)' : 'rgba(255, 0, 0, 0.16)'
+        c: this.isInsideRedZone ? 'rgb(255, 180, 0, 0.5)' : 'rgba(255, 200, 50, 0.25)'
       },
       {
         name: 'Corona',

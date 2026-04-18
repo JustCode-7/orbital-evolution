@@ -99,27 +99,27 @@
         </div>
       </div>
     }
-
-    @if (!gameActive || winState) {
-      <div class="menu-modal">
-        <div class="modal-content">
-          <h1>{{ winState ? 'MISSION ERFOLGREICH' : 'ORBITAL EVOLUTION' }}</h1>
-          @if (winState) {
-            <p class="hyper-jump-text">Du bist sicher in den Hyperraum gesprungen!</p>
-          }
-          <div class="scores">
-            <p class="score-display">Letzter Score: {{ lastScore }}</p>
-            <p class="score-display high">Bester Score: {{ highScore }}</p>
-          </div>
-          <div class="d-flex justify-content-evenly">
-            <button class="start-btn fw-bold" (click)="startGame()">{{ winState ? 'NEUER START' : 'START' }}</button>
-            <button class="start-btn fw-bold" routerLink="">INTRO</button>
-            <button class="mt-2" mat-icon-button (click)="clearHighScore()">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-        </div>
-      </div>
-    }
   </div>
 </div>
+
+@if (!gameActive || winState) {
+  <div class="menu-modal">
+    <div class="modal-content">
+      <h1>{{ winState ? 'MISSION ERFOLGREICH' : 'ORBITAL EVOLUTION' }}</h1>
+      @if (winState) {
+        <p class="hyper-jump-text">Du bist sicher in den Hyperraum gesprungen!</p>
+      }
+      <div class="scores">
+        <p class="score-display">Letzter Score: {{ lastScore }}</p>
+        <p class="score-display high">Bester Score: {{ highScore }}</p>
+      </div>
+      <div class="d-flex justify-content-evenly">
+        <button class="start-btn fw-bold" (click)="startGame()">{{ winState ? 'NEUER START' : 'START' }}</button>
+        <button class="start-btn fw-bold" routerLink="">INTRO</button>
+        <button class="mt-2" mat-icon-button (click)="clearHighScore()">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+}

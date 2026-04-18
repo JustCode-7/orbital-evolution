@@ -283,13 +283,15 @@ button:disabled {
 }
 
 .menu-modal {
+  color: white;
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 500;
+  pointer-events: auto !important;
 }
 
 .modal-content {
@@ -298,6 +300,7 @@ button:disabled {
   border: 1px solid #00fbff;
   background: #020617;
   border-radius: 12px;
+  pointer-events: auto !important;
 }
 
 .scores {
