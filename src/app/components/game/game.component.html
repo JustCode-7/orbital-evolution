@@ -19,24 +19,6 @@
             <div class="countdown-number">{{ resumeCountdown() }}</div>
           </div>
         }
-        <div class="top-right-controls">
-          <div class="pause-control d-flex flex-column gap-2 align-items-end">
-            @if (researchLevel >= 10 && !isJumping) {
-              <button class="jump-btn" (mousedown)="triggerOrbitalJump()" (touchstart)="triggerOrbitalJump()">
-                🌌 Orbitalsprung LV {{ jumpBounsLevel | number:'1.0-0' }}
-                <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
-              </button>
-            }
-            @if (isPaused) {
-              <button class="resume-btn" (click)="resumeGame()">WEITER</button>
-            } @else {
-              <button class="pause-btn float-end" (click)="togglePause($event)">
-                <div class="pause-icon"></div>
-              </button>
-            }
-          </div>
-        </div>
-
         <div class="top-row">
           <div class="main-stats">
             <div class="score" [class.score-active]="isScoreZone">SCORE: {{ scoreFromated }}</div>
@@ -101,6 +83,25 @@
     }
   </div>
 </div>
+
+<div class="top-right-controls">
+  <div class="pause-control d-flex flex-column gap-2 align-items-end">
+    @if (researchLevel >= 10 && !isJumping) {
+      <button class="jump-btn" (mousedown)="triggerOrbitalJump()" (touchstart)="triggerOrbitalJump()">
+        🌌 Orbitalsprung LV {{ jumpBounsLevel | number:'1.0-0' }}
+        <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
+      </button>
+    }
+    @if (isPaused) {
+      <button class="resume-btn" (click)="resumeGame()">WEITER</button>
+    } @else {
+      <button class="pause-btn float-end" (click)="togglePause($event)">
+        <div class="pause-icon"></div>
+      </button>
+    }
+  </div>
+</div>
+
 
 @if (!gameActive || winState) {
   <div class="menu-modal">

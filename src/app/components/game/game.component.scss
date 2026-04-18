@@ -67,7 +67,8 @@ canvas {
   position: absolute;
   top: 15px;
   right: 15px;
-  pointer-events: auto;
+  pointer-events: auto !important;
+  z-index: 500;
 }
 
 .jump-btn {
