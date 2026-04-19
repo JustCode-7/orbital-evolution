@@ -207,7 +207,11 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
-  startGame() {
+  startGame($event: Event) {
+    if ($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+    }
     this.fullscreenService.initDisplayAlwaysOnMode();
     this.fullscreenService.toggleTabFullScreenModeGame();
     this.cleanup();

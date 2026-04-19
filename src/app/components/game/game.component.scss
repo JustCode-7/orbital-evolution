@@ -39,10 +39,8 @@
   pointer-events: none; // WICHTIG: Der Overlay-Container selbst ignoriert Klicks...
 
   // ...ABER alle interaktiven Elemente darin fangen Klicks wieder ab:
-  .top-right-controls,
-  .bottom-controls,
-  .pause-control,
-  .menu-modal {
+  .hud,
+  .bottom-controls {
     pointer-events: auto;
   }
 }
@@ -67,8 +65,13 @@ canvas {
   position: absolute;
   top: 15px;
   right: 15px;
-  pointer-events: auto !important;
-  z-index: 500;
+  z-index: 30; // Etwas höher als das HUD
+  pointer-events: none; // Container selbst lässt durch
+
+  .pause-control {
+    pointer-events: auto !important; // Die Buttons selbst fangen Klicks ab
+    padding: 1rem;
+  }
 }
 
 .jump-btn {
@@ -81,6 +84,7 @@ canvas {
   box-shadow: 0 0 15px #a855f7;
   animation: pulse-glow 1.5s infinite;
   opacity: 80%;
+  pointer-events: auto !important;
 }
 
 .jump-btn span {
@@ -302,7 +306,8 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 500;
+  /* Das ist der entscheidende Teil für iOS */
+  z-index: 9999 !important;
   pointer-events: auto !important;
 }
 
@@ -339,7 +344,11 @@ button:disabled {
   font-size: 1rem;
   border-radius: 5px;
   margin-top: 15px;
-  cursor: pointer;
+  /* iOS FIXES */
+  cursor: pointer !important;
+  touch-action: manipulation !important; // Verhindert Zoom-Verzögerung
+  -webkit-tap-highlight-color: transparent;
+  pointer-events: auto !important;
 }
 
 .pause-control {
@@ -361,6 +370,7 @@ button:disabled {
   cursor: pointer;
   transition: all 0.2s ease;
   padding: 0 !important;
+  pointer-events: auto !important;
 
   &:hover {
     background: rgba(255, 255, 255, 0.2) !important;
@@ -406,6 +416,7 @@ button:disabled {
   font-size: 1.1rem !important;
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
   border-radius: 5px;
+  pointer-events: auto !important;
 }
 
 .hyper-jump-text {

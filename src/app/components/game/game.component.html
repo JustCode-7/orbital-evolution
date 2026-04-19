@@ -143,8 +143,8 @@
       <div class="d-flex justify-content-evenly">
 
         <button class="start-btn fw-bold"
-                (mousedown)="startGame()"
-                (touchstart)="startGame()">
+                (mousedown)="startGame($event)"
+                (touchstart)="startGame($event)">
           {{ winState ? 'NEUER START' : 'START' }}
         </button>
 
