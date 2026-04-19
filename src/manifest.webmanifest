@@ -6,24 +6,24 @@
   "background_color": "#05080c",
   "theme_color": "#05080c",
   "icons": [
-      {
-        "src": "assets/app-icon/icons/72.png",
-        "sizes": "72x72",
-        "type": "image/png",
-        "purpose": "maskable any"
-      },
-      {
-        "src": "assets/app-icon/icons/92.png",
-        "sizes": "96x96",
-        "type": "image/png",
-        "purpose": "maskable any"
-      },
-      {
-        "src": "assets/app-icon/icons/128.png",
-        "sizes": "128x128",
-        "type": "image/png",
-        "purpose": "maskable any"
-      },
+    {
+      "src": "assets/app-icon/icons/72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/app-icon/icons/92.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/app-icon/icons/128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
     {
       "src": "assets/app-icon/icons/192.png",
       "sizes": "192x192",
@@ -35,12 +35,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "assets/app-icon/icons/512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ]
 }
