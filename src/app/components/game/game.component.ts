@@ -374,11 +374,13 @@ export class GameComponent implements OnInit, OnDestroy {
       const r = size * (0.8 + Math.random() * 0.4);
       points.push({x: Math.cos(a) * r, y: Math.sin(a) * r});
     }
+    const colors = ['#8B4513', 'rgb(97 55 7)', '#4e3a36', '#8B4513'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
 
     this.asteroids.push({
       x: Math.cos(angle) * 900, y: Math.sin(angle) * 900,
       vx, vy, ovx: vx, ovy: vy,
-      size, color: '#888', points, hp
+      size, color: color, points, hp
     });
   }
 
@@ -917,20 +919,43 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private drawAsteroids(s: number, cx: number, cy: number) {
     this.asteroids.forEach(a => {
-      this.ctx.fillStyle = a.hp === 1 ? '#4a3333' : '#777';
+      const x = cx + a.x * s;
+      const y = cy + a.y * s;
+      const radius = a.size * s;
+
+      // 1. Gradient erstellen:
+      // Der Mittelpunkt des Lichts (0,0) wird leicht versetzt,
+      // um einen 3D-Effekt zu erzeugen (Lichteinfall von oben links).
+      const gradient = this.ctx.createRadialGradient(
+        x - radius * 0.3, y - radius * 0.3, radius * 0.1, // Lichtquelle
+        x, y, radius                                     // Äußerer Rand
+      );
+
+      // 2. Farben definieren basierend auf der Asteroiden-Farbe
+      // Wir nehmen die Grundfarbe und mischen hell/dunkel dazu
+      gradient.addColorStop(0.1, 'rgb(60 60 59)');      // Glanzlicht
+      gradient.addColorStop(0.5, a.color);   // Die eigentliche Farbe
+      gradient.addColorStop(1, 'rgb(87 45 1)');      // Schattenseite
+
+      this.ctx.fillStyle = gradient;
+
+      // 3. Das Polygon zeichnen
       this.ctx.beginPath();
-      this.ctx.moveTo(cx + (a.x + a.points[0].x) * s, cy + (a.y + a.points[0].y) * s);
-      for (let i = 1; i < a.points.length; i++) {
-        this.ctx.lineTo(cx + (a.x + a.points[i].x) * s, cy + (a.y + a.points[i].y) * s);
+      if (a.points && a.points.length > 0) {
+        this.ctx.moveTo(x + a.points[0].x * s, y + a.points[0].y * s);
+        for (let i = 1; i < a.points.length; i++) {
+          this.ctx.lineTo(x + a.points[i].x * s, y + a.points[i].y * s);
+        }
       }
       this.ctx.closePath();
       this.ctx.fill();
 
-      // Krater-Details
-      this.ctx.fillStyle = '#555';
-      this.ctx.beginPath();
-      this.ctx.arc(cx + (a.x + a.size * 0.2) * s, cy + (a.y - a.size * 0.2) * s, a.size * 0.3 * s, 0, Math.PI * 2);
-      this.ctx.fill();
+      // Optional: Ein kleiner "Glow" oder Rand, wenn sie fast kaputt sind (HP < 2)
+      if (a.hp < 2) {
+        this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+      }
     });
   }
 
