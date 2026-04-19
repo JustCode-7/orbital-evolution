@@ -992,7 +992,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   protected clearHighScore() {
-    localStorage.removeItem('orbital_last_score')
+    localStorage.removeItem('orbital_hs')
   }
 
 }

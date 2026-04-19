@@ -51,17 +51,17 @@
           <div class="action-side left">
             <button class="power-up-button shield-button-container"
                     [class.shield-active]="shieldActive"
-                    [class.critical]="shieldActive && shieldHp < 25"
+                    [class.critical]="shieldActive && shieldHp < 50"
                     (mousedown)="buy('shield', $event)"
                     (touchstart)="buy('shield', $event)"
-                    [disabled]="ep < 100">
+                    [disabled]="ep < 100 || shieldHp === 100">
 
               @if (shieldActive) {
                 <svg class="shield-border-svg rounded-2">
                   <rect x="0" y="0" width="100%" height="100%"
                         class="shield-rect"
                         [style.stroke-dashoffset]="getShieldDashOffset()"
-                        [style.stroke]="shieldHp < 25 ? 'red' : 'rgba(0, 255, 255, ' + (shieldHp / 100) + ')'"/>
+                        [style.stroke]="'rgba(0, 255, 255, ' + (shieldHp / 100) + ')'"/>
                 </svg>
               }
 
