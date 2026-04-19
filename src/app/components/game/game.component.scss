@@ -477,9 +477,3 @@ button:disabled {
     transform: scale(1);
   }
 }
-
-button {
-  cursor: pointer !important;
-  touch-action: manipulation;
-  pointer-events: auto !important;
-}

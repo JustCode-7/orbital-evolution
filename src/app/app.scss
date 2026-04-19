@@ -2,3 +2,11 @@
   display: block;
   width: 100%;
 }
+
+// sichert clicks auf ios geräten ab
+button, .interactive {
+  cursor: pointer !important;
+  touch-action: manipulation;
+  pointer-events: auto !important;
+  -webkit-tap-highlight-color: transparent; /* Verhindert den blauen Kasten beim Tippen auf iOS */
+}
