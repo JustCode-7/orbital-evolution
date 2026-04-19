@@ -50,8 +50,8 @@
         <div class="bottom-controls">
           <div class="action-side left">
             <button class="power-up-button shield-button-container"
-                    [class.shield-active]="shieldActive"
-                    [class.critical]="shieldActive && shieldHp < 50"
+                    [class.shield-active]="shieldHp > 0"
+                    [class.critical]="shieldHp < 35"
                     (mousedown)="buy('shield', $event)"
                     (touchstart)="buy('shield', $event)"
                     [disabled]="ep < 100 || shieldHp === 100">
@@ -127,8 +127,8 @@
         <p class="hyper-jump-text">Du bist sicher in den Hyperraum gesprungen!</p>
       }
       <div class="scores">
-        <p class="score-display">Letzter Score: {{ lastScore }}</p>
-        <p class="score-display high">Bester Score: {{ highScore }}</p>
+        <p class="score-display">Letzter Score: {{ lastScore | number:'1.0-0' }}</p>
+        <p class="score-display high">Bester Score: {{ highScore | number:'1.0-0' }}</p>
       </div>
       <div class="d-flex justify-content-evenly">
         <button class="start-btn fw-bold" (click)="startGame()">{{ winState ? 'NEUER START' : 'START' }}</button>

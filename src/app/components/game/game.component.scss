@@ -72,12 +72,14 @@ canvas {
 }
 
 .jump-btn {
+  background: #3b0764;
   border: 1px solid #d8b4fe;
   color: #e9d5ff;
   padding: 10px 20px;
   font-size: 0.95rem;
   border-radius: 8px;
   box-shadow: 0 0 15px #a855f7;
+  animation: pulse-glow 1.5s infinite;
   opacity: 80%;
 }
 
@@ -431,12 +433,12 @@ button:disabled {
 
   &.shield-active {
     animation: shield-glow-pulse 2s infinite ease-in-out;
+  }
 
-    // Wenn das Schild fast leer ist, soll es schneller und rötlicher pulsieren
-    &.critical {
-      animation: shield-glow-pulse 0.5s infinite ease-in-out;
-      background: linear-gradient(to right, #ff4444, #00fbff, #ff4444);
-    }
+  // Wenn das Schild fast leer ist, soll es schneller und rötlicher pulsieren
+  &.critical {
+    animation: shield-glow-pulse 0.5s infinite ease-in-out;
+    background: linear-gradient(to right, #ff4444, #0f172a, #0f172a, #ff4444);
   }
 }
 
