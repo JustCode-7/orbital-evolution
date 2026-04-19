@@ -6,12 +6,9 @@
     <app-3d></app-3d>
   </div>
 
-  <canvas #gameCanvas id="gameCanvas"
-  >
-  </canvas>
+  <canvas #gameCanvas id="gameCanvas"></canvas>
+
   <div class="ui-overlay top-left p-3 text-white">
-
-
     @if (gameActive && !winState) {
       <div class="hud">
 
@@ -68,18 +65,22 @@
               🛡️ Shield<span>(100 EP)</span>
             </button>
             @if (satellitesCount >= 10) {
-              <button class="orbit-direction-change-btn-color jump-btn" (mousedown)="buy('sats', $event)"
+              <button class="orbit-direction-change-btn-color jump-btn"
+                      (mousedown)="buy('sats', $event)"
                       (touchstart)="buy('sats', $event)">⇄<br>Orbit
               </button>
             } @else {
-              <button class="power-up-button" (mousedown)="buy('sats', $event)" (touchstart)="buy('sats', $event)"
+              <button class="power-up-button"
+                      (mousedown)="buy('sats', $event)"
+                      (touchstart)="buy('sats', $event)"
                       [disabled]="ep < 150">🛰️ Sats {{ satellitesCount }}<span>(150 EP)</span>
               </button>
             }
           </div>
 
           <div class="action-side right">
-            <button class="power-up-button marine-btn" (mousedown)="buy('marines', $event)"
+            <button class="power-up-button marine-btn"
+                    (mousedown)="buy('marines', $event)"
                     (touchstart)="buy('marines', $event)"
                     [disabled]="ep < 250 || marinesCooldownProgress < 100">
               🎖️ Marines <span>(250 EP)</span>
@@ -90,7 +91,9 @@
               }
             </button>
 
-            <button class="power-up-button" (mousedown)="buy('research', $event)" (touchstart)="buy('research', $event)"
+            <button class="power-up-button"
+                    (mousedown)="buy('research', $event)"
+                    (touchstart)="buy('research', $event)"
                     [disabled]="ep < 200">🔬 Lvl {{ researchLevel }} <span>(200 EP)</span>
             </button>
           </div>
@@ -103,21 +106,28 @@
 <div class="top-right-controls">
   <div class="pause-control d-flex flex-column gap-2 align-items-end">
     @if (researchLevel >= 10 && !isJumping) {
-      <button class="jump-btn" (mousedown)="triggerOrbitalJump()" (touchstart)="triggerOrbitalJump()">
+      <button class="jump-btn"
+              (mousedown)="triggerOrbitalJump()"
+              (touchstart)="triggerOrbitalJump()">
         🌌 Orbitalsprung LV {{ jumpBounsLevel | number:'1.0-0' }}
         <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
       </button>
     }
+
     @if (isPaused) {
-      <button class="resume-btn" (click)="resumeGame()">WEITER</button>
+      <button class="resume-btn"
+              (mousedown)="resumeGame()"
+              (touchstart)="resumeGame()">WEITER
+      </button>
     } @else {
-      <button class="pause-btn float-end" (click)="togglePause($event)">
+      <button class="pause-btn float-end"
+              (mousedown)="togglePause($event)"
+              (touchstart)="togglePause($event)">
         <div class="pause-icon"></div>
       </button>
     }
   </div>
 </div>
-
 
 @if (!gameActive || winState) {
   <div class="menu-modal p-2">
@@ -127,13 +137,22 @@
         <p class="hyper-jump-text">Du bist sicher in den Hyperraum gesprungen!</p>
       }
       <div class="scores">
-        <p class="score-display">Letzter Score: {{ lastScore | number:'1.0-0' }}</p>
-        <p class="score-display high">Bester Score: {{ highScore | number:'1.0-0' }}</p>
+        <p class="score-display">Letzter Score: {{ lastScore() | number:'1.0-0' }}</p>
+        <p class="score-display high">Bester Score: {{ highScore() | number:'1.0-0' }}</p>
       </div>
       <div class="d-flex justify-content-evenly">
-        <button class="start-btn fw-bold" (click)="startGame()">{{ winState ? 'NEUER START' : 'START' }}</button>
+
+        <button class="start-btn fw-bold"
+                (mousedown)="startGame()"
+                (touchstart)="startGame()">
+          {{ winState ? 'NEUER START' : 'START' }}
+        </button>
+
         <button class="start-btn fw-bold" routerLink="">INTRO</button>
-        <button class="mt-2" mat-icon-button (click)="clearHighScore()">
+
+        <button class="mt-2" mat-icon-button
+                (mousedown)="clearHighScore()"
+                (touchstart)="clearHighScore()">
           <mat-icon>delete</mat-icon>
         </button>
       </div>

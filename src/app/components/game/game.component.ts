@@ -82,8 +82,8 @@ export class GameComponent implements OnInit, OnDestroy {
   gameActive = false;
   winState = false;
   isPressing = false;
-  highScore = parseInt(localStorage.getItem('orbital_hs') || '0');
-  lastScore = parseInt(localStorage.getItem('orbital_last_score') || '0');
+  highScore = signal(parseInt(localStorage.getItem('orbital_hs') || '0'));
+  lastScore = signal(parseInt(localStorage.getItem('orbital_last_score') || '0'));
 
   playerR = 350;
   playerAngle = 0;
@@ -687,11 +687,11 @@ export class GameComponent implements OnInit, OnDestroy {
   endGame(win: boolean) {
     this.gameActive = false;
     this.winState = win;
-    this.lastScore = Math.floor(this.score);
-    localStorage.setItem('orbital_last_score', this.lastScore.toString());
-    if (this.score > this.highScore) {
-      this.highScore = Math.floor(this.score);
-      localStorage.setItem('orbital_hs', this.highScore.toString());
+    this.lastScore.set(Math.floor(this.score));
+    localStorage.setItem('orbital_last_score', this.lastScore().toString());
+    if (this.score > this.highScore()) {
+      this.highScore.set(Math.floor(this.score));
+      localStorage.setItem('orbital_hs', this.highScore().toString());
     }
   }
 
@@ -1045,6 +1045,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   protected clearHighScore() {
     localStorage.removeItem('orbital_hs')
+    this.highScore.set(parseInt(localStorage.getItem('orbital_hs') || '0'))
   }
 
 }
