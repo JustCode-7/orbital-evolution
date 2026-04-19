@@ -359,31 +359,6 @@ export class GameComponent implements OnInit, OnDestroy {
     this.addLog("Ein Komet nähert sich der Sonne!", 'event');
   }
 
-  private spawnAsteroid() {
-    if (this.isPaused || this.resumeCountdown() > 0 || !this.gameActive) return;
-    const angle = Math.random() * Math.PI * 2;
-    const vx = -Math.cos(angle) * (2 + Math.random() * 2.5);
-    const vy = -Math.sin(angle) * (2 + Math.random() * 2.5);
-
-    const size = 12 + Math.random() * 15;
-    const points = [];
-    const numPoints = 7 + Math.floor(Math.random() * 5);
-    const hp = Math.ceil(size / 3);
-    for (let i = 0; i < numPoints; i++) {
-      const a = (i / numPoints) * Math.PI * 2;
-      const r = size * (0.8 + Math.random() * 0.4);
-      points.push({x: Math.cos(a) * r, y: Math.sin(a) * r});
-    }
-    const colors = ['#8B4513', 'rgb(97 55 7)', '#4e3a36', '#8B4513'];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-
-    this.asteroids.push({
-      x: Math.cos(angle) * 900, y: Math.sin(angle) * 900,
-      vx, vy, ovx: vx, ovy: vy,
-      size, color: color, points, hp
-    });
-  }
-
   private gameLoop() {
     const now = performance.now();
     if (this.lastTimestamp === 0) this.lastTimestamp = now;
@@ -923,39 +898,91 @@ export class GameComponent implements OnInit, OnDestroy {
       const y = cy + a.y * s;
       const radius = a.size * s;
 
-      // 1. Gradient erstellen:
-      // Der Mittelpunkt des Lichts (0,0) wird leicht versetzt,
-      // um einen 3D-Effekt zu erzeugen (Lichteinfall von oben links).
+      // 1. Basis-Gradient für den Schatten (Dunkel nach Hauptfarbe)
       const gradient = this.ctx.createRadialGradient(
-        x - radius * 0.3, y - radius * 0.3, radius * 0.1, // Lichtquelle
-        x, y, radius                                     // Äußerer Rand
+        x, y, radius * 0.2,
+        x, y, radius
       );
-
-      // 2. Farben definieren basierend auf der Asteroiden-Farbe
-      // Wir nehmen die Grundfarbe und mischen hell/dunkel dazu
-      gradient.addColorStop(0.1, 'rgb(60 60 59)');      // Glanzlicht
+      gradient.addColorStop(0.1, 'rgb(202 103 1.2)');      // Glanzlicht
       gradient.addColorStop(0.5, a.color);   // Die eigentliche Farbe
       gradient.addColorStop(1, 'rgb(87 45 1)');      // Schattenseite
 
+      // 2. Das Haupt-Polygon zeichnen (Schattenseite)
       this.ctx.fillStyle = gradient;
-
-      // 3. Das Polygon zeichnen
-      this.ctx.beginPath();
-      if (a.points && a.points.length > 0) {
-        this.ctx.moveTo(x + a.points[0].x * s, y + a.points[0].y * s);
-        for (let i = 1; i < a.points.length; i++) {
-          this.ctx.lineTo(x + a.points[i].x * s, y + a.points[i].y * s);
-        }
-      }
-      this.ctx.closePath();
+      this.drawAsteroidShape(x, y, a.points, s);
       this.ctx.fill();
 
-      // Optional: Ein kleiner "Glow" oder Rand, wenn sie fast kaputt sind (HP < 2)
+      // 3. DAS ZACKIGE GLANZLICHT (Die "Highlight-Struktur")
+      // Wir speichern den Kontext, um mit Transparenz und Versatz zu arbeiten
+      this.ctx.save();
+
+      // Wir versetzen das Highlight leicht in Richtung "Lichteinfall" (oben links)
+      this.ctx.translate(-radius * 0.15, -radius * 0.15);
+      // Wir machen das Highlight etwas kleiner
+      this.ctx.scale(0.85, 0.85);
+      // Wir korrigieren die Position nach dem Skalieren (Pivot-Punkt Ausgleich)
+      this.ctx.translate((x * 0.15) / 0.85, (y * 0.15) / 0.85);
+
+      // Ein heller, zackiger Verlauf für das Licht
+      const glossGradient = this.ctx.createRadialGradient(
+        x, y, 0,
+        x, y, radius * 0.8
+      );
+      glossGradient.addColorStop(0.1, 'rgb(202 103 1.25)');      // Glanzlicht
+      glossGradient.addColorStop(0.5, a.color);   // Die eigentliche Farbe
+      glossGradient.addColorStop(1, 'rgb(87 45 1)');      // Schattenseite
+      glossGradient.addColorStop(1, 'transparent');
+
+      this.ctx.fillStyle = glossGradient;
+      // Wir nutzen dieselbe zackige Form!
+      this.drawAsteroidShape(x, y, a.points, s);
+      this.ctx.fill();
+
+      this.ctx.restore();
+
+      // Optional: Riss-Struktur (Lines)
       if (a.hp < 2) {
-        this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = 'rgba(255, 60, 0, 0.6)';
+        this.ctx.lineWidth = 1 * s;
+        this.drawAsteroidShape(x, y, a.points, s);
         this.ctx.stroke();
       }
+    });
+  }
+
+  private drawAsteroidShape(x: number, y: number, points: any[], s: number) {
+    this.ctx.beginPath();
+    if (points && points.length > 0) {
+      this.ctx.moveTo(x + points[0].x * s, y + points[0].y * s);
+      for (let i = 1; i < points.length; i++) {
+        this.ctx.lineTo(x + points[i].x * s, y + points[i].y * s);
+      }
+    }
+    this.ctx.closePath();
+  }
+
+  private spawnAsteroid() {
+    if (this.isPaused || this.resumeCountdown() > 0 || !this.gameActive) return;
+    const angle = Math.random() * Math.PI * 2;
+    const vx = -Math.cos(angle) * (2 + Math.random() * 2.5);
+    const vy = -Math.sin(angle) * (2 + Math.random() * 2.5);
+
+    const size = 12 + Math.random() * 15;
+    const points = [];
+    const numPoints = 7 + Math.floor(Math.random() * 5);
+    const hp = Math.ceil(size / 3);
+    for (let i = 0; i < numPoints; i++) {
+      const a = (i / numPoints) * Math.PI * 2;
+      const r = size * (0.8 + Math.random() * 0.4);
+      points.push({x: Math.cos(a) * r, y: Math.sin(a) * r});
+    }
+    const colors = ['#8B4513', 'rgb(97 55 7)', 'rgb(202 103 1.3)', '#8B4513'];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    this.asteroids.push({
+      x: Math.cos(angle) * 900, y: Math.sin(angle) * 900,
+      vx, vy, ovx: vx, ovy: vy,
+      size, color: color, points, hp
     });
   }
 
