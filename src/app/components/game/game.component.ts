@@ -6,58 +6,13 @@ import {
   inject,
   OnDestroy,
   OnInit,
-  signal,
   ViewChild
 } from '@angular/core';
 import {DecimalPipe} from '@angular/common';
-import {ToggleFullscreenService} from '../../service/toggle-fullscreen.service';
 import {ThreeDimensions} from '../three-dimensions/three-dimensions';
-import {MatIcon} from '@angular/material/icon';
-import {MatIconButton} from '@angular/material/button';
-import {RouterLink} from '@angular/router';
-
-interface Comet {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  hue: number;
-  lifespan: number;
-  tail: { x: number, y: number }[]; // NEU: Schweif-Positionen
-}
-
-interface Asteroid {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  ovx: number;
-  ovy: number;
-  size: number;
-  color: string;
-  points: { x: number, y: number }[];
-  hp: number;
-}
-
-interface LogEntry {
-  text: string;
-  timestamp: number;
-  type: 'research' | 'event' | 'system';
-}
-
-interface Star {
-  x: number;
-  y: number;
-  size: number;
-  opacity: number;
-}
-
-interface Projectile {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-}
+import {GameService} from '../../service/game.service';
+import {ToggleFullscreenService} from '../../service/toggle-fullscreen.service';
+import {GameDialog} from '../game-dialog/game-dialog';
 
 @Component({
   selector: 'app-game',
@@ -65,9 +20,7 @@ interface Projectile {
   imports: [
     DecimalPipe,
     ThreeDimensions,
-    MatIcon,
-    MatIconButton,
-    RouterLink,
+    GameDialog,
   ],
   styleUrls: ['./game.component.scss']
 })
@@ -75,53 +28,26 @@ export class GameComponent implements OnInit, OnDestroy {
   @ViewChild('gameCanvas', {static: true}) canvas!: ElementRef<HTMLCanvasElement>;
   private ctx!: CanvasRenderingContext2D;
   private cdr = inject(ChangeDetectorRef);
+  protected readonly fullscreenService = inject(ToggleFullscreenService);
 
-  score = 0;
-  ep = 0;
-  researchLevel = 1;
-  gameActive = false;
-  winState = false;
+  gameService = inject(GameService)
   isPressing = false;
-  highScore = signal(parseInt(localStorage.getItem('orbital_hs') || '0'));
-  lastScore = signal(parseInt(localStorage.getItem('orbital_last_score') || '0'));
-
-  playerR = 350;
   playerAngle = 0;
   playerRotation = 0;
   shipDirection = 0;
-  isRecovering = false;
-  isJumping = false;
-  shieldActive = false;
-  shieldHp = 0;
-  satellitesCount = 0;
-
-  marinesActive = false;
   marinesCooldown = 15000;
-  marinesReadyTime = 0;
   marinesCooldownProgress = 100;
-  projectiles: Projectile[] = [];
   lastShotTime = 0;
-  // In den Klassen-Eigenschaften (State)
   private flightDirection = 1; // 1 = Uhrzeigersinn, -1 = gegen den Uhrzeigersinn
-  private lastTimestamp: number = 0;
   private lastDelta: number = 0;
-
-  asteroids: Asteroid[] = [];
-  scienceLog: LogEntry[] = [];
   stars: Star[] = [];
-  comets: Comet[] = [];
   isScoreZone = false;
   isInsideYellowZone = false;  // Die äußere Gefahrenzone (Gelb/Orange)
   isInsideRedZone = false;     // Die mittlere Gefahrenzone (Rot)
   isInsideCoronaZone = false;  // Direkt vor der Sonne (Extrem)
-  isInsideHabitableZone = false;
-  isPaused = false;
-  resumeCountdown = signal(0);
   private playerImg = new Image();
-
-  private spawnInterval: any;
   private animFrame: any;
-  protected readonly fullscreenService = inject(ToggleFullscreenService);
+
 
   ngOnInit() {
     this.ctx = this.canvas.nativeElement.getContext('2d')!;
@@ -132,12 +58,8 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.cleanup();
+    this.gameService.cleanup();
     cancelAnimationFrame(this.animFrame);
-  }
-
-  private cleanup() {
-    if (this.spawnInterval) clearInterval(this.spawnInterval);
   }
 
   @HostListener('window:resize')
@@ -145,6 +67,36 @@ export class GameComponent implements OnInit, OnDestroy {
     this.canvas.nativeElement.width = window.innerWidth;
     this.canvas.nativeElement.height = window.innerHeight;
     this.initStars();
+  }
+
+  @HostListener('window:mouseup')
+  @HostListener('window:touchend')
+  onUp() {
+    this.isPressing = false;
+  }
+
+  @HostListener('contextmenu', ['$event'])
+  onContextMenu(e: Event) {
+    e.preventDefault();
+  }
+
+  get scoreFromated(): number {
+    return Math.floor(this.gameService.score);
+  }
+
+  get jumpBounsLevel(): number {
+    return Math.floor(this.gameService.researchLevel / 10);
+  }
+
+  get jumpBonus(): number {
+    if (this.gameService.researchLevel < 10) return 0;
+
+    // Wir nehmen 5% pro Research-Level als Basis
+    // Level 10 -> 0.5 (50%)
+    // Level 20 -> 1.0 (100%)
+    const percentage = this.gameService.researchLevel * 0.05;
+
+    return Math.floor(this.gameService.score * percentage);
   }
 
   initStars() {
@@ -167,82 +119,14 @@ export class GameComponent implements OnInit, OnDestroy {
     e.preventDefault();
   }
 
-  @HostListener('window:mouseup')
-  @HostListener('window:touchend')
-  onUp() {
-    this.isPressing = false;
-  }
-
-  @HostListener('contextmenu', ['$event'])
-  onContextMenu(e: Event) {
-    e.preventDefault();
-  }
-
-  get scoreFromated(): number {
-    return Math.floor(this.score);
-  }
-
-  get jumpBounsLevel(): number {
-    return Math.floor(this.researchLevel / 10);
-  }
-
-  get jumpBonus(): number {
-    if (this.researchLevel < 10) return 0;
-
-    // Wir nehmen 5% pro Research-Level als Basis
-    // Level 10 -> 0.5 (50%)
-    // Level 20 -> 1.0 (100%)
-    const percentage = this.researchLevel * 0.05;
-
-    return Math.floor(this.score * percentage);
-  }
-
   triggerOrbitalJump() {
-    if (this.researchLevel >= 10 && !this.isJumping) {
+    if (this.gameService.researchLevel >= 10 && !this.gameService.isJumping) {
       const finalBonus = this.jumpBonus;
-      this.isJumping = true;
+      this.gameService.isJumping = true;
 
-      this.score += finalBonus;
-      this.addLog(`Orbitalsprung initiiert! (+${finalBonus.toLocaleString()} Punkte)`, 'event');
+      this.gameService.score += finalBonus;
+      this.gameService.addLog(`Orbitalsprung initiiert! (+${finalBonus.toLocaleString()} Punkte)`, 'event');
     }
-  }
-
-  startGame($event: Event) {
-    if ($event) {
-      $event.preventDefault();
-      $event.stopPropagation();
-    }
-    this.fullscreenService.initDisplayAlwaysOnMode();
-    this.fullscreenService.toggleTabFullScreenModeGame();
-    this.cleanup();
-    this.lastTimestamp = performance.now()
-    this.gameActive = true;
-    this.winState = false;
-    this.score = 0;
-    this.ep = 100;
-    this.researchLevel = 1;
-    this.playerR = 350;
-    this.asteroids = [];
-    this.scienceLog = [];
-    this.projectiles = [];
-    this.marinesActive = false;
-    this.isRecovering = false;
-    this.isJumping = false; // Reset Jump Status
-    this.satellitesCount = 0;
-    this.marinesReadyTime = 0;
-    this.shieldActive = false;
-    this.shieldHp = 0;
-    this.comets = [];
-    this.isInsideHabitableZone = false;
-
-    this.addLog("Orbitale Verteidigung aktiviert.", 'event');
-    this.startSpawning();
-  }
-
-  private startSpawning() {
-    this.cleanup();
-    const interval = Math.max(400, 1500 - Math.floor((this.researchLevel - 1) / 3) * 250);
-    this.spawnInterval = setInterval(() => this.spawnAsteroid(), interval);
   }
 
   buy(item: string, e?: Event) {
@@ -269,71 +153,71 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private buyShield() {
-    if (this.ep >= 100 && this.shieldHp < 100) {
-      this.ep -= 100;
-      this.shieldActive = true;
-      this.shieldHp = 100;
-      this.addLog("Schilde aktiviert!", "system");
+    if (this.gameService.ep >= 100 && this.gameService.shieldHp < 100) {
+      this.gameService.ep -= 100;
+      this.gameService.shieldActive = true;
+      this.gameService.shieldHp = 100;
+      this.gameService.addLog("Schilde aktiviert!", "system");
     }
   }
 
   private handleSatelliteAction() {
     // Wenn bereits 10 Satelliten da sind: Richtungswechsel (kostenlos)
-    if (this.satellitesCount >= 10) {
+    if (this.gameService.satellitesCount >= 10) {
       this.flightDirection *= -1;
       const dirText = this.flightDirection === 1 ? "Uhrzeigersinn" : "Gegen Uhrzeigersinn";
-      this.addLog(`Orbit-Umkehr: Flugrichtung nun ${dirText}`, "system");
+      this.gameService.addLog(`Orbit-Umkehr: Flugrichtung nun ${dirText}`, "system");
       return;
     }
 
     // Ansonsten: Satellit kaufen
-    if (this.ep >= 150) {
-      this.ep -= 150;
-      this.satellitesCount++;
-      this.addLog(`Satellit ${this.satellitesCount}/10 online.`, "system");
+    if (this.gameService.ep >= 150) {
+      this.gameService.ep -= 150;
+      this.gameService.satellitesCount++;
+      this.gameService.addLog(`Satellit ${this.gameService.satellitesCount}/10 online.`, "system");
 
-      if (this.satellitesCount === 10) {
-        this.addLog("MAXIMALE SATELLITEN: Orbit-Umkehr freigeschaltet!", "event");
+      if (this.gameService.satellitesCount === 10) {
+        this.gameService.addLog("MAXIMALE SATELLITEN: Orbit-Umkehr freigeschaltet!", "event");
       }
     }
   }
 
   private buyMarines() {
     const now = Date.now();
-    if (this.ep >= 250 && now >= this.marinesReadyTime) {
-      this.ep -= 250;
-      this.marinesActive = true;
-      this.addLog("Marines Einsatzgruppe gestartet!", 'event');
+    if (this.gameService.ep >= 250 && now >= this.gameService.marinesReadyTime) {
+      this.gameService.ep -= 250;
+      this.gameService.marinesActive = true;
+      this.gameService.addLog("Marines Einsatzgruppe gestartet!", 'event');
 
-      setTimeout(() => (this.marinesActive = false), 10000);
-      this.marinesReadyTime = now + this.marinesCooldown;
+      setTimeout(() => (this.gameService.marinesActive = false), 10000);
+      this.gameService.marinesReadyTime = now + this.marinesCooldown;
     }
   }
 
   private buyResearch() {
-    if (this.ep < 200) return;
+    if (this.gameService.ep < 200) return;
 
-    const oldThreshold = Math.floor((this.researchLevel - 1) / 3);
-    this.ep -= 200;
-    this.researchLevel++;
+    const oldThreshold = Math.floor((this.gameService.researchLevel - 1) / 3);
+    this.gameService.ep -= 200;
+    this.gameService.researchLevel++;
 
     // Logik für Kometen-Spawn
-    if (this.researchLevel % 3 === 0) {
+    if (this.gameService.researchLevel % 3 === 0) {
       this.spawnComet();
-      this.addLog(`Seltener Energie-Komet gesichtet!`, 'research');
+      this.gameService.addLog(`Seltener Energie-Komet gesichtet!`, 'research');
     }
 
     // Logik für Asteroiden-Intensität
-    const newThreshold = Math.floor((this.researchLevel - 1) / 3);
+    const newThreshold = Math.floor((this.gameService.researchLevel - 1) / 3);
     if (newThreshold > oldThreshold) {
-      this.startSpawning();
-      this.addLog(`Gefahrenstufe erhöht! Asteroiden-Frequenz gesteigert.`, 'event');
+      this.gameService.startSpawning();
+      this.gameService.addLog(`Gefahrenstufe erhöht! Asteroiden-Frequenz gesteigert.`, 'event');
     }
 
-    this.addLog(`Technologie-Level ${this.researchLevel} erreicht.`, 'research');
+    this.gameService.addLog(`Technologie-Level ${this.gameService.researchLevel} erreicht.`, 'research');
 
-    if (this.researchLevel === 10) {
-      this.addLog(`ANTIGRAVITATIONSANTRIEB BEREIT ZUM SPRUNG!`, 'event');
+    if (this.gameService.researchLevel === 10) {
+      this.gameService.addLog(`ANTIGRAVITATIONSANTRIEB BEREIT ZUM SPRUNG!`, 'event');
     }
   }
 
@@ -352,7 +236,7 @@ export class GameComponent implements OnInit, OnDestroy {
     //Geschwindigkeit zwischen 1.5 und 3.5
     const speed = 1.5 + Math.random() * 2;
 
-    this.comets.push({
+    this.gameService.comets.push({
       x: startX, y: startY,
       vx: Math.cos(angleToTarget) * speed,
       vy: Math.sin(angleToTarget) * speed,
@@ -360,16 +244,16 @@ export class GameComponent implements OnInit, OnDestroy {
       lifespan: 0,
       tail: []
     });
-    this.addLog("Ein Komet nähert sich der Sonne!", 'event');
+    this.gameService.addLog("Ein Komet nähert sich der Sonne!", 'event');
   }
 
   private gameLoop() {
     const now = performance.now();
-    if (this.lastTimestamp === 0) this.lastTimestamp = now;
+    if (this.gameService.lastTimestamp === 0) this.gameService.lastTimestamp = now;
 
     // Zeit seit dem letzten Frame in Sekunden (z.B. 0.0166 bei 60 FPS)
-    this.lastDelta = (now - this.lastTimestamp) / 1000;
-    this.lastTimestamp = now;
+    this.lastDelta = (now - this.gameService.lastTimestamp) / 1000;
+    this.gameService.lastTimestamp = now;
 
     // Falls das Spiel durch einen Tab-Wechsel pausiert war,
     // begrenzen wir das Delta, damit man nicht plötzlich Milliarden Punkte kriegt
@@ -382,7 +266,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private update() {
-    if (!this.gameActive || this.winState || this.isPaused || this.resumeCountdown() > 0) return;
+    if (!this.gameService.gameActive() || this.gameService.winState() || this.gameService.isPaused || this.gameService.resumeCountdown() > 0) return;
 
     const now = Date.now();
 
@@ -396,8 +280,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.applyPlayerPhysics(dr);
 
     // 4. Weltraum-Hintergrund & Neutrale Objekte
-    const px = Math.cos(this.playerAngle) * this.playerR;
-    const py = Math.sin(this.playerAngle) * this.playerR;
+    const px = Math.cos(this.playerAngle) * this.gameService.playerR;
+    const py = Math.sin(this.playerAngle) * this.gameService.playerR;
 
     this.updateStars();
     this.updateComets(px, py);
@@ -412,15 +296,15 @@ export class GameComponent implements OnInit, OnDestroy {
 // --- HELPER METHODS ---
 
   private updateCooldowns(now: number) {
-    const remaining = this.marinesReadyTime - now;
+    const remaining = this.gameService.marinesReadyTime - now;
     this.marinesCooldownProgress = remaining > 0
       ? ((this.marinesCooldown - remaining) / this.marinesCooldown) * 100
       : 100;
   }
 
   private calculatePlayerRadiusDelta(): number {
-    if (this.isJumping) {
-      if (this.playerR > 1500) this.endGame(true);
+    if (this.gameService.isJumping) {
+      if (this.gameService.playerR > 1500) this.endGame(true);
       return 15.0; // Sprung-Geschwindigkeit
     }
 
@@ -428,13 +312,13 @@ export class GameComponent implements OnInit, OnDestroy {
     const s = Math.min(window.innerWidth, window.innerHeight) / 900;
     const maxVisibleR = (Math.max(window.innerWidth, window.innerHeight) / 2) / s;
 
-    if (this.playerR > maxVisibleR + 50) this.isRecovering = true;
+    if (this.gameService.playerR > maxVisibleR + 50) this.gameService.isRecovering = true;
 
     let dr = this.isPressing ? 4.5 : -2.0;
 
-    if (this.isRecovering) {
+    if (this.gameService.isRecovering) {
       dr = -6.0;
-      if (this.playerR < maxVisibleR - 50) this.isRecovering = false;
+      if (this.gameService.playerR < maxVisibleR - 50) this.gameService.isRecovering = false;
     }
 
     // Zone Check & Belohnung
@@ -445,32 +329,32 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private updateZonesAndScoring() {
     // 1. Habitable Zone (Grüner Nebel)
-    this.isInsideHabitableZone = (this.playerR > 300 && this.playerR < 420);
+    this.gameService.isInsideHabitableZone = (this.gameService.playerR > 300 && this.gameService.playerR < 420);
 
     // 1. Gelbe/Orange Zone (r: 250, Breite: 100 -> Bereich 200 bis 300)
-    this.isInsideYellowZone = (this.playerR > 200 && this.playerR <= 300);
+    this.isInsideYellowZone = (this.gameService.playerR > 200 && this.gameService.playerR <= 300);
 
     // 1. Rote Zone (r: 150, Breite: 80 -> Bereich 110 bis 190)
-    this.isInsideRedZone = (this.playerR > 110 && this.playerR <= 190);
+    this.isInsideRedZone = (this.gameService.playerR > 110 && this.gameService.playerR <= 190);
 
     // 1. Corona/Extreme Zone (Direkt vor der Sonne, r: 85, Breite: 40 -> Bereich 65 bis 105)
     // 65 ist dein Todes-Radius
-    this.isInsideCoronaZone = (this.playerR >= 65 && this.playerR <= 110);
+    this.isInsideCoronaZone = (this.gameService.playerR >= 65 && this.gameService.playerR <= 110);
 
-    if (this.isInsideHabitableZone) {
+    if (this.gameService.isInsideHabitableZone) {
       this.isScoreZone = false;
 
       // EP Gewinn: ca. 15 EP pro Sekunde als Basis
-      const epPerSecond = 15 * (1 + (this.satellitesCount * 0.1));
-      this.ep += epPerSecond * this.lastDelta;
+      const epPerSecond = 15 * (1 + (this.gameService.satellitesCount * 0.1));
+      this.gameService.ep += epPerSecond * this.lastDelta;
 
-    } else if (this.playerR <= 300) {
+    } else if (this.gameService.playerR <= 300) {
       this.isScoreZone = true;
 
       // 2. Der Potenzielle Score (Basis ist die Nähe)
       // Die '10' ist ein Skalierungswert, damit die Zahlen im HUD gut aussehen
       const basisSkalierung = 10
-      const potentialPoints = Math.pow(1000 / Math.max(1, this.playerR), 2) * basisSkalierung;
+      const potentialPoints = Math.pow(1000 / Math.max(1, this.gameService.playerR), 2) * basisSkalierung;
 
       // 3. Effizienz-Faktor basierend auf der Zone
       let efficiency = 0.4; // Standardwert außerhalb der Zonen (Fallback)
@@ -484,12 +368,12 @@ export class GameComponent implements OnInit, OnDestroy {
       }
 
       // 4. Forschung bleibt ein zusätzlicher Bonus obendrauf
-      const resMultiplier = 1 + (this.researchLevel * 0.1);
+      const resMultiplier = 1 + (this.gameService.researchLevel * 0.1);
 
       // Finale Berechnung
       const pointsPerSecond = potentialPoints * efficiency * resMultiplier;
 
-      this.score += pointsPerSecond * this.lastDelta;
+      this.gameService.score += pointsPerSecond * this.lastDelta;
 
     } else {
       this.isScoreZone = false;
@@ -498,13 +382,13 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private applyPlayerPhysics(dr: number) {
     const da = 0.015 * this.flightDirection;
-    this.playerR += dr;
+    this.gameService.playerR += dr;
     this.playerAngle += da;
     this.playerRotation += 0.08 * this.flightDirection;
 
     // Richtungs-Vektor berechnen für die Schiff-Rotation (ShipDirection)
-    const shipVx = dr * Math.cos(this.playerAngle) - this.playerR * Math.sin(this.playerAngle) * da;
-    const shipVy = dr * Math.sin(this.playerAngle) + this.playerR * Math.cos(this.playerAngle) * da;
+    const shipVx = dr * Math.cos(this.playerAngle) - this.gameService.playerR * Math.sin(this.playerAngle) * da;
+    const shipVy = dr * Math.sin(this.playerAngle) + this.gameService.playerR * Math.cos(this.playerAngle) * da;
     this.shipDirection = Math.atan2(shipVy, shipVx);
   }
 
@@ -517,8 +401,8 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private updateComets(px: number, py: number) {
 
-    for (let i = this.comets.length - 1; i >= 0; i--) {
-      const c = this.comets[i];
+    for (let i = this.gameService.comets.length - 1; i >= 0; i--) {
+      const c = this.gameService.comets[i];
       const dx = 0 - c.x;
       const dy = 0 - c.y;
       const distToSun = Math.hypot(dx, dy);
@@ -547,29 +431,29 @@ export class GameComponent implements OnInit, OnDestroy {
 
       // Wenn der Komet zu alt ist, löschen wir ihn
       if (c.lifespan > 1800) {
-        this.comets.splice(i, 1);
+        this.gameService.comets.splice(i, 1);
         continue;
       }
 
       // Kollisionsprüfung (Spieler)
       if (Math.hypot(px - c.x, py - c.y) < 40) {
-        const cometValue = Math.floor(100 * this.researchLevel * 50)
-        this.score += cometValue;
-        this.addLog("+" + cometValue.toString() + " Pts: Kometen-Staub extrahiert!", 'research');
-        this.comets.splice(i, 1);
+        const cometValue = Math.floor(100 * this.gameService.researchLevel * 50)
+        this.gameService.score += cometValue;
+        this.gameService.addLog("+" + cometValue.toString() + " Pts: Kometen-Staub extrahiert!", 'research');
+        this.gameService.comets.splice(i, 1);
         continue;
       }
 
       // Cleanup: weit im All verschwunden
       if (distToSun > 1500) {
-        this.comets.splice(i, 1);
+        this.gameService.comets.splice(i, 1);
       }
     }
   }
 
   private updateCombat(now: number, px: number, py: number) {
     // Marines Feuerbefehl
-    if (this.marinesActive && now - this.lastShotTime > 350) {
+    if (this.gameService.marinesActive && now - this.lastShotTime > 350) {
       this.fireMarines(px, py);
       this.lastShotTime = now;
     }
@@ -581,8 +465,8 @@ export class GameComponent implements OnInit, OnDestroy {
   private updateAsteroids(px: number, py: number) {
     const recoveryRate = 0.012;
 
-    for (let i = this.asteroids.length - 1; i >= 0; i--) {
-      const ast = this.asteroids[i];
+    for (let i = this.gameService.asteroids.length - 1; i >= 0; i--) {
+      const ast = this.gameService.asteroids[i];
 
       // Recovery & Movement
       ast.vx += (ast.ovx - ast.vx) * recoveryRate;
@@ -594,41 +478,41 @@ export class GameComponent implements OnInit, OnDestroy {
 
       // In die Sonne geflogen
       if (distToSun < 60) {
-        this.asteroids.splice(i, 1);
+        this.gameService.asteroids.splice(i, 1);
         continue;
       }
 
       // Kollision Spieler
       const distToPlayer = Math.hypot(px - ast.x, py - ast.y);
       if (distToPlayer < ast.size + 15) {
-        this.asteroids.splice(i, 1);
+        this.gameService.asteroids.splice(i, 1);
         this.handleHit();
         continue;
       }
 
       // Aus dem Bildschirm
       if (Math.hypot(ast.x, ast.y) > 1200) {
-        this.asteroids.splice(i, 1);
+        this.gameService.asteroids.splice(i, 1);
       }
     }
   }
 
   private checkDeathConditions() {
-    if (this.playerR < 65) {
+    if (this.gameService.playerR < 65) {
       this.endGame(false);
     }
   }
 
   private fireMarines(px: number, py: number) {
-    if (this.asteroids.length === 0) return;
+    if (this.gameService.asteroids.length === 0) return;
     for (let i = 0; i < 3; i++) {
       const marineAngle = this.playerAngle + (i * (Math.PI * 2 / 3));
       const mx = px + Math.cos(marineAngle) * 35;
       const my = py + Math.sin(marineAngle) * 35;
 
-      let target = this.asteroids[0];
+      let target = this.gameService.asteroids[0];
       let minDist = Infinity;
-      this.asteroids.forEach(a => {
+      this.gameService.asteroids.forEach(a => {
         const d = Math.hypot(mx - a.x, my - a.y);
         if (d < minDist) {
           minDist = d;
@@ -639,19 +523,19 @@ export class GameComponent implements OnInit, OnDestroy {
       const dx = target.x - mx;
       const dy = target.y - my;
       const dist = Math.hypot(dx, dy);
-      this.projectiles.push({x: mx, y: my, vx: (dx / dist) * 14, vy: (dy / dist) * 14});
+      this.gameService.projectiles.push({x: mx, y: my, vx: (dx / dist) * 14, vy: (dy / dist) * 14});
     }
   }
 
   private updateProjectiles() {
     const impactFactor = 0.55;
-    for (let i = this.projectiles.length - 1; i >= 0; i--) {
-      const p = this.projectiles[i];
+    for (let i = this.gameService.projectiles.length - 1; i >= 0; i--) {
+      const p = this.gameService.projectiles[i];
       p.x += p.vx;
       p.y += p.vy;
 
-      for (let j = this.asteroids.length - 1; j >= 0; j--) {
-        const a = this.asteroids[j];
+      for (let j = this.gameService.asteroids.length - 1; j >= 0; j--) {
+        const a = this.gameService.asteroids[j];
         if (Math.hypot(p.x - a.x, p.y - a.y) < a.size + 6) {
           // 1. Verlangsamen (wie bisher)
           a.vx *= impactFactor;
@@ -662,11 +546,11 @@ export class GameComponent implements OnInit, OnDestroy {
 
           // 3. Zerstören bei 0 HP
           if (a.hp <= 0) {
-            this.score += Math.floor(a.size * 10);
-            this.asteroids.splice(j, 1);
+            this.gameService.score += Math.floor(a.size * 10);
+            this.gameService.asteroids.splice(j, 1);
           }
 
-          this.projectiles.splice(i, 1);
+          this.gameService.projectiles.splice(i, 1);
           break;
         }
       }
@@ -674,28 +558,28 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   handleHit() {
-    if (this.isRecovering || this.isJumping) return; // Unsterblich während Rückkehr oder Orbitalsprung
-    if (this.shieldActive && this.shieldHp > 0) {
-      this.shieldHp -= 34;
-      if (this.shieldHp <= 0) {
-        this.shieldHp = 0;
-        this.shieldActive = false;
+    if (this.gameService.isRecovering || this.gameService.isJumping) return; // Unsterblich während Rückkehr oder Orbitalsprung
+    if (this.gameService.shieldActive && this.gameService.shieldHp > 0) {
+      this.gameService.shieldHp -= 34;
+      if (this.gameService.shieldHp <= 0) {
+        this.gameService.shieldHp = 0;
+        this.gameService.shieldActive = false;
       }
-    } else if (this.satellitesCount > 0) {
-      this.satellitesCount--;
+    } else if (this.gameService.satellitesCount > 0) {
+      this.gameService.satellitesCount--;
     } else {
       this.endGame(false);
     }
   }
 
   endGame(win: boolean) {
-    this.gameActive = false;
-    this.winState = win;
-    this.lastScore.set(Math.floor(this.score));
-    localStorage.setItem('orbital_last_score', this.lastScore().toString());
-    if (this.score > this.highScore()) {
-      this.highScore.set(Math.floor(this.score));
-      localStorage.setItem('orbital_hs', this.highScore().toString());
+    this.gameService.gameActive.set(false);
+    this.gameService.winState.set(win);
+    this.gameService.lastScore.set(Math.floor(this.gameService.score));
+    localStorage.setItem('orbital_last_score', this.gameService.lastScore().toString());
+    if (this.gameService.score > this.gameService.highScore()) {
+      this.gameService.highScore.set(Math.floor(this.gameService.score));
+      localStorage.setItem('orbital_hs', this.gameService.highScore().toString());
     }
   }
 
@@ -712,8 +596,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.drawComets(s, cx, cy);
 
     // Spieler-System berechnen
-    const px = cx + Math.cos(this.playerAngle) * (this.playerR * s);
-    const py = cy + Math.sin(this.playerAngle) * (this.playerR * s);
+    const px = cx + Math.cos(this.playerAngle) * (this.gameService.playerR * s);
+    const py = cy + Math.sin(this.playerAngle) * (this.gameService.playerR * s);
 
     // Spieler & Einheiten
     this.drawPlayerShip(s, px, py);
@@ -766,8 +650,8 @@ export class GameComponent implements OnInit, OnDestroy {
     // 2. Habitable Zone (Gasnebel-Effekt)
     const resR = 360 * s;
     // Den Nebel bei Betreten etwas "aufblähen"
-    const resW = (this.isInsideHabitableZone ? 150 : 120) * s;
-    const ringAlpha = this.isInsideHabitableZone ? 0.4 : 0.15;
+    const resW = (this.gameService.isInsideHabitableZone ? 150 : 120) * s;
+    const ringAlpha = this.gameService.isInsideHabitableZone ? 0.4 : 0.15;
     //
     const innerR = resR - resW / 2;
     const outerR = resR + resW / 2;
@@ -824,7 +708,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.ctx.fill();
     }
 
-    if (this.isJumping) {
+    if (this.gameService.isJumping) {
       this.ctx.fillStyle = '#00ffff';
       this.ctx.beginPath();
       this.ctx.moveTo(-shipSize * 0.6, shipSize * 0.7);
@@ -839,8 +723,8 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private drawSatellites(s: number, px: number, py: number) {
-    for (let i = 0; i < this.satellitesCount; i++) {
-      const a = (Math.PI * 2 / this.satellitesCount) * i + (this.playerAngle * 0.5);
+    for (let i = 0; i < this.gameService.satellitesCount; i++) {
+      const a = (Math.PI * 2 / this.gameService.satellitesCount) * i + (this.playerAngle * 0.5);
       const sx = px + Math.cos(a) * 30 * s;
       const sy = py + Math.sin(a) * 30 * s;
 
@@ -857,7 +741,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private drawMarines(s: number, px: number, py: number) {
-    if (!this.marinesActive) return;
+    if (!this.gameService.marinesActive) return;
 
     for (let i = 0; i < 3; i++) {
       const a = this.playerAngle + (i * (Math.PI * 2 / 3));
@@ -879,7 +763,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private drawComets(s: number, cx: number, cy: number) {
-    this.comets.forEach(c => {
+    this.gameService.comets.forEach(c => {
       // Schweif (Tail)
       c.tail.forEach((pos, idx) => {
         const alpha = 1 - (idx / c.tail.length);
@@ -897,7 +781,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private drawAsteroids(s: number, cx: number, cy: number) {
-    this.asteroids.forEach(a => {
+    this.gameService.asteroids.forEach(a => {
       const x = cx + a.x * s;
       const y = cy + a.y * s;
       const radius = a.size * s;
@@ -965,34 +849,10 @@ export class GameComponent implements OnInit, OnDestroy {
     this.ctx.closePath();
   }
 
-  private spawnAsteroid() {
-    if (this.isPaused || this.resumeCountdown() > 0 || !this.gameActive) return;
-    const angle = Math.random() * Math.PI * 2;
-    const vx = -Math.cos(angle) * (2 + Math.random() * 2.5);
-    const vy = -Math.sin(angle) * (2 + Math.random() * 2.5);
-
-    const size = 12 + Math.random() * 15;
-    const points = [];
-    const numPoints = 7 + Math.floor(Math.random() * 5);
-    const hp = Math.ceil(size / 3);
-    for (let i = 0; i < numPoints; i++) {
-      const a = (i / numPoints) * Math.PI * 2;
-      const r = size * (0.8 + Math.random() * 0.4);
-      points.push({x: Math.cos(a) * r, y: Math.sin(a) * r});
-    }
-    const colors = ['#8B4513', 'rgb(97 55 7)', 'rgb(202 103 1.3)', '#8B4513'];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-
-    this.asteroids.push({
-      x: Math.cos(angle) * 900, y: Math.sin(angle) * 900,
-      vx, vy, ovx: vx, ovy: vy,
-      size, color: color, points, hp
-    });
-  }
 
   private drawProjectiles(s: number, cx: number, cy: number) {
     this.ctx.fillStyle = '#ffff00';
-    this.projectiles.forEach(p => {
+    this.gameService.projectiles.forEach(p => {
       this.ctx.beginPath();
       this.ctx.arc(cx + p.x * s, cy + p.y * s, 3 * s, 0, Math.PI * 2);
       this.ctx.fill();
@@ -1000,9 +860,9 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private drawShield(s: number, px: number, py: number) {
-    if (!this.shieldActive) return;
+    if (!this.gameService.shieldActive) return;
     const shipSize = 15 * s;
-    this.ctx.strokeStyle = `rgba(0, 255, 255, ${this.shieldHp / 100})`;
+    this.ctx.strokeStyle = `rgba(0, 255, 255, ${this.gameService.shieldHp / 100})`;
     this.ctx.lineWidth = 3 * s;
     this.ctx.beginPath();
     this.ctx.arc(px, py, shipSize * 2, 0, Math.PI * 2);
@@ -1010,29 +870,24 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
 
-  private addLog(text: string, type: 'research' | 'event' | 'system') {
-    this.scienceLog.unshift({text, timestamp: Date.now(), type});
-    if (this.scienceLog.length > 4) this.scienceLog.pop();
-  }
-
   // Methode zum Pausieren
   togglePause(e?: Event) {
     if (e) {
       e.stopPropagation();
       e.preventDefault();
     }
-    if (!this.gameActive || this.winState || this.resumeCountdown() > 0) return;
-    this.isPaused = true;
+    if (!this.gameService.gameActive() || this.gameService.winState() || this.gameService.resumeCountdown() > 0) return;
+    this.gameService.isPaused = true;
   }
 
   // Methode zum Fortsetzen mit Countdown
   resumeGame() {
-    this.isPaused = false;
-    this.resumeCountdown.set(3);
+    this.gameService.isPaused = false;
+    this.gameService.resumeCountdown.set(3);
 
     const interval = setInterval(() => {
-      this.resumeCountdown.set(this.resumeCountdown() - 1);
-      if (this.resumeCountdown() <= 0) {
+      this.gameService.resumeCountdown.set(this.gameService.resumeCountdown() - 1);
+      if (this.gameService.resumeCountdown() <= 0) {
         clearInterval(interval);
       }
     }, 1000);
@@ -1042,14 +897,8 @@ export class GameComponent implements OnInit, OnDestroy {
     // Umfang des Buttons (2x Breite + 2x Höhe)
     // Basierend auf den SCSS Werten (150px Breite, 60px Höhe)
     const pathLength = 420;
-    const progress = this.shieldHp / 100;
+    const progress = this.gameService.shieldHp / 100;
     // Offset berechnet, wie viel vom Rand "leer" bleibt
     return pathLength * (1 - progress);
   }
-
-  protected clearHighScore() {
-    localStorage.removeItem('orbital_hs')
-    this.highScore.set(parseInt(localStorage.getItem('orbital_hs') || '0'))
-  }
-
 }

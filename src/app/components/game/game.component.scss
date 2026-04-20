@@ -24,6 +24,7 @@
   position: absolute;
   top: 0;
   left: 0;
+  display: block;
   width: 100%;
   height: 100%;
   z-index: 10; // Hoher Z-Index
@@ -43,12 +44,6 @@
   .bottom-controls {
     pointer-events: auto;
   }
-}
-
-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
 }
 
 .hud {
@@ -92,21 +87,6 @@ canvas {
   font-size: 0.75rem;
   color: #00ff88;
   margin-top: 4px;
-}
-
-@keyframes pulse-glow {
-  0% {
-    box-shadow: 0 0 5px #a855f7;
-    border-color: #a855f7;
-  }
-  50% {
-    box-shadow: 0 0 25px #d8b4fe;
-    border-color: #d8b4fe;
-  }
-  100% {
-    box-shadow: 0 0 5px #a855f7;
-    border-color: #a855f7;
-  }
 }
 
 .main-stats .score {
@@ -243,21 +223,8 @@ canvas {
   }
 }
 
-.orbit-direction-change-btn-color {
-  width: 120px;
-  height: 50px;
-  background: #9a29d3 !important;
-  border: 1px solid #1e293b;
-  color: white;
-  border-radius: 5px;
-  padding: 6px 2px;
-  font-size: 0.7rem;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  opacity: 70%;
+.orbit-change-btn-color {
+  background: linear-gradient(to bottom, #a855f7, #3b0764, #0f172a, #3b0764, #a855f7);
 }
 
 button span {
@@ -296,59 +263,6 @@ button:disabled {
   background: #ffcc00;
   position: absolute;
   bottom: 0;
-}
-
-.menu-modal {
-  color: white;
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Das ist der entscheidende Teil für iOS */
-  z-index: 9999 !important;
-  pointer-events: auto !important;
-}
-
-.modal-content {
-  text-align: center;
-  padding: 30px;
-  border: 1px solid #00fbff;
-  background: #020617;
-  border-radius: 12px;
-  pointer-events: auto !important;
-}
-
-.scores {
-  margin: 15px 0;
-}
-
-.score-display {
-  margin: 5px 0;
-  color: #64748b;
-  font-size: 0.9rem;
-}
-
-.score-display.high {
-  color: #ffcc00;
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-.start-btn {
-  background: #00fbff;
-  color: black;
-  padding: 10px 25px;
-  border: none;
-  font-size: 1rem;
-  border-radius: 5px;
-  margin-top: 15px;
-  /* iOS FIXES */
-  cursor: pointer !important;
-  touch-action: manipulation !important; // Verhindert Zoom-Verzögerung
-  -webkit-tap-highlight-color: transparent;
-  pointer-events: auto !important;
 }
 
 .pause-control {
@@ -419,25 +333,6 @@ button:disabled {
   pointer-events: auto !important;
 }
 
-.hyper-jump-text {
-  color: #00fbff;
-  margin-bottom: 15px;
-}
-
-@keyframes pulseCount {
-  0% {
-    transform: scale(1.2);
-    opacity: 0;
-  }
-  20% {
-    opacity: 1;
-  }
-  100% {
-    transform: scale(0.8);
-    opacity: 0;
-  }
-}
-
 .shield-button-container {
   position: relative;
   transition: all 0.3s ease;
@@ -486,5 +381,34 @@ button:disabled {
   100% {
     filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.4));
     transform: scale(1);
+  }
+}
+
+@keyframes pulseCount {
+  0% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 5px #a855f7;
+    border-color: #a855f7;
+  }
+  50% {
+    box-shadow: 0 0 25px #d8b4fe;
+    border-color: #d8b4fe;
+  }
+  100% {
+    box-shadow: 0 0 5px #a855f7;
+    border-color: #a855f7;
   }
 }

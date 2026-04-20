@@ -1,9 +1,9 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, isDevMode, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import {ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners} from '@angular/core';
+import {provideRouter} from '@angular/router';
+import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
 
-import { routes } from './app.routes';
-import { provideServiceWorker } from '@angular/service-worker';
+import {routes} from './app.routes';
+import {provideServiceWorker} from '@angular/service-worker';
 
 export const appConfig: ApplicationConfig = {
   providers: [

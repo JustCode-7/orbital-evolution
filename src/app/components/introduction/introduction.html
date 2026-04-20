@@ -1,7 +1,7 @@
 <div class="intro-wrapper">
 
   <header class="main-header">
-    <h1>ORBITAL EVOLUTION 0.9.9</h1>
+    <h1>ORBITAL EVOLUTION 0.9.9.1</h1>
     <p class="tagline">Mission: Solar Harvest</p>
   </header>
 
@@ -15,7 +15,8 @@
 
   <section class="graphic-section">
     <div class="preview-container">
-      <img src="assets/introduction-animation.gif" alt="Gameplay Preview" class="game-gif">
+      <img priority [ngSrc]="'assets/introduction-animation.gif'" alt="Gameplay Preview" class="game-gif" width="600"
+           height="500">
     </div>
   </section>
 
@@ -27,13 +28,13 @@
           <svg viewBox="0 0 24 24" class="icon icon-cyan">
             <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z"/>
           </svg>
-          <h3>Steuerung</h3>
+          <h3>🕹️ Steuerung</h3>
         </div>
         <p>Halte <strong>Maustaste/Touch</strong> zum Steigen, lass los zum Sinken.</p>
       </div>
 
       <div class="info-card">
-        <h3>🕹️ Ziel</h3>
+        <h3>🪐 Ziel</h3>
         <p>
           Sammele Sonnenenergie! Je näher das <strong>Raumschiff</strong> der Sonne kommt, desto schneller steigen deine
           <strong>Punkte</strong>.
@@ -42,7 +43,7 @@
       </div>
 
       <div class="info-card special">
-        <h3>🔬 Forschungszone (EP)</h3>
+        <h3>⚛️ Forschungszone (EP)</h3>
         <p>
           Verweile im grünen Orbit (Forschungszone), um <strong>Erfahrungspunkte (EP)</strong> zu generieren. Mit diesen
           Punkten kannst du Upgrades erwerben.
@@ -55,9 +56,10 @@
             <path
               d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
           </svg>
-          <h3>Schilde</h3>
+          <h3>🛡️ Schilde (100 EP)</h3>
         </div>
-        <p>Absorbieren Asteroiden-Einschläge. Ohne Schild verlierst du Satelliten oder das gesamte Schiff!</p>
+        <p>Wohl die wichtigste Technologie, denn sie absorbieren Asteroiden-Einschläge. Ohne Schild verlierst du
+          Satelliten oder das gesamte Schiff!</p>
       </div>
 
       <div class="info-card special">
@@ -66,7 +68,7 @@
             <path
               d="M21 16.5C21 16.88 20.79 17.21 20.47 17.38L12.57 21.82C12.41 21.94 12.21 22 12 22C11.79 22 11.59 21.94 11.43 21.82L3.53 17.38C3.21 17.21 3 16.88 3 16.5V7.5C3 7.12 3.21 6.79 3.53 6.62L11.43 2.18C11.59 2.06 11.79 2 12 2C12.21 2 12.41 2.06 12.57 2.18L20.47 6.62C20.79 6.79 21 7.12 21 7.5V16.5Z"/>
           </svg>
-          <h3>Satelliten</h3>
+          <h3>🛰️ Satelliten (150 EP)</h3>
         </div>
         <p>Erhöhen die EP-Gewinnrate massiv, solange sie aktiv sind (max. 10). Sie fangen außerdem Asterioden ab, werden
           aber
@@ -78,7 +80,7 @@
           <svg viewBox="0 0 24 24" class="icon icon-red">
             <path d="M13 2v8h8L12 22v-8H4L13 2z"/>
           </svg>
-          <h3>Space Marines</h3>
+          <h3>🎖️ Space Marines (250 EP)</h3>
         </div>
         <p>Temporäre Eskorte, die automatisch auf nahende Asteroiden feuert und den Orbit säubert.</p>
       </div>
@@ -89,7 +91,7 @@
             <path
               d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5.89 12.55L12 15.89l6.11-3.34c.66-.36.89-1.19.53-1.85-.36-.66-1.19-.89-1.85-.53L12 12.79l-4.79-2.62c-.66-.36-1.49-.13-1.85.53-.36.66-.13 1.49.53 1.85z"/>
           </svg>
-          <h3>Forschung</h3>
+          <h3>🔬 Forschung (200 EP)</h3>
         </div>
         <p>Erhöhe deine Stufe mindestens bis auf 10, um den <strong>Anti-Gravitation-Antrieb</strong> für den
           OrbitalSprung aus dem Sonnensystem zu aktivieren. Doch ist das schon das Ende ...?</p>

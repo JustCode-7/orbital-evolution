@@ -9,34 +9,34 @@
   <canvas #gameCanvas id="gameCanvas"></canvas>
 
   <div class="ui-overlay top-left p-3 text-white">
-    @if (gameActive && !winState) {
+    @if (gameService.gameActive() && !gameService.winState()) {
       <div class="hud">
 
-        @if (resumeCountdown() > 0) {
+        @if (gameService.resumeCountdown() > 0) {
           <div class="countdown-overlay">
-            <div class="countdown-number">{{ resumeCountdown() }}</div>
+            <div class="countdown-number">{{ gameService.resumeCountdown() }}</div>
           </div>
         }
         <div class="top-row">
           <div class="main-stats">
             <div class="score" [class.score-active]="isScoreZone">SCORE: {{ scoreFromated }}</div>
-            <div class="ep" [class.ep-active]="isInsideHabitableZone">
-              EP: {{ ep | number:'1.0-0' }}
+            <div class="ep" [class.ep-active]="gameService.isInsideHabitableZone">
+              EP: {{ gameService.ep | number:'1.0-0' }}
             </div>
           </div>
         </div>
 
         <div class="left-panels">
-          @if (shieldActive) {
+          @if (gameService.shieldActive) {
             <div class="bar-row">
               <label>SHIELD</label>
               <div class="progress">
-                <div class="fill cyan" [style.width.%]="shieldHp"></div>
+                <div class="fill cyan" [style.width.%]="gameService.shieldHp"></div>
               </div>
             </div>
           }
           <div class="log-overlay">
-            @for (entry of scienceLog; track $index) {
+            @for (entry of gameService.scienceLog; track $index) {
               <div [class]="entry.type" class="log-item">
                 {{ entry.type === 'research' ? '🔬' : '⚠️' }} {{ entry.text }}
               </div>
@@ -47,33 +47,33 @@
         <div class="bottom-controls">
           <div class="action-side left">
             <button class="power-up-button shield-button-container"
-                    [class.shield-active]="shieldHp > 0"
-                    [class.critical]="shieldHp < 35"
+                    [class.shield-active]="gameService.shieldHp > 0"
+                    [class.critical]="gameService.shieldHp < 35"
                     (mousedown)="buy('shield', $event)"
                     (touchstart)="buy('shield', $event)"
-                    [disabled]="ep < 100 || shieldHp === 100">
+                    [disabled]="gameService.ep < 100 || gameService.shieldHp === 100">
 
-              @if (shieldActive) {
+              @if (gameService.shieldActive) {
                 <svg class="shield-border-svg rounded-2">
                   <rect x="0" y="0" width="100%" height="100%"
                         class="shield-rect"
                         [style.stroke-dashoffset]="getShieldDashOffset()"
-                        [style.stroke]="'rgba(0, 255, 255, ' + (shieldHp / 100) + ')'"/>
+                        [style.stroke]="'rgba(0, 255, 255, ' + (gameService.shieldHp / 100) + ')'"/>
                 </svg>
               }
 
               🛡️ Shield<span>(100 EP)</span>
             </button>
-            @if (satellitesCount >= 10) {
-              <button class="orbit-direction-change-btn-color jump-btn"
+            @if (gameService.satellitesCount >= 10) {
+              <button class="power-up-button orbit-change-btn-color fw-bold pt-2"
                       (mousedown)="buy('sats', $event)"
-                      (touchstart)="buy('sats', $event)">⇄<br>Orbit
+                      (touchstart)="buy('sats', $event)">⇄ Orbit
               </button>
             } @else {
               <button class="power-up-button"
                       (mousedown)="buy('sats', $event)"
                       (touchstart)="buy('sats', $event)"
-                      [disabled]="ep < 150">🛰️ Sats {{ satellitesCount }}<span>(150 EP)</span>
+                      [disabled]="gameService.ep < 150">🛰️ Sats {{ gameService.satellitesCount }}<span>(150 EP)</span>
               </button>
             }
           </div>
@@ -82,7 +82,7 @@
             <button class="power-up-button marine-btn"
                     (mousedown)="buy('marines', $event)"
                     (touchstart)="buy('marines', $event)"
-                    [disabled]="ep < 250 || marinesCooldownProgress < 100">
+                    [disabled]="gameService.ep < 250 || marinesCooldownProgress < 100">
               🎖️ Marines <span>(250 EP)</span>
               @if (marinesCooldownProgress < 100) {
                 <div class="cooldown-overlay-mini">
@@ -94,7 +94,7 @@
             <button class="power-up-button"
                     (mousedown)="buy('research', $event)"
                     (touchstart)="buy('research', $event)"
-                    [disabled]="ep < 200">🔬 Lvl {{ researchLevel }} <span>(200 EP)</span>
+                    [disabled]="gameService.ep < 200">🔬 Lvl {{ gameService.researchLevel }} <span>(200 EP)</span>
             </button>
           </div>
         </div>
@@ -105,7 +105,7 @@
 
 <div class="top-right-controls">
   <div class="pause-control d-flex flex-column gap-2 align-items-end">
-    @if (researchLevel >= 10 && !isJumping) {
+    @if (gameService.researchLevel >= 10 && !gameService.isJumping) {
       <button class="jump-btn"
               (mousedown)="triggerOrbitalJump()"
               (touchstart)="triggerOrbitalJump()">
@@ -114,7 +114,7 @@
       </button>
     }
 
-    @if (isPaused) {
+    @if (gameService.isPaused) {
       <button class="resume-btn"
               (mousedown)="resumeGame()"
               (touchstart)="resumeGame()">WEITER
@@ -129,33 +129,6 @@
   </div>
 </div>
 
-@if (!gameActive || winState) {
-  <div class="menu-modal p-2">
-    <div class="modal-content">
-      <h1>{{ winState ? 'MISSION ERFOLGREICH' : 'ORBITAL EVOLUTION' }}</h1>
-      @if (winState) {
-        <p class="hyper-jump-text">Du bist sicher in den Hyperraum gesprungen!</p>
-      }
-      <div class="scores">
-        <p class="score-display">Letzter Score: {{ lastScore() | number:'1.0-0' }}</p>
-        <p class="score-display high">Bester Score: {{ highScore() | number:'1.0-0' }}</p>
-      </div>
-      <div class="d-flex justify-content-evenly">
-
-        <button class="start-btn fw-bold"
-                (mousedown)="startGame($event)"
-                (touchstart)="startGame($event)">
-          {{ winState ? 'NEUER START' : 'START' }}
-        </button>
-
-        <button class="start-btn fw-bold" routerLink="">INTRO</button>
-
-        <button class="mt-2" mat-icon-button
-                (mousedown)="clearHighScore()"
-                (touchstart)="clearHighScore()">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </div>
-    </div>
-  </div>
+@if (!gameService.gameActive() || gameService.winState()) {
+  <app-game-dialog></app-game-dialog>
 }
