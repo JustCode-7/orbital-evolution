@@ -1,8 +1,9 @@
 <div class="intro-wrapper">
 
   <header class="main-header">
-    <h1>ORBITAL EVOLUTION 0.9.9.1</h1>
+    <h1>ORBITAL EVOLUTION</h1>
     <p class="tagline">Mission: Solar Harvest</p>
+    <p class="control-hint">beta - 1.0</p>
   </header>
 
   <section class="story-section">
@@ -107,6 +108,15 @@
         App installieren ?
       </button>
     }
+
+    <p class="control-hint">local share</p>
+    <button class="btn btn-dark m-2 fw-bold font-monospace"
+            (click)="showQRCode(colapseDivBox)">
+      {{ colapseDivBox.classList.contains('collapse') ? 'Show' : 'Hide' }} QR-Code
+    </button>
+    <div #colapseDivBox class="collapse multi-collapse">
+      <img src="assets/site-qr-code.png" alt="site-qr-code" class="w-75">
+    </div>
 
   </footer>
 

@@ -19,4 +19,9 @@ export class Introduction {
   protected installApp() {
     this.pwaService.triggerInstall();
   }
+
+  protected showQRCode(colapseDivBox: HTMLDivElement) {
+    colapseDivBox.classList.contains('collapse') ? colapseDivBox.classList.remove('collapse') : colapseDivBox.classList.add('collapse')
+    colapseDivBox ? colapseDivBox.scrollIntoView({behavior: 'smooth'}) : null
+  }
 }
