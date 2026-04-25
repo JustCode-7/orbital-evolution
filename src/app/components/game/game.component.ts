@@ -882,6 +882,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   // Methode zum Fortsetzen mit Countdown
   resumeGame() {
+    this.fullscreenService.toggleTabFullScreenModeGame()
     this.gameService.isPaused = false;
     this.gameService.resumeCountdown.set(3);
 
