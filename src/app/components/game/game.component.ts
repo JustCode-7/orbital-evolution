@@ -592,8 +592,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     this.drawStars();
     this.drawEnvironmentZones(s, cx, cy);
-    // this.drawSun(s, cx, cy);
     this.drawComets(s, cx, cy);
+    this.cutFor3dSun(cx, cy, s);
 
     // Spieler-System berechnen
     const px = cx + Math.cos(this.playerAngle) * (this.gameService.playerR * s);
@@ -608,6 +608,26 @@ export class GameComponent implements OnInit, OnDestroy {
     // Kampf-Objekte
     this.drawProjectiles(s, cx, cy);
     this.drawAsteroids(s, cx, cy);
+  }
+
+  /**
+   * LOCH FÜR DIE SONNE STANZEN
+   * @param cx
+   * @param cy
+   * @param s
+   * @private
+   */
+  private cutFor3dSun(cx: number, cy: number, s: number) {
+    // --- NEU:  ---
+    // Alles was wir jetzt zeichnen, "löscht" Pixel statt sie zu färben
+    this.ctx.save();
+    this.ctx.globalCompositeOperation = 'destination-out';
+    this.ctx.beginPath();
+    // Radius etwas kleiner als der Sonnen-Radius (65), damit der Rand weich bleibt
+    this.ctx.arc(cx, cy, 60 * s, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.restore();
+    // ---------------------------------------
   }
 
 // --- PRIVATE HELPER METHODS ---

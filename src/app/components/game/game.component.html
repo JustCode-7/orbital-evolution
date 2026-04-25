@@ -76,6 +76,7 @@
               <button class="power-up-button"
                       (mousedown)="buy('sats', $event)"
                       (touchstart)="buy('sats', $event)"
+                      [class.power-active]="gameService.ep >= 150"
                       [disabled]="gameService.ep < 150">🛰️ Sats {{ gameService.satellitesCount }}<span>(150 EP)</span>
               </button>
             }
@@ -85,7 +86,8 @@
             <button class="power-up-button marine-btn"
                     (mousedown)="buy('marines', $event)"
                     (touchstart)="buy('marines', $event)"
-                    [disabled]="gameService.ep < 250 || marinesCooldownProgress < 100">
+                    [disabled]="gameService.ep < 250 || marinesCooldownProgress < 100"
+                    [class.power-active]="gameService.ep >= 250 && marinesCooldownProgress === 100">
               🎖️ Marines <span>(250 EP)</span>
               @if (marinesCooldownProgress < 100) {
                 <div class="cooldown-overlay-mini">
@@ -97,7 +99,9 @@
             <button class="power-up-button"
                     (mousedown)="buy('research', $event)"
                     (touchstart)="buy('research', $event)"
-                    [disabled]="gameService.ep < 200">🔬 Lvl {{ gameService.researchLevel }} <span>(200 EP)</span>
+                    [disabled]="gameService.ep < 200"
+                    [class.power-active]="gameService.ep >= 200"
+            >🔬 Lvl {{ gameService.researchLevel }} <span>(200 EP)</span>
             </button>
           </div>
         </div>

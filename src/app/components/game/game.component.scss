@@ -221,6 +221,10 @@
   border: 2px solid transparent;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 
+  &.power-active {
+    animation: power-btn-glow-pulse 2s infinite ease-in-out;
+  }
+
   &.shield-active-border {
     // Ein leichter Glow-Effekt passend zur Rahmenfarbe
     box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
@@ -342,12 +346,12 @@ button:disabled {
   transition: all 0.3s ease;
 
   &.shield-active {
-    animation: shield-glow-pulse 2s infinite ease-in-out;
+    animation: power-btn-glow-pulse 2s infinite ease-in-out;
   }
 
   // Wenn das Schild fast leer ist, soll es schneller und rötlicher pulsieren
   &.critical {
-    animation: shield-glow-pulse 0.5s infinite ease-in-out;
+    animation: power-btn-glow-pulse 0.5s infinite ease-in-out;
     background: linear-gradient(to right, #ff4444, #0f172a, #0f172a, #ff4444);
   }
 }
@@ -373,7 +377,7 @@ button:disabled {
   }
 }
 
-@keyframes shield-glow-pulse {
+@keyframes power-btn-glow-pulse {
   0% {
     filter: drop-shadow(0 0 2px rgba(0, 255, 255, 0.4));
     transform: scale(1);
