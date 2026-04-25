@@ -6,41 +6,51 @@ import {Injectable, signal} from '@angular/core';
 export class ToggleFullscreenService {
   private wakeLock: WakeLockSentinel | null = null;
   isFullScreen = signal(false)
+  // Auf dem iPhone wird dies meist 'false' sein, außer du bist auf einem iPad
+  // oder in einem Browser, der es emuliert.
+  readonly canFullscreen = !!document.documentElement.requestFullscreen ||
+    !!(document.documentElement as any).webkitRequestFullscreen;
 
   constructor() {
-    document.addEventListener("fullscreenchange", () => {
-      if (document.fullscreenElement) {
-        this.isFullScreen.set(true)
-      } else {
-        this.isFullScreen.set(false)
-      }
-    });
+    if (this.canFullscreen) {
+      document.addEventListener("fullscreenchange", () => {
+        if (document.fullscreenElement) {
+          this.isFullScreen.set(true)
+        } else {
+          this.isFullScreen.set(false)
+        }
+      });
+    }
   }
 
   toggleTabFullScreenModeGame() {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        this.isFullScreen.set(true)
-        this.initDisplayAlwaysOnMode().then(() => {
-          console.log('full screen and display always on mode requested');
+    if (this.canFullscreen) {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(() => {
+          this.isFullScreen.set(true)
+          this.initDisplayAlwaysOnMode().then(() => {
+            console.log('full screen and display always on mode requested');
+          })
         })
-      })
-        .catch(reason => {
-          console.warn("Fullscreen error: ", reason)
-        });
+          .catch(reason => {
+            console.warn("Fullscreen error: ", reason)
+          });
+      }
     }
   }
 
   toggleTabFullScreenModeMenue() {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        this.isFullScreen.set(true)
-        this.initDisplayAlwaysOnMode().then(() => {
-          console.log('full screen and display always on mode requested');
-        })
-      });
-    } else if (document.exitFullscreen) {
-      document.exitFullscreen();
+    if (this.canFullscreen) {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(() => {
+          this.isFullScreen.set(true)
+          this.initDisplayAlwaysOnMode().then(() => {
+            console.log('full screen and display always on mode requested');
+          })
+        });
+      } else if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
     }
   }
 
