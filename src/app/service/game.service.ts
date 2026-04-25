@@ -32,6 +32,12 @@ export class GameService {
   scienceLog: LogEntry[] = [];
   projectiles: Projectile[] = [];
 
+  isColorsInverted = false;
+
+  toggleInversion() {
+    this.isColorsInverted = !this.isColorsInverted;
+  }
+
   startSpawning() {
     this.cleanup();
     const interval = Math.max(400, 1500 - Math.floor((this.researchLevel - 1) / 3) * 250);

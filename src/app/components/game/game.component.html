@@ -1,12 +1,15 @@
 <div class="game-container" (mousedown)="onDown($event);"
      (touchstart)="onDown($event)"
-     (mouseup)="onUp()" (touchend)="onUp()" (mouseleave)="onUp()">
+     (mouseup)="onUp()" (touchend)="onUp()" (mouseleave)="onUp()"
+     [class.invert-colors]="gameService.isColorsInverted"
+>
 
   <div class="sun-3d-layer">
     <app-3d></app-3d>
   </div>
 
-  <canvas #gameCanvas id="gameCanvas"></canvas>
+  <canvas #gameCanvas
+          id="gameCanvas"></canvas>
 
   <div class="ui-overlay top-left p-3 text-white">
     @if (gameService.gameActive() && !gameService.winState()) {
@@ -103,7 +106,7 @@
   </div>
 </div>
 
-<div class="top-right-controls">
+<div class="top-right-controls" [class.invert-colors]="gameService.isColorsInverted">
   <div class="pause-control d-flex flex-column gap-2 align-items-end">
     @if (gameService.researchLevel >= 10 && !gameService.isJumping) {
       <button class="jump-btn"
