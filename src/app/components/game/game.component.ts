@@ -27,6 +27,28 @@ import {MusicService} from '../../service/music.service';
 })
 export class GameComponent implements OnInit, OnDestroy {
   @ViewChild('gameCanvas', {static: true}) canvas!: ElementRef<HTMLCanvasElement>;
+
+  @HostListener('window:orientationchange')
+  @HostListener('window:resize')
+  resize() {
+    this.canvas.nativeElement.width = window.innerWidth;
+    this.canvas.nativeElement.height = window.innerHeight;
+    // Wir nehmen 900px als Referenzhöhe
+    this.scale = Math.min(window.innerWidth, window.innerHeight) / 900;
+    this.initStars();
+  }
+
+  @HostListener('window:mouseup')
+  @HostListener('window:touchend')
+  onUp() {
+    this.isPressing = false;
+  }
+
+  @HostListener('contextmenu', ['$event'])
+  onContextMenu(e: Event) {
+    e.preventDefault();
+  }
+
   private ctx!: CanvasRenderingContext2D;
   private cdr = inject(ChangeDetectorRef);
   protected readonly fullscreenService = inject(ToggleFullscreenService);
@@ -49,7 +71,10 @@ export class GameComponent implements OnInit, OnDestroy {
   private playerImg = new Image();
   private animFrame: any;
   private musicservice = inject(MusicService);
-
+  private scale = 1;
+  private cachedGlassCanvas: HTMLCanvasElement | null = null;
+  private lastShieldHpForCracks: number = -1;
+  private lastInvertedState: boolean = false;
 
   ngOnInit() {
     this.ctx = this.canvas.nativeElement.getContext('2d')!;
@@ -63,24 +88,6 @@ export class GameComponent implements OnInit, OnDestroy {
     this.gameService.cleanup();
     cancelAnimationFrame(this.animFrame);
     this.musicservice.stopMusic();
-  }
-
-  @HostListener('window:resize')
-  resize() {
-    this.canvas.nativeElement.width = window.innerWidth;
-    this.canvas.nativeElement.height = window.innerHeight;
-    this.initStars();
-  }
-
-  @HostListener('window:mouseup')
-  @HostListener('window:touchend')
-  onUp() {
-    this.isPressing = false;
-  }
-
-  @HostListener('contextmenu', ['$event'])
-  onContextMenu(e: Event) {
-    e.preventDefault();
   }
 
   get scoreFromated(): number {
@@ -611,6 +618,10 @@ export class GameComponent implements OnInit, OnDestroy {
     // Kampf-Objekte
     this.drawProjectiles(s, cx, cy);
     this.drawAsteroids(s, cx, cy);
+
+
+    this.drawGlassCracks(this.ctx, window.innerWidth, window.innerHeight);
+    this.drawDamageVignette(this.ctx, window.innerWidth, window.innerHeight);
   }
 
   /**
@@ -935,5 +946,149 @@ export class GameComponent implements OnInit, OnDestroy {
     const progress = this.gameService.shieldHp / 100;
     // Offset berechnet, wie viel vom Rand "leer" bleibt
     return pathLength * (1 - progress);
+  }
+
+
+  private drawGlassCracks(ctx: CanvasRenderingContext2D, width: number, height: number) {
+    const shieldPercent = this.gameService.shieldHp / 100;
+
+    // NEU: Startet jetzt bei 35%
+    if (shieldPercent >= 0.35) return;
+
+    // NEU: Intensität berechnen (0.35 - 0 = 0.35 Bereich)
+    // 1 / 0.35 ≈ 2.857. Damit erreichen wir bei 0% HP genau die Intensität 1.
+    const intensity = (0.35 - shieldPercent) * 2.857;
+
+    // ERWEITERTE PRÜFUNG:
+    // Wir prüfen jetzt auch, ob die Breite oder Höhe des Caches noch zur Fenstergröße passt
+    if (
+      !this.cachedGlassCanvas ||
+      this.cachedGlassCanvas.width !== width || // NEU: Check auf Breitenänderung
+      this.cachedGlassCanvas.height !== height || // NEU: Check auf Höhenänderung
+      this.gameService.shieldHp !== this.lastShieldHpForCracks ||
+      this.gameService.isColorsInverted !== this.lastInvertedState
+    ) {
+      this.generateGlassCache(width, height, intensity);
+      this.lastShieldHpForCracks = this.gameService.shieldHp;
+      this.lastInvertedState = this.gameService.isColorsInverted;
+    }
+
+    if (this.cachedGlassCanvas) {
+      ctx.drawImage(this.cachedGlassCanvas, 0, 0);
+    }
+  }
+
+  private generateGlassCache(width: number, height: number, intensity: number) {
+    // 1. Canvas Vorbereitung
+    if (!this.cachedGlassCanvas) {
+      this.cachedGlassCanvas = document.createElement('canvas');
+    }
+    this.cachedGlassCanvas.width = width;
+    this.cachedGlassCanvas.height = height;
+    const offCtx = this.cachedGlassCanvas.getContext('2d')!;
+    offCtx.clearRect(0, 0, width, height);
+
+    // 2. Parameter-Berechnung basierend auf deinen Schwellenwerten
+    // intensity kommt mit 0 an bei 35% HP und mit 1 bei 0% HP
+    const maxCracks = 8;
+    const crackCount = Math.floor(maxCracks * 0.5 + (maxCracks * 0.5 * intensity));
+
+    // Die Länge wächst von 200px auf 350px (skaliert mit this.scale)
+    const totalLength = (200 + 150 * intensity) * this.scale;
+
+    const isInverted = this.gameService.isColorsInverted;
+    const corners = [
+      {x: 0, y: 0, angle: Math.PI / 4},               // Oben Links
+      {x: width, y: 0, angle: (Math.PI * 3) / 4},     // Oben Rechts
+      {x: width, y: height, angle: (Math.PI * 5) / 4},// Unten Rechts
+      {x: 0, y: height, angle: (Math.PI * 7) / 4}     // Unten Links
+    ];
+
+    // Statischer Zufall für ruckelfreie Darstellung
+    let seed = 12345;
+    const random = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+
+    // --- DURCHGANG 1: Roter Glow & Dunkle Kanten (Tiefeneffekt) ---
+    offCtx.save();
+    offCtx.shadowColor = 'rgba(255, 0, 0, 0.9)'; // Kräftiges Schadens-Rot
+    offCtx.shadowBlur = 10 * this.scale;
+    offCtx.strokeStyle = isInverted ? 'rgba(0,0,0,0.6)' : 'rgba(20,20,20,0.8)';
+    offCtx.lineWidth = 3 * this.scale;
+
+    corners.forEach(c => {
+      for (let i = 0; i < crackCount; i++) {
+        // Wir starten pro Ecke crackCount-mal einen Riss-Zweig
+        const variation = (random() - 0.5) * 1.2;
+        this.drawStaticBranch(offCtx, c.x, c.y, c.angle + variation, totalLength, random);
+      }
+    });
+    offCtx.restore();
+
+    // --- DURCHGANG 2: Helle Glaskante (Spiegelung/Bruch) ---
+    seed = 12345; // Seed zurücksetzen für identische Linienführung
+    offCtx.save();
+    // Ein helles Blau-Weiß für den Glas-Look, bei Inverted eher ein helles Rot
+    offCtx.strokeStyle = isInverted ? 'rgba(255, 100, 100, 0.8)' : 'rgba(220, 240, 255, 0.7)';
+    offCtx.lineWidth = 1 * this.scale;
+
+    corners.forEach(c => {
+      for (let i = 0; i < crackCount; i++) {
+        const variation = (random() - 0.5) * 1.2;
+        this.drawStaticBranch(offCtx, c.x, c.y, c.angle + variation, totalLength, random);
+      }
+    });
+    offCtx.restore();
+  }
+
+  private drawStaticBranch(ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, length: number, rng: () => number) {
+    // Wenn der Ast zu kurz wird, aufhören
+    if (length < 8) return;
+
+    // Kürzere Segmente machen den Riss zackiger
+    const segmentLength = 10 + rng() * 15;
+    const nextX = x + Math.cos(angle) * segmentLength;
+    const nextY = y + Math.sin(angle) * segmentLength;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(nextX, nextY);
+    ctx.stroke();
+
+    const newLength = length - segmentLength;
+
+    // Hauptast weiterführen (nur leichte Winkeländerung)
+    this.drawStaticBranch(ctx, nextX, nextY, angle + (rng() - 0.5) * 0.3, newLength, rng);
+
+    // NEU: Viel höhere Wahrscheinlichkeit für Nebenäste (rng > 0.35 statt 0.6)
+    if (rng() > 0.35) {
+      // Scharfer Abbruchwinkel für typische Glassplitter-Optik (45° bis 90° Abzweigung)
+      const sharpAngle = (rng() > 0.5 ? 1 : -1) * (0.6 + rng() * 0.6);
+
+      // Der Nebenast ist etwas kürzer als der Hauptast
+      this.drawStaticBranch(ctx, nextX, nextY, angle + sharpAngle, newLength * (0.4 + rng() * 0.3), rng);
+    }
+  }
+
+  private drawDamageVignette(ctx: CanvasRenderingContext2D, width: number, height: number) {
+    const shieldPercent = this.gameService.shieldHp / 100;
+    // NEU: Synchronisation mit den Rissen auf 35%
+    if (shieldPercent >= 0.35) return;
+
+    const intensity = (0.3 - shieldPercent) * 3.33;
+
+    // Radialer Verlauf: Zentrum transparent, Ränder färben
+    const grad = ctx.createRadialGradient(width / 2, height / 2, width * 0.1, width / 2, height / 2, width * 0.9);
+
+    // Im Light Mode eher ein grauer Schatten, im Dark Mode ein rötlicher Alarm-Schimmer
+    const color = this.gameService.isColorsInverted ? '50, 50, 50' : '150, 0, 0';
+
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, `rgba(${color}, ${intensity * 0.4})`);
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
   }
 }

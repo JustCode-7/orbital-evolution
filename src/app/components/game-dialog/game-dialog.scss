@@ -3,7 +3,6 @@
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.85);
-  display: flex;
   align-items: center;
   justify-content: center;
   /* Das ist der entscheidende Teil für iOS */
@@ -12,8 +11,12 @@
 }
 
 .menu-modal-content {
+  max-width: 90vw;
+  width: 70vw;
+  height: auto;
   text-align: center;
-  padding: 30px;
+  margin: auto;
+  padding: 10px;
   border: 1px solid #00fbff;
   background: #020617;
   border-radius: 12px;
