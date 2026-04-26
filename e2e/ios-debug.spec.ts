@@ -66,7 +66,7 @@ test('Full Game Loop: Start, Shield, Touch and Crash', async ({page}) => {
   // Wir warten einfach, bis das Game Over (winState oder gameActive = false) eintritt.
   // Da die Sonne das Schiff anzieht, passiert das von allein.
   // Wir warten max. 30 Sekunden auf das Wiedererscheinen des Modals
-  const modal = page.locator('.menu-modal');
+  const modal = page.locator('.menu-modal-content');
   await expect(modal).toBeVisible({timeout: 30000});
 
   // 5. Beweis-Check: Erscheint der "NEUER START" Text?

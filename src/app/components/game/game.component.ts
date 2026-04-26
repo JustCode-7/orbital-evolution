@@ -26,14 +26,39 @@ import {MusicService} from '../../service/music.service';
   styleUrls: ['./game.component.scss']
 })
 export class GameComponent implements OnInit, OnDestroy {
-  @ViewChild('gameCanvas', {static: true}) canvas!: ElementRef<HTMLCanvasElement>;
+  private _canvas!: ElementRef<HTMLCanvasElement>;
+  ctx!: CanvasRenderingContext2D;
 
+  // 3. Der Setter: Wird von Angular aufgerufen, sobald das Element erscheint oder verschwindet
+  @ViewChild('gameCanvas', {static: false}) set canvas(content: ElementRef<HTMLCanvasElement> | undefined) {
+    if (content) {
+      this._canvas = content;
+      this.ctx = this._canvas.nativeElement.getContext('2d')!;
+
+      // Sobald das Canvas da ist, müssen wir die Größe berechnen
+      this.resize();
+
+      // Falls die Sterne noch nicht da sind, initialisieren
+      if (this.stars.length === 0) {
+        this.initStars();
+      }
+    }
+  }
+
+  // Hilfsmethode, falls du im restlichen Code "this.canvas" statt "this._canvas" nutzt
+  get canvasRef(): ElementRef<HTMLCanvasElement> {
+    return this._canvas;
+  }
+
+  // WICHTIG: In der resize() Methode musst du jetzt prüfen, ob das Canvas da ist
   @HostListener('window:orientationchange')
   @HostListener('window:resize')
   resize() {
-    this.canvas.nativeElement.width = window.innerWidth;
-    this.canvas.nativeElement.height = window.innerHeight;
-    // Wir nehmen 900px als Referenzhöhe
+    // Sicherheitssperre, falls das Canvas gerade im @if-Block versteckt ist
+    if (!this._canvas) return;
+
+    this._canvas.nativeElement.width = window.innerWidth;
+    this._canvas.nativeElement.height = window.innerHeight;
     this.scale = Math.min(window.innerWidth, window.innerHeight) / 900;
     this.initStars();
   }
@@ -49,7 +74,6 @@ export class GameComponent implements OnInit, OnDestroy {
     e.preventDefault();
   }
 
-  private ctx!: CanvasRenderingContext2D;
   private cdr = inject(ChangeDetectorRef);
   protected readonly fullscreenService = inject(ToggleFullscreenService);
 
@@ -77,10 +101,7 @@ export class GameComponent implements OnInit, OnDestroy {
   private lastInvertedState: boolean = false;
 
   ngOnInit() {
-    this.ctx = this.canvas.nativeElement.getContext('2d')!;
     this.playerImg.src = 'assets/ship.svg';
-    this.resize();
-    this.initStars();
     this.gameLoop();
   }
 
@@ -594,6 +615,10 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private draw() {
+
+    if (!this.ctx) return; // Abbruch, wenn das Canvas (noch) nicht existiert
+    this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    
     const s = Math.min(window.innerWidth, window.innerHeight) / 900;
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;

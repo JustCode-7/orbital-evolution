@@ -70,7 +70,7 @@ yarn-error.log*
 
 # Playwright
 node_modules/
-/test-results/
+/e2e/test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/

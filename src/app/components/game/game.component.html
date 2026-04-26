@@ -1,140 +1,143 @@
-<div class="game-container" (mousedown)="onDown($event);"
-     (touchstart)="onDown($event)"
-     (mouseup)="onUp()" (touchend)="onUp()" (mouseleave)="onUp()"
-     [class.invert-colors]="gameService.isColorsInverted"
->
-
-  <div class="sun-3d-layer">
-    <app-3d></app-3d>
+@if (!gameService.gameActive() || gameService.winState()) {
+  <div class="d-flex justify-content-center align-items-center vh-100">
+    <app-game-dialog></app-game-dialog>
   </div>
+} @else {
+  <div class="game-container" (mousedown)="onDown($event);"
+       (touchstart)="onDown($event)"
+       (mouseup)="onUp()" (touchend)="onUp()" (mouseleave)="onUp()"
+       [class.invert-colors]="gameService.isColorsInverted"
+  >
 
-  <canvas #gameCanvas
-          id="gameCanvas"></canvas>
+    <div class="sun-3d-layer">
+      <app-3d></app-3d>
+    </div>
 
-  <div class="ui-overlay top-left p-3 text-white">
-    @if (gameService.gameActive() && !gameService.winState()) {
-      <div class="hud">
+    <canvas #gameCanvas
+            id="gameCanvas"></canvas>
 
-        @if (gameService.resumeCountdown() > 0) {
-          <div class="countdown-overlay">
-            <div class="countdown-number">{{ gameService.resumeCountdown() }}</div>
-          </div>
-        }
-        <div class="top-row">
-          <div class="main-stats">
-            <div class="score" [class.score-active]="isScoreZone">SCORE: {{ scoreFromated }}</div>
-            <div class="ep" [class.ep-active]="gameService.isInsideHabitableZone">
-              EP: {{ gameService.ep | number:'1.0-0' }}
-            </div>
-          </div>
-        </div>
+    <div class="ui-overlay top-left p-3 text-white">
+      @if (gameService.gameActive() && !gameService.winState()) {
+        <div class="hud">
 
-        <div class="left-panels">
-          @if (gameService.shieldActive) {
-            <div class="bar-row">
-              <label>SHIELD</label>
-              <div class="progress">
-                <div class="fill cyan" [style.width.%]="gameService.shieldHp"></div>
-              </div>
+          @if (gameService.resumeCountdown() > 0) {
+            <div class="countdown-overlay">
+              <div class="countdown-number">{{ gameService.resumeCountdown() }}</div>
             </div>
           }
-          <div class="log-overlay">
-            @for (entry of gameService.scienceLog; track $index) {
-              <div [class]="entry.type" class="log-item">
-                {{ entry.type === 'research' ? '🔬' : '⚠️' }} {{ entry.text }}
+          <div class="top-row">
+            <div class="main-stats">
+              <div class="score" [class.score-active]="isScoreZone">SCORE: {{ scoreFromated }}</div>
+              <div class="ep" [class.ep-active]="gameService.isInsideHabitableZone">
+                EP: {{ gameService.ep | number:'1.0-0' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="left-panels">
+            @if (gameService.shieldActive) {
+              <div class="bar-row">
+                <label>SHIELD</label>
+                <div class="progress">
+                  <div class="fill cyan" [style.width.%]="gameService.shieldHp"></div>
+                </div>
               </div>
             }
-          </div>
-        </div>
-
-        <div class="bottom-controls">
-          <div class="action-side left">
-            <button class="power-up-button shield-button-container"
-                    [class.shield-active]="gameService.shieldHp > 0"
-                    [class.critical]="gameService.shieldHp < 35"
-                    (mousedown)="buy('shield', $event)"
-                    (touchstart)="buy('shield', $event)"
-                    [disabled]="gameService.ep < 100 || gameService.shieldHp === 100">
-
-              @if (gameService.shieldActive) {
-                <svg class="shield-border-svg rounded-2">
-                  <rect x="0" y="0" width="100%" height="100%"
-                        class="shield-rect"
-                        [style.stroke-dashoffset]="getShieldDashOffset()"
-                        [style.stroke]="'rgba(0, 255, 255, ' + (gameService.shieldHp / 100) + ')'"/>
-                </svg>
-              }
-
-              🛡️ Shield<span>(100 EP)</span>
-            </button>
-            @if (gameService.satellitesCount >= 10) {
-              <button class="power-up-button orbit-change-btn-color fw-bold pt-2"
-                      (mousedown)="buy('sats', $event)"
-                      (touchstart)="buy('sats', $event)">⇄ Orbit
-              </button>
-            } @else {
-              <button class="power-up-button"
-                      (mousedown)="buy('sats', $event)"
-                      (touchstart)="buy('sats', $event)"
-                      [class.power-active]="gameService.ep >= 150"
-                      [disabled]="gameService.ep < 150">🛰️ Sats {{ gameService.satellitesCount }}<span>(150 EP)</span>
-              </button>
-            }
-          </div>
-
-          <div class="action-side right">
-            <button class="power-up-button marine-btn"
-                    (mousedown)="buy('marines', $event)"
-                    (touchstart)="buy('marines', $event)"
-                    [disabled]="gameService.ep < 250 || marinesCooldownProgress < 100"
-                    [class.power-active]="gameService.ep >= 250 && marinesCooldownProgress === 100">
-              🎖️ Marines <span>(250 EP)</span>
-              @if (marinesCooldownProgress < 100) {
-                <div class="cooldown-overlay-mini">
-                  <div class="fill" [style.height.%]="marinesCooldownProgress"></div>
+            <div class="log-overlay">
+              @for (entry of gameService.scienceLog; track $index) {
+                <div [class]="entry.type" class="log-item">
+                  {{ entry.type === 'research' ? '🔬' : '⚠️' }} {{ entry.text }}
                 </div>
               }
-            </button>
+            </div>
+          </div>
 
-            <button class="power-up-button"
-                    (mousedown)="buy('research', $event)"
-                    (touchstart)="buy('research', $event)"
-                    [disabled]="gameService.ep < 200"
-                    [class.power-active]="gameService.ep >= 200"
-            >🔬 Lvl {{ gameService.researchLevel }} <span>(200 EP)</span>
-            </button>
+          <div class="bottom-controls">
+            <div class="action-side left">
+              <button class="power-up-button shield-button-container"
+                      [class.shield-active]="gameService.shieldHp > 0"
+                      [class.critical]="gameService.shieldHp < 35"
+                      (mousedown)="buy('shield', $event)"
+                      (touchstart)="buy('shield', $event)"
+                      [disabled]="gameService.ep < 100 || gameService.shieldHp === 100">
+
+                @if (gameService.shieldActive) {
+                  <svg class="shield-border-svg rounded-2">
+                    <rect x="0" y="0" width="100%" height="100%"
+                          class="shield-rect"
+                          [style.stroke-dashoffset]="getShieldDashOffset()"
+                          [style.stroke]="'rgba(0, 255, 255, ' + (gameService.shieldHp / 100) + ')'"/>
+                  </svg>
+                }
+
+                🛡️ Shield<span>(100 EP)</span>
+              </button>
+              @if (gameService.satellitesCount >= 10) {
+                <button class="power-up-button orbit-change-btn-color fw-bold pt-2"
+                        (mousedown)="buy('sats', $event)"
+                        (touchstart)="buy('sats', $event)">⇄ Orbit
+                </button>
+              } @else {
+                <button class="power-up-button"
+                        (mousedown)="buy('sats', $event)"
+                        (touchstart)="buy('sats', $event)"
+                        [class.power-active]="gameService.ep >= 150"
+                        [disabled]="gameService.ep < 150">🛰️ Sats {{ gameService.satellitesCount }}<span>(150 EP)</span>
+                </button>
+              }
+            </div>
+
+            <div class="action-side right">
+              <button class="power-up-button marine-btn"
+                      (mousedown)="buy('marines', $event)"
+                      (touchstart)="buy('marines', $event)"
+                      [disabled]="gameService.ep < 250 || marinesCooldownProgress < 100"
+                      [class.power-active]="gameService.ep >= 250 && marinesCooldownProgress === 100">
+                🎖️ Marines <span>(250 EP)</span>
+                @if (marinesCooldownProgress < 100) {
+                  <div class="cooldown-overlay-mini">
+                    <div class="fill" [style.height.%]="marinesCooldownProgress"></div>
+                  </div>
+                }
+              </button>
+
+              <button class="power-up-button"
+                      (mousedown)="buy('research', $event)"
+                      (touchstart)="buy('research', $event)"
+                      [disabled]="gameService.ep < 200"
+                      [class.power-active]="gameService.ep >= 200"
+              >🔬 Lvl {{ gameService.researchLevel }} <span>(200 EP)</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    }
+      }
+    </div>
   </div>
-</div>
 
-<div class="top-right-controls" [class.invert-colors]="gameService.isColorsInverted">
-  <div class="pause-control d-flex flex-column gap-2 align-items-end">
-    @if (gameService.researchLevel >= 10 && !gameService.isJumping) {
-      <button class="jump-btn"
-              (mousedown)="triggerOrbitalJump()"
-              (touchstart)="triggerOrbitalJump()">
-        🌌 Orbitalsprung LV {{ jumpBounsLevel | number:'1.0-0' }}
-        <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
-      </button>
-    }
+  <div class="top-right-controls" [class.invert-colors]="gameService.isColorsInverted">
+    <div class="pause-control d-flex flex-column gap-2 align-items-end">
+      @if (gameService.researchLevel >= 10 && !gameService.isJumping) {
+        <button class="jump-btn"
+                (mousedown)="triggerOrbitalJump()"
+                (touchstart)="triggerOrbitalJump()">
+          🌌 Orbitalsprung LV {{ jumpBounsLevel | number:'1.0-0' }}
+          <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
+        </button>
+      }
 
-    @if (gameService.isPaused) {
-      <button class="resume-btn"
-              (mousedown)="resumeGame()"
-              (touchstart)="resumeGame()">WEITER
-      </button>
-    } @else {
-      <button class="pause-btn float-end"
-              (mousedown)="togglePause($event)"
-              (touchstart)="togglePause($event)">
-        <div class="pause-icon"></div>
-      </button>
-    }
+      @if (gameService.isPaused) {
+        <button class="resume-btn"
+                (mousedown)="resumeGame()"
+                (touchstart)="resumeGame()">WEITER
+        </button>
+      } @else {
+        <button class="pause-btn float-end"
+                (mousedown)="togglePause($event)"
+                (touchstart)="togglePause($event)">
+          <div class="pause-icon"></div>
+        </button>
+      }
+    </div>
   </div>
-</div>
-@if (!gameService.gameActive() || gameService.winState()) {
-  <app-game-dialog></app-game-dialog>
 }

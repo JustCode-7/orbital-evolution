@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, OnDestroy, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {PwaInstallService} from '../../service/pwa-install.service';
 import {AsyncPipe, NgOptimizedImage} from '@angular/common';
@@ -13,8 +13,11 @@ import {AsyncPipe, NgOptimizedImage} from '@angular/common';
   templateUrl: './introduction.html',
   styleUrl: './introduction.scss',
 })
-export class Introduction {
+export class Introduction implements OnDestroy {
+
   protected readonly pwaService = inject(PwaInstallService);
+  isShowSpinner = signal(false);
+
 
   protected installApp() {
     this.pwaService.triggerInstall();
@@ -23,5 +26,13 @@ export class Introduction {
   protected showQRCode(colapseDivBox: HTMLDivElement) {
     colapseDivBox.classList.contains('collapse') ? colapseDivBox.classList.remove('collapse') : colapseDivBox.classList.add('collapse')
     colapseDivBox ? colapseDivBox.scrollIntoView({behavior: 'smooth'}) : null
+  }
+
+  protected showSpinner() {
+    this.isShowSpinner.set(true);
+  }
+
+  ngOnDestroy(): void {
+    this.isShowSpinner.set(false);
   }
 }

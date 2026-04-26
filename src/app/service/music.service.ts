@@ -25,16 +25,18 @@ export class MusicService {
   ];
 
   isMusicOn = signal(false);
+  isMusicReady = signal(false);
 
   /**
    * SCHRITT 1: Nur die Dateien vom Server laden (Parallel).
    * Wird vom Resolver aufgerufen. Erzeugt KEINEN AudioContext.
    */
   async fetchAllTracks(): Promise<void> {
+    this.isMusicReady.set(false);
     const fetchPromises = this.playlist.map(async (track) => {
       try {
         const res = await fetch(track.file);
-        if (!res.ok) throw new Error(`404: ${track.file}`);
+        if (!res.ok) console.error(`404: ${track.file}`);
         const arrayBuffer = await res.arrayBuffer();
         this.rawBuffers.set(track.id, arrayBuffer);
       } catch (e) {
@@ -45,6 +47,7 @@ export class MusicService {
     await Promise.all(fetchPromises);
     this.playlistIds = Array.from(this.rawBuffers.keys());
     console.log('Alle MP3-Dateien im Speicher (Rohdaten).');
+    this.isMusicReady.set(true);
   }
 
   /**
