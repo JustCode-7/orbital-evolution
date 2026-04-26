@@ -168,7 +168,7 @@ export class GameComponent implements OnInit, OnDestroy {
     // Wenn bereits 10 Satelliten da sind: Richtungswechsel (kostenlos)
     if (this.gameService.satellitesCount >= 10) {
       this.flightDirection *= -1;
-      const dirText = this.flightDirection === 1 ? "Uhrzeigersinn" : "Gegen Uhrzeigersinn";
+      const dirText = this.flightDirection === 1 ? "im Uhrzeigersinn" : "gegen Uhrzeigersinn";
       this.gameService.addLog(`Orbit-Umkehr: Flugrichtung nun ${dirText}`, "system");
       return;
     }
@@ -177,7 +177,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.gameService.ep >= 150) {
       this.gameService.ep -= 150;
       this.gameService.satellitesCount++;
-      this.gameService.addLog(`Satellit ${this.gameService.satellitesCount}/10 online.`, "system");
+      this.gameService.addLog(`Satellit Level-Up: EP-Bonus +${this.gameService.satellitesCount * 10} % | ${this.gameService.satellitesCount}/10 online`, "system");
 
       if (this.gameService.satellitesCount === 10) {
         this.gameService.addLog("MAXIMALE SATELLITEN: Orbit-Umkehr freigeschaltet!", "event");
@@ -217,7 +217,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.addLog(`Gefahrenstufe erhöht! Asteroiden-Frequenz gesteigert.`, 'event');
     }
 
-    this.gameService.addLog(`Technologie-Level ${this.gameService.researchLevel} erreicht.`, 'research');
+    this.gameService.addLog(`Technologie-Level-Up PunkteBonus +${this.gameService.researchLevel * 10}%.`, 'research');
 
     if (this.gameService.researchLevel === 10) {
       this.gameService.addLog(`ANTIGRAVITATIONSANTRIEB BEREIT ZUM SPRUNG!`, 'event');
@@ -645,23 +645,37 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private drawEnvironmentZones(s: number, cx: number, cy: number) {
+    const isInverted = this.gameService.isColorsInverted;
+
+    // Multiplikator für die Deckkraft: Im Light-Mode (Inverted) nehmen wir nur 40% der normalen Stärke
+    const alphaMult = isInverted ? 0.4 : 1.0;
+
     const zones = [
       {
         name: 'Yellow',
         r: 250, w: (this.isInsideYellowZone ? 110 : 100),
-        c: this.isInsideYellowZone ? 'rgb(255, 230, 100, 0.4)' : 'rgba(255, 255, 150, 0.15)'
+        // Dynamische Alpha-Berechnung
+        c: this.isInsideYellowZone
+          ? `rgba(255, 230, 100, ${0.4 * alphaMult})`
+          : `rgba(255, 255, 150, ${0.15 * alphaMult})`
       },
       {
         name: 'Red',
         r: 150, w: (this.isInsideRedZone ? 90 : 80),
-        c: this.isInsideRedZone ? 'rgb(255, 180, 0, 0.5)' : 'rgba(255, 200, 50, 0.25)'
+        c: this.isInsideRedZone
+          ? `rgba(255, 180, 0, ${0.5 * alphaMult})`
+          : `rgba(255, 200, 50, ${0.25 * alphaMult})`
       },
       {
         name: 'Corona',
         r: 85, w: (this.isInsideCoronaZone ? 50 : 40),
-        c: this.isInsideCoronaZone ? '#fb9331' : 'rgba(255, 200, 0, 0.2)'
+        // Bei Corona nutzen wir im Inverted Mode eine rgba statt des festen Hex-Codes
+        c: this.isInsideCoronaZone
+          ? (isInverted ? `rgba(251, 147, 49, 0.6)` : '#fb9331')
+          : `rgba(255, 200, 0, ${0.2 * alphaMult})`
       }
     ];
+
     zones.forEach(z => {
       this.ctx.beginPath();
       this.ctx.arc(cx, cy, z.r * s, 0, Math.PI * 2);
@@ -672,27 +686,24 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // 2. Habitable Zone (Gasnebel-Effekt)
     const resR = 360 * s;
-    // Den Nebel bei Betreten etwas "aufblähen"
     const resW = (this.gameService.isInsideHabitableZone ? 150 : 120) * s;
-    const ringAlpha = this.gameService.isInsideHabitableZone ? 0.4 : 0.15;
-    //
+
+    let ringAlpha = this.gameService.isInsideHabitableZone ? 0.4 : 0.15;
+
     const innerR = resR - resW / 2;
     const outerR = resR + resW / 2;
     const resGradient = this.ctx.createRadialGradient(cx, cy, innerR, cx, cy, outerR);
 
-    // Mehrstufige Farbstopps für die Gasdichte
-    resGradient.addColorStop(0, 'rgba(0, 255, 100, 0)');               // Innen transparent
-    resGradient.addColorStop(0.5, `rgba(0, 255, 150, ${ringAlpha})`);       // Dichtester Kern des Nebels
-    resGradient.addColorStop(1, 'rgba(0, 255, 100, 0)');               // Außen transparent
+    resGradient.addColorStop(0, 'rgba(0, 255, 100, 0)');
+    resGradient.addColorStop(0.5, `rgba(0, 255, 150, ${ringAlpha})`);
+    resGradient.addColorStop(1, 'rgba(0, 255, 100, 0)');
 
     this.ctx.save();
-
     this.ctx.beginPath();
     this.ctx.arc(cx, cy, resR, 0, Math.PI * 2);
     this.ctx.strokeStyle = resGradient;
     this.ctx.lineWidth = resW;
     this.ctx.stroke();
-
     this.ctx.restore();
   }
 
