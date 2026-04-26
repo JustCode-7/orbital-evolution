@@ -5,6 +5,9 @@ import {RouterLink} from '@angular/router';
 import {MatIconButton} from '@angular/material/button';
 import {ToggleFullscreenService} from '../../service/toggle-fullscreen.service';
 import {GameService} from '../../service/game.service';
+import {MatSlideToggle} from '@angular/material/slide-toggle';
+import {MusicService} from '../../service/music.service';
+import {FormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-game-dialog',
@@ -12,7 +15,9 @@ import {GameService} from '../../service/game.service';
     DecimalPipe,
     MatIcon,
     RouterLink,
-    MatIconButton
+    MatIconButton,
+    MatSlideToggle,
+    FormsModule
   ],
   templateUrl: './game-dialog.html',
   styleUrl: './game-dialog.scss',
@@ -21,6 +26,7 @@ export class GameDialog {
 
   protected readonly fullscreenService = inject(ToggleFullscreenService);
   gameService = inject(GameService)
+  protected musicservice = inject(MusicService)
 
   protected clearHighScore() {
     localStorage.removeItem('orbital_hs')

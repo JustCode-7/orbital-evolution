@@ -13,6 +13,7 @@ import {ThreeDimensions} from '../three-dimensions/three-dimensions';
 import {GameService} from '../../service/game.service';
 import {ToggleFullscreenService} from '../../service/toggle-fullscreen.service';
 import {GameDialog} from '../game-dialog/game-dialog';
+import {MusicService} from '../../service/music.service';
 
 @Component({
   selector: 'app-game',
@@ -47,6 +48,7 @@ export class GameComponent implements OnInit, OnDestroy {
   isInsideCoronaZone = false;  // Direkt vor der Sonne (Extrem)
   private playerImg = new Image();
   private animFrame: any;
+  private musicservice = inject(MusicService);
 
 
   ngOnInit() {
@@ -60,6 +62,7 @@ export class GameComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.gameService.cleanup();
     cancelAnimationFrame(this.animFrame);
+    this.musicservice.stopMusic();
   }
 
   @HostListener('window:resize')

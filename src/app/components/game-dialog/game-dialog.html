@@ -20,7 +20,16 @@
       <button class="start-btn fw-bold text-nowrap" (click)="gameService.toggleInversion()">
         {{ gameService.isColorsInverted ? 'Dark-Mode' : 'Light-Mode' }}
       </button>
-
+      <div class="music-box fw-bold">
+        <mat-slide-toggle
+          (toggleChange)="musicservice.isMusicOn() ?  musicservice.stopMusic() : musicservice.startAutoplay()"
+          [checked]="musicservice.isMusicOn()"
+          labelPosition="before">
+          <span class="fw-bold me-2">
+          SOUND {{ musicservice.isMusicOn() ? 'ON' : 'OFF' }}
+            </span>
+        </mat-slide-toggle>
+      </div>
       <button class="mt-2 w-100" mat-icon-button
               (click)="clearHighScore()">
         <mat-icon>delete</mat-icon>

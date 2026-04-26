@@ -94,13 +94,16 @@
           </svg>
           <h3>🔬 Forschung (200 EP)</h3>
         </div>
-        <p>Erhöhe deine Stufe mindestens bis auf 10, um den <strong>Anti-Gravitation-Antrieb</strong> für den
-          OrbitalSprung aus dem Sonnensystem zu aktivieren. Doch ist das schon das Ende ...?</p>
+        <p>Erhöhe deine Forschungsstufe, damit dein Schiff effizienter Sonnenenergie sammeln kann.
+          Erreichst du Stufe 10, schaltest du den <strong>Anti-Gravitation-Antrieb</strong> für den
+          OrbitalSprung aus dem Sonnensystem frei, dieser gewährt auch einen Punkte-Bonus.
+          Doch ist das schon das Ende ...?</p>
       </div>
     </div>
   </section>
   <footer>
-    <button class="start-button border border-2 rounded-2 mb-2" routerLink="game">MISSION STARTEN</button>
+    <button class="start-button border border-2 rounded-2 mb-2" routerLink="game">MISSION STARTEN
+    </button>
     <p class="control-hint">Das Spiel ist für die Mobilnutzung optimiert und bietet als installierte App die beste
       Nutzungserfahrung, am besten im Querformat.</p>
     @if (pwaService.canInstall$ | async) {
