@@ -618,7 +618,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     if (!this.ctx) return; // Abbruch, wenn das Canvas (noch) nicht existiert
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    
+
     const s = Math.min(window.innerWidth, window.innerHeight) / 900;
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;
@@ -1004,7 +1004,6 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private generateGlassCache(width: number, height: number, intensity: number) {
-    // 1. Canvas Vorbereitung
     if (!this.cachedGlassCanvas) {
       this.cachedGlassCanvas = document.createElement('canvas');
     }
@@ -1013,67 +1012,76 @@ export class GameComponent implements OnInit, OnDestroy {
     const offCtx = this.cachedGlassCanvas.getContext('2d')!;
     offCtx.clearRect(0, 0, width, height);
 
-    // 2. Parameter-Berechnung basierend auf deinen Schwellenwerten
-    // intensity kommt mit 0 an bei 35% HP und mit 1 bei 0% HP
-    const maxCracks = 8;
-    const crackCount = Math.floor(maxCracks * 0.5 + (maxCracks * 0.5 * intensity));
-
-    // Die Länge wächst von 200px auf 350px (skaliert mit this.scale)
-    const totalLength = (200 + 150 * intensity) * this.scale;
-
     const isInverted = this.gameService.isColorsInverted;
-    const corners = [
-      {x: 0, y: 0, angle: Math.PI / 4},               // Oben Links
-      {x: width, y: 0, angle: (Math.PI * 3) / 4},     // Oben Rechts
-      {x: width, y: height, angle: (Math.PI * 5) / 4},// Unten Rechts
-      {x: 0, y: height, angle: (Math.PI * 7) / 4}     // Unten Links
-    ];
 
-    // Statischer Zufall für ruckelfreie Darstellung
+    // Farben (Invertierungs-Trick: Cyan -> Rot im Filter)
+    const glassColor = isInverted ? 'rgba(0, 255, 255, 0.95)' : 'rgba(255, 0, 0, 0.9)';
+    const darkLine = isInverted ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.6)';
+
+    // Erhöhung auf Basis 60 (vorher 40). Bei 0% HP sind es dann bis zu 60 Risse am Rand.
+    const baseRisse = 60;
+    const totalRisse = Math.floor(baseRisse * 0.5 + (baseRisse * 0.5 * intensity));
+
+    // Wir halten die Länge etwas kürzer, damit die schiere Menge nicht das UI verdeckt
+    const referenceSize = Math.min(width, height);
+    const maxReach = (referenceSize * 0.15 + (referenceSize * 0.2 * intensity)) * this.scale;
+
+    const spawnPoints: { x: number, y: number, angle: number }[] = [];
     let seed = 12345;
     const random = () => {
       seed = (seed * 9301 + 49297) % 233280;
       return seed / 233280;
     };
 
-    // --- DURCHGANG 1: Roter Glow & Dunkle Kanten (Tiefeneffekt) ---
-    offCtx.save();
-    offCtx.shadowColor = 'rgba(255, 0, 0, 0.9)'; // Kräftiges Schadens-Rot
-    offCtx.shadowBlur = 10 * this.scale;
-    offCtx.strokeStyle = isInverted ? 'rgba(0,0,0,0.6)' : 'rgba(20,20,20,0.8)';
-    offCtx.lineWidth = 3 * this.scale;
-
-    corners.forEach(c => {
-      for (let i = 0; i < crackCount; i++) {
-        // Wir starten pro Ecke crackCount-mal einen Riss-Zweig
-        const variation = (random() - 0.5) * 1.2;
-        this.drawStaticBranch(offCtx, c.x, c.y, c.angle + variation, totalLength, random);
+    for (let i = 0; i < totalRisse; i++) {
+      const side = Math.floor(random() * 4);
+      let x = 0, y = 0, angle = 0;
+      if (side === 0) {
+        x = random() * width;
+        y = 0;
+        angle = Math.PI / 2;
+      } else if (side === 1) {
+        x = width;
+        y = random() * height;
+        angle = Math.PI;
+      } else if (side === 2) {
+        x = random() * width;
+        y = height;
+        angle = -Math.PI / 2;
+      } else {
+        x = 0;
+        y = random() * height;
+        angle = 0;
       }
+      spawnPoints.push({x, y, angle});
+    }
+
+    // --- Zeichnen ---
+    // Durchgang 1: Die dunkle Basisstruktur (Start-Stärke 2.5)
+    offCtx.save();
+    offCtx.strokeStyle = darkLine;
+    seed = 12345;
+    spawnPoints.forEach(p => {
+      this.drawStaticBranch(offCtx, p.x, p.y, p.angle + (random() - 0.5) * 0.8, maxReach, random, 2.5);
     });
     offCtx.restore();
 
-    // --- DURCHGANG 2: Helle Glaskante (Spiegelung/Bruch) ---
-    seed = 12345; // Seed zurücksetzen für identische Linienführung
+    // Durchgang 2: Die feine rote Bruchlinie (Start-Stärke 1.2)[cite: 7]
     offCtx.save();
-    // Ein helles Blau-Weiß für den Glas-Look, bei Inverted eher ein helles Rot
-    offCtx.strokeStyle = isInverted ? 'rgba(255, 100, 100, 0.8)' : 'rgba(220, 240, 255, 0.7)';
-    offCtx.lineWidth = 1 * this.scale;
-
-    corners.forEach(c => {
-      for (let i = 0; i < crackCount; i++) {
-        const variation = (random() - 0.5) * 1.2;
-        this.drawStaticBranch(offCtx, c.x, c.y, c.angle + variation, totalLength, random);
-      }
+    offCtx.strokeStyle = glassColor;
+    seed = 12345;
+    spawnPoints.forEach(p => {
+      this.drawStaticBranch(offCtx, p.x, p.y, p.angle + (random() - 0.5) * 0.8, maxReach, random, 1.2);
     });
     offCtx.restore();
   }
 
-  private drawStaticBranch(ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, length: number, rng: () => number) {
-    // Wenn der Ast zu kurz wird, aufhören
-    if (length < 8) return;
+  private drawStaticBranch(ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, length: number, rng: () => number, currentWidth: number) {
+    if (length < 4 || currentWidth < 0.15) return; // Etwas feineres Auslaufen
 
-    // Kürzere Segmente machen den Riss zackiger
-    const segmentLength = 10 + rng() * 15;
+    ctx.lineWidth = currentWidth * this.scale;
+
+    const segmentLength = 4 + rng() * 8; // Kürzere Segmente für mehr "Zackigkeit"
     const nextX = x + Math.cos(angle) * segmentLength;
     const nextY = y + Math.sin(angle) * segmentLength;
 
@@ -1082,38 +1090,57 @@ export class GameComponent implements OnInit, OnDestroy {
     ctx.lineTo(nextX, nextY);
     ctx.stroke();
 
-    const newLength = length - segmentLength;
+    const nextWidth = currentWidth * 0.82; // Verjüngt sich etwas schneller[cite: 7]
 
-    // Hauptast weiterführen (nur leichte Winkeländerung)
-    this.drawStaticBranch(ctx, nextX, nextY, angle + (rng() - 0.5) * 0.3, newLength, rng);
+    // Hauptast
+    this.drawStaticBranch(ctx, nextX, nextY, angle + (rng() - 0.5) * 0.1, length - segmentLength, rng, nextWidth);
 
-    // NEU: Viel höhere Wahrscheinlichkeit für Nebenäste (rng > 0.35 statt 0.6)
-    if (rng() > 0.35) {
-      // Scharfer Abbruchwinkel für typische Glassplitter-Optik (45° bis 90° Abzweigung)
-      const sharpAngle = (rng() > 0.5 ? 1 : -1) * (0.6 + rng() * 0.6);
-
-      // Der Nebenast ist etwas kürzer als der Hauptast
-      this.drawStaticBranch(ctx, nextX, nextY, angle + sharpAngle, newLength * (0.4 + rng() * 0.3), rng);
+    // Nebenäste: Wahrscheinlichkeit leicht reduziert, da wir nun viel mehr Startpunkte haben
+    if (rng() > 0.5) {
+      const splitAngle = (rng() > 0.5 ? 1 : -1) * (Math.PI / 2.5 + rng() * Math.PI / 4);
+      this.drawStaticBranch(ctx, nextX, nextY, angle + splitAngle, (length - segmentLength) * 0.35, rng, nextWidth * 0.6);
     }
   }
 
   private drawDamageVignette(ctx: CanvasRenderingContext2D, width: number, height: number) {
     const shieldPercent = this.gameService.shieldHp / 100;
-    // NEU: Synchronisation mit den Rissen auf 35%
+
+    // Wir bleiben bei der 35% Grenze für den Start
     if (shieldPercent >= 0.35) return;
 
-    const intensity = (0.3 - shieldPercent) * 3.33;
+    // EXTRAPOLATION:
+    // Wir berechnen einen Basis-Faktor zwischen 0 (bei 35% HP) und 1 (bei 0% HP)
+    const factor = (0.35 - shieldPercent) / 0.35;
 
-    // Radialer Verlauf: Zentrum transparent, Ränder färben
-    const grad = ctx.createRadialGradient(width / 2, height / 2, width * 0.1, width / 2, height / 2, width * 0.9);
+    // EXPONENTIELLES WACHSTUM:
+    // factor^2 sorgt dafür, dass der Effekt bei 30% erst bei ~0.02 (2%) startet
+    // und bei 0% HP die vollen 100% erreicht.
+    const intensity = Math.pow(factor, 2);
 
-    // Im Light Mode eher ein grauer Schatten, im Dark Mode ein rötlicher Alarm-Schimmer
-    const color = this.gameService.isColorsInverted ? '50, 50, 50' : '150, 0, 0';
+    // einheitliches Verhältnis in allen Formaten.
+    const screenDiag = Math.hypot(width, height);
+
+    // Der innere Radius (wo es transparent ist)
+    // Wir nutzen 40% der Diagonale als Basis und verengen ihn bei 0 HP
+    const stickOut = 1
+    const innerRadius = (screenDiag * stickOut) * (1 - (intensity * stickOut));
+    const outerRadius = screenDiag * 0.7;
+
+    const grad = ctx.createRadialGradient(
+      width / 2, height / 2, innerRadius,
+      width / 2, height / 2, outerRadius
+    );
+
+    const color = this.gameService.isColorsInverted ? '0, 255, 255' : '150, 0, 0';
+    const alpha = intensity * 0.7;
 
     grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(1, `rgba(${color}, ${intensity * 0.4})`);
+    grad.addColorStop(0.6, `rgba(${color}, ${alpha * 0.3})`);
+    grad.addColorStop(1, `rgba(${color}, ${alpha})`);
 
+    ctx.save();
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
+    ctx.restore();
   }
 }
