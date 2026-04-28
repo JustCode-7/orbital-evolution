@@ -232,6 +232,79 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
+  private updateNovaBombe() {
+    if (this.gameService.novaBombeVisuals) {
+      const v = this.gameService.novaBombeVisuals;
+      v.r += 15;
+      v.alpha -= 0.01;
+
+      // Zerstöre Asteroiden in der Welle
+      for (let i = this.gameService.asteroids.length - 1; i >= 0; i--) {
+        const a = this.gameService.asteroids[i];
+        const px = Math.cos(this.playerAngle) * this.gameService.playerR;
+        const py = Math.sin(this.playerAngle) * this.gameService.playerR;
+        const distToNovaSource = Math.hypot(a.x - px, a.y - py);
+
+        if (distToNovaSource < v.r && distToNovaSource > v.r - 100) {
+          this.gameService.score += Math.floor(a.size * 10);
+          this.gameService.asteroids.splice(i, 1);
+        }
+      }
+
+      if (v.alpha <= 0) {
+        this.gameService.novaBombeVisuals = null;
+      }
+    }
+  }
+
+  private drawNovaBombe(s: number, cx: number, cy: number) {
+    if (!this.gameService.novaBombeVisuals || !this.ctx) return;
+    const v = this.gameService.novaBombeVisuals;
+    const px = cx + Math.cos(this.playerAngle) * (this.gameService.playerR * s);
+    const py = cy + Math.sin(this.playerAngle) * (this.gameService.playerR * s);
+
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.arc(px, py, v.r * s, 0, Math.PI * 2);
+    this.ctx.strokeStyle = `rgba(255, 100, 0, ${v.alpha})`;
+    this.ctx.lineWidth = 15 * s;
+    this.ctx.stroke();
+
+    // Glühen
+    this.ctx.shadowBlur = 30 * s;
+    this.ctx.shadowColor = 'orange';
+    this.ctx.stroke();
+    this.ctx.restore();
+  }
+
+  protected triggerNovaBombe() {
+    this.gameService.novaBombeVisuals = {x: 0, y: 0, r: 0, alpha: 1};
+    this.gameService.stopSpawningUntil = Date.now() + 5000;
+    this.gameService.addLog("NOVABOMBE GEZÜNDET!", 'event');
+  }
+
+  protected selectReward(choice: number) {
+    this.gameService.showRewardDialog.set(false);
+    switch (choice) {
+      case 1:
+        // Soforteinsatz: Ignoriert EP und Cooldown
+        this.gameService.marinesActive = true;
+        this.gameService.addLog("MARINES SOFORTEINSATZ!", 'event');
+        setTimeout(() => (this.gameService.marinesActive = false), 10000);
+        // Optional: Cooldown zurücksetzen, falls gewünscht
+        this.gameService.marinesReadyTime = Date.now() + this.marinesCooldown;
+        break;
+      case 2:
+        this.gameService.ep = Math.min(this.gameService.maxEp, this.gameService.ep + 400);
+        this.gameService.addLog("400 EP Bonus erhalten!", 'event');
+        break;
+      case 3:
+        this.triggerNovaBombe();
+        break;
+    }
+    this.gameService.isPaused = false;
+  }
+
   private buyResearch() {
     if (this.gameService.ep < 200) return;
 
@@ -253,6 +326,11 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     this.gameService.addLog(`Technologie-Level-Up PunkteBonus +${this.gameService.researchLevel * 10}%.`, 'research');
+
+    if (this.gameService.researchLevel % 5 === 0) {
+      this.gameService.isPaused = true;
+      this.gameService.showRewardDialog.set(true);
+    }
 
     if (this.gameService.researchLevel === 10) {
       this.gameService.addLog(`ANTIGRAVITATIONSANTRIEB BEREIT ZUM SPRUNG!`, 'event');
@@ -326,7 +404,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // 5. Kampf & Abwehr
     this.updateCombat(now, px, py);
-
+    this.updateNovaBombe();
     this.updatePlusParticles();
 
     // 6. Gefahrenprüfung
@@ -724,6 +802,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // Kampf-Objekte
     this.drawProjectiles(s, cx, cy);
+    this.drawNovaBombe(s, cx, cy);
     this.drawAsteroids(s, cx, cy);
     this.drawPlusParticles();
 

@@ -331,6 +331,131 @@ button:disabled {
   }
 }
 
+.reward-z-index {
+  // z-index wird jetzt über .dialog-overlay gesteuert
+}
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.reward-dialog {
+  background: #020617;
+  border: 2px solid #ffcc00;
+  border-radius: 12px;
+  padding: clamp(1rem, 3vw, 2rem);
+  max-width: 90vw;
+  width: min(500px, 95vw);
+  pointer-events: auto;
+  box-shadow: 0 0 30px rgba(255, 204, 0, 0.4);
+  max-height: 90vh;
+  overflow-y: auto;
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    width: min(800px, 95vw);
+    padding: 1rem;
+
+    .reward-subtitle {
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+.reward-title {
+  color: #ffcc00;
+  text-align: center;
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+.reward-subtitle {
+  color: #94a3b8;
+  text-align: center;
+  margin-bottom: clamp(1rem, 3vw, 2rem);
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
+}
+
+.reward-options {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 2vw, 15px);
+
+  @media (orientation: landscape) and (max-height: 600px) {
+    flex-direction: row;
+    justify-content: center;
+
+    .reward-option-btn {
+      flex: 1;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+      text-align: center;
+      padding: 10px 5px;
+
+      .reward-icon {
+        grid-row: 1;
+        margin-bottom: 5px;
+      }
+
+      .reward-name {
+        font-size: 0.9rem;
+      }
+
+      .reward-desc {
+        display: none; // Beschreibung im extremen Querformat ausblenden um Platz zu sparen
+      }
+    }
+  }
+}
+
+.reward-option-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 204, 0, 0.3);
+  border-radius: 8px;
+  padding: clamp(10px, 2.5vw, 15px);
+  display: grid;
+  grid-template-columns: clamp(40px, 10vw, 50px) 1fr;
+  grid-template-rows: auto auto;
+  gap: 0 clamp(10px, 2vw, 15px);
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+  text-align: left;
+
+  &:hover {
+    background: rgba(255, 204, 0, 0.1);
+    border-color: #ffcc00;
+    transform: translateY(-2px);
+  }
+
+  .reward-icon {
+    grid-row: span 2;
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .reward-name {
+    font-weight: bold;
+    color: #ffcc00;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+  }
+
+  .reward-desc {
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
+    color: #94a3b8;
+  }
+}
+
 .resume-btn {
   background: #22c55e !important;
   color: white;

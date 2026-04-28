@@ -26,12 +26,16 @@ export class GameService {
   isJumping = false;
   satellitesCount = 0;
   marinesReadyTime = 0;
+  novaBombeActive = false;
+  novaBombeVisuals: { x: number, y: number, r: number, alpha: number } | null = null;
+  stopSpawningUntil = 0;
   shieldActive = false;
   shieldHp = 0;
   comets: Comet[] = [];
   isInsideHabitableZone = false;
   private spawnInterval: any;
   isPaused = false;
+  showRewardDialog = signal(false);
   flightDirection = 1; // 1 = Uhrzeigersinn, -1 = gegen den Uhrzeigersinn
 
   asteroids: Asteroid[] = [];
@@ -47,7 +51,10 @@ export class GameService {
   startSpawning() {
     this.cleanup();
     const interval = Math.max(400, 1500 - Math.floor((this.researchLevel - 1) / 3) * 250);
-    this.spawnInterval = setInterval(() => this.spawnAsteroid(), interval);
+    this.spawnInterval = setInterval(() => {
+      if (Date.now() < this.stopSpawningUntil) return;
+      this.spawnAsteroid();
+    }, interval);
   }
 
   private spawnAsteroid() {
@@ -93,7 +100,7 @@ export class GameService {
     this.gameActive.set(true);
     this.winState.set(false);
     this.score = 0;
-    this.ep = 0;
+    this.ep = 100;
     this.epOverflowLogged = false;
     this.researchLevel = 1;
     this.playerR = 350;
@@ -105,6 +112,10 @@ export class GameService {
     this.isJumping = false; // Reset Jump Status
     this.satellitesCount = 0;
     this.marinesReadyTime = 0;
+    this.novaBombeActive = false;
+    this.novaBombeVisuals = null;
+    this.stopSpawningUntil = 0;
+    this.showRewardDialog.set(false);
     this.shieldActive = false;
     this.shieldHp = 0;
     this.comets = [];

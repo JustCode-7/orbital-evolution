@@ -1,5 +1,5 @@
 @if (!gameService.gameActive() || gameService.winState()) {
-  <div class="dialog-overlay d-flex justify-content-center align-items-center vh-100">
+  <div class="dialog-overlay vh-100">
     <app-game-dialog></app-game-dialog>
   </div>
 } @else {
@@ -126,12 +126,12 @@
         </button>
       }
 
-      @if (gameService.isPaused) {
+      @if (gameService.isPaused && !gameService.showRewardDialog()) {
         <button class="resume-btn"
                 (mousedown)="resumeGame()"
                 (touchstart)="resumeGame()">WEITER
         </button>
-      } @else {
+      } @else if (!gameService.showRewardDialog()) {
         <button class="pause-btn float-end"
                 (mousedown)="togglePause($event)"
                 (touchstart)="togglePause($event)">
@@ -140,4 +140,31 @@
       }
     </div>
   </div>
+
+  @if (gameService.showRewardDialog()) {
+    <div class="dialog-overlay vh-100">
+      <div class="reward-dialog">
+        <h2 class="reward-title">FORSCHUNGS-BELOHNUNG</h2>
+        <p class="reward-subtitle">Wähle eine Verstärkung für dein Schiff:</p>
+        <div class="reward-options">
+          <button class="reward-option-btn" (click)="selectReward(1)">
+            <div class="reward-icon">🎖️</div>
+            <div class="reward-name">Marines</div>
+            <div class="reward-desc">Soforteinsatz der Marines-Eskorte</div>
+          </button>
+          <button [disabled]="gameService.ep === gameService.maxEp" class="reward-option-btn"
+                  (click)="selectReward(2)">
+            <div class="reward-icon">🔋</div>
+            <div class="reward-name">400 EP</div>
+            <div class="reward-desc">Direkte EP-Gutschrift</div>
+          </button>
+          <button class="reward-option-btn" (click)="selectReward(3)">
+            <div class="reward-icon">💥</div>
+            <div class="reward-name">Novabombe</div>
+            <div class="reward-desc">Zerstört alle Asteroiden</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 }
