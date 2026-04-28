@@ -17,7 +17,7 @@ import {FormsModule} from '@angular/forms';
     RouterLink,
     MatIconButton,
     MatSlideToggle,
-    FormsModule
+    FormsModule,
   ],
   templateUrl: './game-dialog.html',
   styleUrl: './game-dialog.scss',
@@ -29,8 +29,16 @@ export class GameDialog {
   protected musicservice = inject(MusicService)
 
   protected clearHighScore() {
-    localStorage.removeItem('orbital_hs')
-    this.gameService.highScore.set(parseInt(localStorage.getItem('orbital_hs') || '0'))
+    localStorage.removeItem('orbital_hs');
+    localStorage.removeItem('orbital_history');
+    this.gameService.highScore.set(0);
+    this.gameService.scoreHistory.set([]);
+  }
+
+  protected formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
   startGame() {

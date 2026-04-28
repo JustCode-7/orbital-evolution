@@ -3,13 +3,35 @@
   background: #020617;
   border-radius: 12px;
   pointer-events: auto !important;
+  max-width: 95vw;
+  max-height: 95vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .menu-modal-content {
+    flex-direction: row;
+    padding: 2rem;
+  }
 }
 
 h1 {
   color: #00fbff;
-  letter-spacing: 5px;
-  margin-bottom: 0;
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
   text-shadow: 0 0 15px rgba(0, 251, 255, 0.7);
+  font-size: clamp(1.2rem, 4vw, 2.5rem);
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  h1 {
+    letter-spacing: 5px;
+    text-align: left;
+  }
 }
 
 .hyper-jump-text {
@@ -31,16 +53,71 @@ h1 {
   color: #ffcc00;
   font-weight: bold;
   font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+.history-list {
+  background: rgba(0, 251, 255, 0.05);
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid rgba(0, 251, 255, 0.2);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.history-title {
+  color: #00fbff;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  opacity: 0.8;
+}
+
+.min-w-md-200 {
+  @media (min-width: 768px) {
+    min-width: 200px;
+  }
+}
+
+.history-item {
+  display: flex;
+  gap: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 3px;
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 2px;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-date {
+  color: #94a3b8;
+  min-width: 60px;
+}
+
+.history-score {
+  font-weight: bold;
+  color: #00fbff;
+  flex-grow: 1;
+}
+
+.history-time {
+  color: #94a3b8;
+  font-style: italic;
 }
 
 .start-btn {
   background: #00fbff;
   color: black;
-  padding: 10px 25px;
+  padding: 10px 10px;
   border: none;
-  font-size: 1rem;
+  font-size: clamp(0.8rem, 2vw, 1rem);
   border-radius: 5px;
-  margin-top: 15px;
+  margin-top: 10px;
+  width: 100%;
   /* iOS FIXES */
   cursor: pointer !important;
   touch-action: manipulation !important; // Verhindert Zoom-Verzögerung
@@ -51,9 +128,12 @@ h1 {
 .music-box {
   background: #00fbff;
   color: black;
-  padding: 10px 25px;
+  padding: 8px 15px;
   border: none;
-  font-size: 1rem;
+  font-size: clamp(0.8rem, 2vw, 1rem);
   border-radius: 5px;
-  margin-top: 15px;
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }

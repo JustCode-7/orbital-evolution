@@ -14,6 +14,7 @@ import {GameService} from '../../service/game.service';
 import {ToggleFullscreenService} from '../../service/toggle-fullscreen.service';
 import {GameDialog} from '../game-dialog/game-dialog';
 import {MusicService} from '../../service/music.service';
+import {Star} from '../../model/game.model';
 
 @Component({
   selector: 'app-game',
@@ -87,6 +88,15 @@ export class GameComponent implements OnInit, OnDestroy {
   lastShotTime = 0;
   private flightDirection = 1; // 1 = Uhrzeigersinn, -1 = gegen den Uhrzeigersinn
   private lastDelta: number = 0;
+  private plusParticles: {
+    x: number,
+    y: number,
+    vx: number,
+    vy: number,
+    alpha: number,
+    color: string,
+    life: number
+  }[] = [];
   stars: Star[] = [];
   isScoreZone = false;
   isInsideYellowZone = false;  // Die äußere Gefahrenzone (Gelb/Orange)
@@ -320,6 +330,8 @@ export class GameComponent implements OnInit, OnDestroy {
     // 5. Kampf & Abwehr
     this.updateCombat(now, px, py);
 
+    this.updatePlusParticles();
+
     // 6. Gefahrenprüfung
     this.checkDeathConditions();
   }
@@ -377,7 +389,18 @@ export class GameComponent implements OnInit, OnDestroy {
 
       // EP Gewinn: ca. 15 EP pro Sekunde als Basis
       const epPerSecond = 15 * (1 + (this.gameService.satellitesCount * 0.1));
-      this.gameService.ep += epPerSecond * this.lastDelta;
+      const gain = epPerSecond * this.lastDelta;
+
+      if (this.gameService.ep < this.gameService.maxEp) {
+        this.gameService.ep = Math.min(this.gameService.maxEp, this.gameService.ep + gain);
+        this.spawnPlusParticle('green');
+        this.gameService.epOverflowLogged = false;
+      } else {
+        if (!this.gameService.epOverflowLogged) {
+          this.gameService.addLog("EP-Memory-Stackoverflow, der EP-Memory muss geleert werden.", 'system');
+          this.gameService.epOverflowLogged = true;
+        }
+      }
 
     } else if (this.gameService.playerR <= 300) {
       this.isScoreZone = true;
@@ -405,10 +428,57 @@ export class GameComponent implements OnInit, OnDestroy {
       const pointsPerSecond = potentialPoints * efficiency * resMultiplier;
 
       this.gameService.score += pointsPerSecond * this.lastDelta;
+      this.spawnPlusParticle('orange');
 
     } else {
       this.isScoreZone = false;
     }
+  }
+
+  private spawnPlusParticle(color: 'orange' | 'green') {
+    if (Math.random() > 0.15) return; // Nicht jeden Frame
+
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    const s = this.scale;
+    const px = cx + Math.cos(this.playerAngle) * (this.gameService.playerR * s);
+    const py = cy + Math.sin(this.playerAngle) * (this.gameService.playerR * s);
+
+    this.plusParticles.push({
+      x: px,
+      y: py,
+      vx: (Math.random() - 0.5) * 1,
+      vy: -1 - Math.random() * 2,
+      alpha: 1,
+      color: color === 'orange' ? '#ffcc00' : '#00ff00',
+      life: 1.0
+    });
+  }
+
+  private updatePlusParticles() {
+    for (let i = this.plusParticles.length - 1; i >= 0; i--) {
+      const p = this.plusParticles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= 0.02;
+      p.alpha = p.life;
+      if (p.life <= 0) {
+        this.plusParticles.splice(i, 1);
+      }
+    }
+  }
+
+  private drawPlusParticles() {
+    if (!this.ctx) return;
+    this.ctx.font = `${Math.floor(20 * this.scale)}px Arial`;
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'middle';
+    this.plusParticles.forEach(p => {
+      this.ctx.fillStyle = p.color;
+      this.ctx.globalAlpha = p.alpha;
+      this.ctx.fillText('+', p.x, p.y);
+    });
+    this.ctx.globalAlpha = 1.0;
   }
 
   private applyPlayerPhysics(dr: number) {
@@ -606,12 +676,27 @@ export class GameComponent implements OnInit, OnDestroy {
   endGame(win: boolean) {
     this.gameService.gameActive.set(false);
     this.gameService.winState.set(win);
-    this.gameService.lastScore.set(Math.floor(this.gameService.score));
-    localStorage.setItem('orbital_last_score', this.gameService.lastScore().toString());
-    if (this.gameService.score > this.gameService.highScore()) {
-      this.gameService.highScore.set(Math.floor(this.gameService.score));
-      localStorage.setItem('orbital_hs', this.gameService.highScore().toString());
+    const finalScore = Math.floor(this.gameService.score);
+    this.gameService.lastScore.set(finalScore);
+    localStorage.setItem('orbital_last_score', finalScore.toString());
+
+    if (finalScore > this.gameService.highScore()) {
+      this.gameService.highScore.set(finalScore);
+      localStorage.setItem('orbital_hs', finalScore.toString());
     }
+
+    // Historie aktualisieren
+    const playtime = Math.floor((Date.now() - this.gameService.startTime) / 1000);
+    const newEntry = {
+      score: finalScore,
+      time: playtime,
+      date: Date.now()
+    };
+
+    const history = [newEntry, ...this.gameService.scoreHistory()];
+    if (history.length > 5) history.pop();
+    this.gameService.scoreHistory.set(history);
+    localStorage.setItem('orbital_history', JSON.stringify(history));
   }
 
   private draw() {
@@ -643,6 +728,7 @@ export class GameComponent implements OnInit, OnDestroy {
     // Kampf-Objekte
     this.drawProjectiles(s, cx, cy);
     this.drawAsteroids(s, cx, cy);
+    this.drawPlusParticles();
 
 
     this.drawGlassCracks(this.ctx, window.innerWidth, window.innerHeight);

@@ -1,4 +1,5 @@
 import {Injectable, signal} from '@angular/core';
+import {Asteroid, Comet, LogEntry, Projectile, ScoreEntry} from '../model/game.model';
 
 @Injectable({
   providedIn: 'root',
@@ -9,11 +10,15 @@ export class GameService {
   winState = signal(false);
   highScore = signal(parseInt(localStorage.getItem('orbital_hs') || '0'));
   lastScore = signal(parseInt(localStorage.getItem('orbital_last_score') || '0'));
+  scoreHistory = signal<ScoreEntry[]>(JSON.parse(localStorage.getItem('orbital_history') || '[]'));
   resumeCountdown = signal(0);
 
   lastTimestamp: number = 0;
+  startTime: number = 0;
   score = 0;
   ep = 0;
+  maxEp = 4000;
+  epOverflowLogged = false;
   researchLevel = 1;
   playerR = 350;
   marinesActive = false;
@@ -82,12 +87,14 @@ export class GameService {
 
 
   initGameVariables() {
-    this.lastTimestamp = performance.now()
+    this.lastTimestamp = performance.now();
+    this.startTime = Date.now();
     this.gameActive.set(true);
     this.winState.set(false);
     this.score = 0;
-    this.ep = 100;
-    this.researchLevel = 1;
+    this.ep = 4000;
+    this.epOverflowLogged = false;
+    this.researchLevel = 10;
     this.playerR = 350;
     this.asteroids = [];
     this.scienceLog = [];
