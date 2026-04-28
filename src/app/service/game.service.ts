@@ -32,6 +32,7 @@ export class GameService {
   isInsideHabitableZone = false;
   private spawnInterval: any;
   isPaused = false;
+  flightDirection = 1; // 1 = Uhrzeigersinn, -1 = gegen den Uhrzeigersinn
 
   asteroids: Asteroid[] = [];
   scienceLog: LogEntry[] = [];
@@ -92,9 +93,9 @@ export class GameService {
     this.gameActive.set(true);
     this.winState.set(false);
     this.score = 0;
-    this.ep = 4000;
+    this.ep = 0;
     this.epOverflowLogged = false;
-    this.researchLevel = 10;
+    this.researchLevel = 1;
     this.playerR = 350;
     this.asteroids = [];
     this.scienceLog = [];
@@ -108,5 +109,6 @@ export class GameService {
     this.shieldHp = 0;
     this.comets = [];
     this.isInsideHabitableZone = false;
+    this.flightDirection = 1;
   }
 }

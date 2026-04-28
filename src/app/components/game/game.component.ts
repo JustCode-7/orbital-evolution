@@ -86,7 +86,7 @@ export class GameComponent implements OnInit, OnDestroy {
   marinesCooldown = 15000;
   marinesCooldownProgress = 100;
   lastShotTime = 0;
-  private flightDirection = 1; // 1 = Uhrzeigersinn, -1 = gegen den Uhrzeigersinn
+
   private lastDelta: number = 0;
   private plusParticles: {
     x: number,
@@ -153,9 +153,6 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onDown(e: Event) {
-    if (!this.fullscreenService.isFullScreen().valueOf()) {
-      this.fullscreenService.toggleTabFullScreenModeGame()
-    }
     this.isPressing = true;
     e.preventDefault();
   }
@@ -205,8 +202,8 @@ export class GameComponent implements OnInit, OnDestroy {
   private handleSatelliteAction() {
     // Wenn bereits 10 Satelliten da sind: Richtungswechsel (kostenlos)
     if (this.gameService.satellitesCount >= 10) {
-      this.flightDirection *= -1;
-      const dirText = this.flightDirection === 1 ? "im Uhrzeigersinn" : "gegen Uhrzeigersinn";
+      this.gameService.flightDirection *= -1;
+      const dirText = this.gameService.flightDirection === 1 ? "im Uhrzeigersinn" : "gegen Uhrzeigersinn";
       this.gameService.addLog(`Orbit-Umkehr: Flugrichtung nun ${dirText}`, "system");
       return;
     }
@@ -482,10 +479,10 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private applyPlayerPhysics(dr: number) {
-    const da = 0.015 * this.flightDirection;
+    const da = 0.015 * this.gameService.flightDirection;
     this.gameService.playerR += dr;
     this.playerAngle += da;
-    this.playerRotation += 0.08 * this.flightDirection;
+    this.playerRotation += 0.08 * this.gameService.flightDirection;
 
     // Richtungs-Vektor berechnen für die Schiff-Rotation (ShipDirection)
     const shipVx = dr * Math.cos(this.playerAngle) - this.gameService.playerR * Math.sin(this.playerAngle) * da;
