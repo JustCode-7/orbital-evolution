@@ -14,6 +14,10 @@ export class MusicService {
   private playlistIds: string[] = [];
   private currentIndex = 0;
   private nextTrackTimer: any;
+  private currentTrackRemainingLoops = 0;
+  private currentTrackId: string | null = null;
+  private readonly MIN_TRACK_DURATION = 600; // 10 Minuten in Sekunden
+  private readonly CROSSFADE_TIME = 3.0;
 
   readonly playlist = [
     {id: 'synth', file: 'assets/music/monume-electronic.mp3'},
@@ -79,7 +83,7 @@ export class MusicService {
   /**
    * SCHRITT 3: Abspielen mit Crossfade.
    */
-  async playTrack(id: string) {
+  async playTrack(id: string, isLooping = false) {
     const buffer = await this.getDecodedBuffer(id);
     if (!buffer || !this.audioCtx) return;
 
@@ -89,7 +93,7 @@ export class MusicService {
     }
 
     const now = this.audioCtx.currentTime;
-    const fadeTime = 3.0;
+    const fadeTime = this.CROSSFADE_TIME;
 
     const newSource = this.audioCtx.createBufferSource();
     const newGain = this.audioCtx.createGain();
@@ -112,10 +116,28 @@ export class MusicService {
     newSource.start(now);
     this.currentSource = newSource;
     this.currentGain = newGain;
+    this.currentTrackId = id;
 
-    // Nächsten Track planen
+    // Wenn es ein neuer Track ist (nicht aus einem Loop), berechnen wir die benötigten Wiederholungen
+    if (!isLooping) {
+      if (buffer.duration < this.MIN_TRACK_DURATION) {
+        this.currentTrackRemainingLoops = Math.ceil(this.MIN_TRACK_DURATION / buffer.duration) - 1;
+      } else {
+        this.currentTrackRemainingLoops = 0;
+      }
+    }
+
+    // Nächsten Track oder Loop planen
     if (this.nextTrackTimer) clearTimeout(this.nextTrackTimer);
-    this.nextTrackTimer = setTimeout(() => this.playNext(), (buffer.duration - fadeTime) * 1000);
+
+    this.nextTrackTimer = setTimeout(() => {
+      if (this.currentTrackRemainingLoops > 0) {
+        this.currentTrackRemainingLoops--;
+        this.playTrack(id, true);
+      } else {
+        this.playNext();
+      }
+    }, (buffer.duration - fadeTime) * 1000);
   }
 
   startAutoplay() {
