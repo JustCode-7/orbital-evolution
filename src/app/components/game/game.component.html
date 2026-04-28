@@ -27,9 +27,11 @@
           }
           <div class="top-row">
             <div class="main-stats">
-              <div class="score" [class.score-active]="isScoreZone">SCORE: {{ scoreFromated }}</div>
+              <div class="score" [class.score-active]="isScoreZone">{{ languageService.t('GAME.SCORE') }}
+                : {{ scoreFromated }}
+              </div>
               <div class="ep" [class.ep-active]="gameService.isInsideHabitableZone">
-                EP: {{ gameService.ep | number:'1.0-0' }}
+                {{ languageService.t('GAME.EP') }}: {{ gameService.ep | number:'1.0-0' }}
               </div>
             </div>
           </div>
@@ -37,7 +39,7 @@
           <div class="left-panels">
             @if (gameService.shieldActive) {
               <div class="bar-row">
-                <label>SHIELD</label>
+                <label>{{ languageService.t('GAME.SHIELD') }}</label>
                 <div class="progress">
                   <div class="fill cyan" [style.width.%]="gameService.shieldHp"></div>
                 </div>
@@ -70,19 +72,20 @@
                   </svg>
                 }
 
-                🛡️ Shield<span>(100 EP)</span>
+                🛡️ {{ languageService.t('GAME.BUY_SHIELD') }}<span>(100 EP)</span>
               </button>
               @if (gameService.satellitesCount >= 10) {
                 <button class="power-up-button orbit-change-btn-color fw-bold pt-2"
                         (mousedown)="buy('sats', $event)"
-                        (touchstart)="buy('sats', $event)">⇄ Orbit
+                        (touchstart)="buy('sats', $event)">⇄ {{ languageService.t('GAME.BUY_ORBIT') }}
                 </button>
               } @else {
                 <button class="power-up-button"
                         (mousedown)="buy('sats', $event)"
                         (touchstart)="buy('sats', $event)"
                         [class.power-active]="gameService.ep >= 150"
-                        [disabled]="gameService.ep < 150">🛰️ Sats {{ gameService.satellitesCount }}<span>(150 EP)</span>
+                        [disabled]="gameService.ep < 150">
+                  🛰️ {{ languageService.t('GAME.BUY_SATS') }} {{ gameService.satellitesCount }}<span>(150 EP)</span>
                 </button>
               }
             </div>
@@ -93,7 +96,7 @@
                       (touchstart)="buy('marines', $event)"
                       [disabled]="gameService.ep < 250 || marinesCooldownProgress < 100"
                       [class.power-active]="gameService.ep >= 250 && marinesCooldownProgress === 100">
-                🎖️ Marines <span>(250 EP)</span>
+                🎖️ {{ languageService.t('GAME.BUY_MARINES') }} <span>(250 EP)</span>
                 @if (marinesCooldownProgress < 100) {
                   <div class="cooldown-overlay-mini">
                     <div class="fill" [style.height.%]="marinesCooldownProgress"></div>
@@ -106,7 +109,7 @@
                       (touchstart)="buy('research', $event)"
                       [disabled]="gameService.ep < 200"
                       [class.power-active]="gameService.ep >= 200"
-              >🔬 Lvl {{ gameService.researchLevel }} <span>(200 EP)</span>
+              >🔬 {{ languageService.t('GAME.RESEARCH_LVL') }} {{ gameService.researchLevel }} <span>(200 EP)</span>
               </button>
             </div>
           </div>
@@ -121,7 +124,7 @@
         <button class="jump-btn"
                 (mousedown)="triggerOrbitalJump()"
                 (touchstart)="triggerOrbitalJump()">
-          🌌 Orbitalsprung LV {{ jumpBounsLevel | number:'1.0-0' }}
+          {{ languageService.t('GAME.ORBITAL_JUMP') }} {{ jumpBounsLevel | number:'1.0-0' }}
           <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
         </button>
       }
@@ -129,7 +132,7 @@
       @if (gameService.isPaused && !gameService.showRewardDialog()) {
         <button class="resume-btn"
                 (mousedown)="resumeGame()"
-                (touchstart)="resumeGame()">WEITER
+                (touchstart)="resumeGame()">{{ languageService.t('GAME.RESUME') }}
         </button>
       } @else if (!gameService.showRewardDialog()) {
         <button class="pause-btn float-end"
@@ -144,24 +147,24 @@
   @if (gameService.showRewardDialog()) {
     <div class="dialog-overlay vh-100">
       <div class="reward-dialog">
-        <h2 class="reward-title">FORSCHUNGS-BELOHNUNG</h2>
-        <p class="reward-subtitle">Wähle eine Verstärkung für dein Schiff:</p>
+        <h2 class="reward-title">{{ languageService.t('GAME.REWARD_TITLE') }}</h2>
+        <p class="reward-subtitle">{{ languageService.t('GAME.REWARD_SUBTITLE') }}</p>
         <div class="reward-options">
           <button class="reward-option-btn" (click)="selectReward(1)">
             <div class="reward-icon">🎖️</div>
-            <div class="reward-name">Marines</div>
-            <div class="reward-desc">Soforteinsatz der Marines-Eskorte</div>
+            <div class="reward-name">{{ languageService.t('GAME.REWARD_MARINES') }}</div>
+            <div class="reward-desc">{{ languageService.t('GAME.REWARD_MARINES_DESC') }}</div>
           </button>
           <button [disabled]="gameService.ep === gameService.maxEp" class="reward-option-btn"
                   (click)="selectReward(2)">
             <div class="reward-icon">🔋</div>
             <div class="reward-name">400 EP</div>
-            <div class="reward-desc">Direkte EP-Gutschrift</div>
+            <div class="reward-desc">{{ languageService.t('GAME.REWARD_EP_DESC') }}</div>
           </button>
           <button class="reward-option-btn" (click)="selectReward(3)">
             <div class="reward-icon">💥</div>
-            <div class="reward-name">Novabombe</div>
-            <div class="reward-desc">Zerstört alle Asteroiden</div>
+            <div class="reward-name">{{ languageService.t('GAME.REWARD_NOVA') }}</div>
+            <div class="reward-desc">{{ languageService.t('GAME.REWARD_NOVA_DESC') }}</div>
           </button>
         </div>
       </div>

@@ -8,6 +8,7 @@ import {GameService} from '../../service/game.service';
 import {MatSlideToggle} from '@angular/material/slide-toggle';
 import {MusicService} from '../../service/music.service';
 import {FormsModule} from '@angular/forms';
+import {LanguageService} from '../../service/language.service';
 
 @Component({
   selector: 'app-game-dialog',
@@ -27,6 +28,7 @@ export class GameDialog {
   protected readonly fullscreenService = inject(ToggleFullscreenService);
   gameService = inject(GameService)
   protected musicservice = inject(MusicService)
+  protected languageService = inject(LanguageService);
 
   protected clearHighScore() {
     localStorage.removeItem('orbital_hs');
@@ -46,7 +48,7 @@ export class GameDialog {
     this.gameService.cleanup();
     this.gameService.initGameVariables();
 
-    this.gameService.addLog("Orbitale Verteidigung aktiviert.", 'event');
+    this.gameService.addLog(this.languageService.translate('GAME.LOG_DEFENSE_ACTIVE'), 'event');
 
     this.gameService.startSpawning();
   }

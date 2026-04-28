@@ -1,16 +1,16 @@
 <div
   class="menu-modal-content">
   <div class="d-flex flex-column justify-content-center p-2 flex-grow-1">
-    <h1>{{ gameService.winState() ? 'MISSION ERFOLGREICH' : 'ORBITAL EVOLUTION' }}</h1>
+    <h1>{{ gameService.winState() ? languageService.t('DIALOG.WIN_TITLE') : languageService.t('DIALOG.LOSE_TITLE') }}</h1>
     @if (gameService.winState()) {
-      <p class="hyper-jump-text text-center text-md-start">Du bist sicher in den Hyperraum gesprungen!</p>
+      <p class="hyper-jump-text text-center text-md-start">{{ languageService.t('DIALOG.WIN_TEXT') }}</p>
     }
     <div class="scores">
       @if (gameService.scoreHistory().length > 0) {
-        <p class="score-display high text-center text-md-start">Bester
-          Score: {{ gameService.highScore() | number:'1.0-0' }}</p>
+        <p class="score-display high text-center text-md-start">{{ languageService.t('DIALOG.BEST_SCORE') }}
+          : {{ gameService.highScore() | number:'1.0-0' }}</p>
         <div class="history-list">
-          <p class="history-title">Letzte Missionen:</p>
+          <p class="history-title">{{ languageService.t('DIALOG.HISTORY_TITLE') }}</p>
           @for (entry of gameService.scoreHistory(); track entry.date) {
             <div class="history-item">
               <span class="history-time">({{ formatTime(entry.time) }} min)</span>
@@ -19,7 +19,7 @@
           }
         </div>
       } @else {
-        <p class="score-display text-center text-md-start">Keine Missionsdaten vorhanden.</p>
+        <p class="score-display text-center text-md-start">{{ languageService.t('DIALOG.NO_DATA') }}</p>
       }
     </div>
   </div>
@@ -27,10 +27,10 @@
 
     <button tabindex="0" class="start-btn fw-bold"
             (click)="startGame()">
-      {{ gameService.winState() ? 'NEUER START' : 'START' }}
+      {{ gameService.winState() ? languageService.t('DIALOG.START_NEW') : languageService.t('DIALOG.START') }}
     </button>
 
-    <button class="start-btn fw-bold" routerLink="">INTRO</button>
+    <button class="start-btn fw-bold" routerLink="">{{ languageService.t('DIALOG.INTRO') }}</button>
 
     <button class="start-btn fw-bold text-nowrap" (click)="gameService.toggleInversion()">
       {{ gameService.isColorsInverted ? 'Dark-Mode' : 'Light-Mode' }}
@@ -41,12 +41,13 @@
         [checked]="musicservice.isMusicOn()"
         labelPosition="before">
           <span class="fw-bold me-2">
-          SOUND {{ musicservice.isMusicOn() ? 'ON' : 'OFF' }}
+          {{ languageService.t('DIALOG.SOUND') }} {{ musicservice.isMusicOn() ? 'ON' : 'OFF' }}
             </span>
       </mat-slide-toggle>
     </div>
     <button class="mt-2 w-100" mat-icon-button
-            (click)="clearHighScore()">
+            (click)="clearHighScore()"
+            [title]="languageService.t('DIALOG.DELETE_HISTORY')">
       <mat-icon>delete</mat-icon>
     </button>
   </div>

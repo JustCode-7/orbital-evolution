@@ -67,7 +67,26 @@
 .preview-container {
   display: flex;
   justify-content: center;
-  align-items: center;
+}
+
+.language-selector {
+  select {
+    font-size: 0.9rem;
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #00ffff !important;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+
+    &:focus {
+      border-color: #00ffff !important;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+      outline: none;
+    }
+  }
 }
 
 /* Info-Karten */

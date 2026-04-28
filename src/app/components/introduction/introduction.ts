@@ -2,6 +2,8 @@ import {Component, inject, OnDestroy, signal} from '@angular/core';
 import {RouterLink} from '@angular/router';
 import {PwaInstallService} from '../../service/pwa-install.service';
 import {AsyncPipe, NgOptimizedImage} from '@angular/common';
+import {LanguageService} from '../../service/language.service';
+import {FormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-introduction',
@@ -9,6 +11,7 @@ import {AsyncPipe, NgOptimizedImage} from '@angular/common';
     RouterLink,
     AsyncPipe,
     NgOptimizedImage,
+    FormsModule,
   ],
   templateUrl: './introduction.html',
   styleUrl: './introduction.scss',
@@ -16,6 +19,7 @@ import {AsyncPipe, NgOptimizedImage} from '@angular/common';
 export class Introduction implements OnDestroy {
 
   protected readonly pwaService = inject(PwaInstallService);
+  protected readonly languageService = inject(LanguageService);
   isShowSpinner = signal(false);
 
 

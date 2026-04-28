@@ -15,6 +15,7 @@ import {ToggleFullscreenService} from '../../service/toggle-fullscreen.service';
 import {GameDialog} from '../game-dialog/game-dialog';
 import {MusicService} from '../../service/music.service';
 import {Star} from '../../model/game.model';
+import {LanguageService} from '../../service/language.service';
 
 @Component({
   selector: 'app-game',
@@ -27,6 +28,7 @@ import {Star} from '../../model/game.model';
   styleUrls: ['./game.component.scss']
 })
 export class GameComponent implements OnInit, OnDestroy {
+  protected languageService = inject(LanguageService);
   private _canvas!: ElementRef<HTMLCanvasElement>;
   ctx!: CanvasRenderingContext2D;
 
@@ -163,7 +165,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.isJumping = true;
 
       this.gameService.score += finalBonus;
-      this.gameService.addLog(`Orbitalsprung initiiert! (+${finalBonus.toLocaleString()} Punkte)`, 'event');
+      this.gameService.addLog(this.languageService.t('GAME.LOG_ORBITAL_JUMP', [finalBonus.toLocaleString()]), 'event');
     }
   }
 
@@ -195,7 +197,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.ep -= 100;
       this.gameService.shieldActive = true;
       this.gameService.shieldHp = 100;
-      this.gameService.addLog("Schilde aktiviert!", "system");
+      this.gameService.addLog(this.languageService.t('GAME.LOG_SHIELD_ACTIVE'), "system");
     }
   }
 
@@ -203,8 +205,8 @@ export class GameComponent implements OnInit, OnDestroy {
     // Wenn bereits 10 Satelliten da sind: Richtungswechsel (kostenlos)
     if (this.gameService.satellitesCount >= 10) {
       this.gameService.flightDirection *= -1;
-      const dirText = this.gameService.flightDirection === 1 ? "im Uhrzeigersinn" : "gegen Uhrzeigersinn";
-      this.gameService.addLog(`Orbit-Umkehr: Flugrichtung nun ${dirText}`, "system");
+      const dirText = this.gameService.flightDirection === 1 ? this.languageService.t('GAME.LOG_CLOCKWISE') : this.languageService.t('GAME.LOG_COUNTER_CLOCKWISE');
+      this.gameService.addLog(this.languageService.t('GAME.LOG_ORBIT_REVERSE', [dirText]), "system");
       return;
     }
 
@@ -212,10 +214,10 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.gameService.ep >= 150) {
       this.gameService.ep -= 150;
       this.gameService.satellitesCount++;
-      this.gameService.addLog(`Satellit Level-Up: EP-Bonus +${this.gameService.satellitesCount * 10} % | ${this.gameService.satellitesCount}/10 online`, "system");
+      this.gameService.addLog(this.languageService.t('GAME.LOG_SATS_LEVEL_UP', [this.gameService.satellitesCount * 10, this.gameService.satellitesCount + "/10 online"]), "system");
 
       if (this.gameService.satellitesCount === 10) {
-        this.gameService.addLog("MAXIMALE SATELLITEN: Orbit-Umkehr freigeschaltet!", "event");
+        this.gameService.addLog(this.languageService.t('GAME.LOG_MAX_SATS'), "event");
       }
     }
   }
@@ -225,7 +227,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.gameService.ep >= 250 && now >= this.gameService.marinesReadyTime) {
       this.gameService.ep -= 250;
       this.gameService.marinesActive = true;
-      this.gameService.addLog("Marines Einsatzgruppe gestartet!", 'event');
+      this.gameService.addLog(this.languageService.t('GAME.LOG_MARINES_STARTED'), 'event');
 
       setTimeout(() => (this.gameService.marinesActive = false), 10000);
       this.gameService.marinesReadyTime = now + this.marinesCooldown;
@@ -280,7 +282,7 @@ export class GameComponent implements OnInit, OnDestroy {
   protected triggerNovaBombe() {
     this.gameService.novaBombeVisuals = {x: 0, y: 0, r: 0, alpha: 1};
     this.gameService.stopSpawningUntil = Date.now() + 5000;
-    this.gameService.addLog("NOVABOMBE GEZÜNDET!", 'event');
+    this.gameService.addLog(this.languageService.t('GAME.LOG_REWARD_NOVA'), 'event');
   }
 
   protected selectReward(choice: number) {
@@ -289,14 +291,14 @@ export class GameComponent implements OnInit, OnDestroy {
       case 1:
         // Soforteinsatz: Ignoriert EP und Cooldown
         this.gameService.marinesActive = true;
-        this.gameService.addLog("MARINES SOFORTEINSATZ!", 'event');
+        this.gameService.addLog(this.languageService.t('GAME.LOG_REWARD_MARINES'), 'event');
         setTimeout(() => (this.gameService.marinesActive = false), 10000);
         // Optional: Cooldown zurücksetzen, falls gewünscht
         this.gameService.marinesReadyTime = Date.now() + this.marinesCooldown;
         break;
       case 2:
         this.gameService.ep = Math.min(this.gameService.maxEp, this.gameService.ep + 400);
-        this.gameService.addLog("400 EP Bonus erhalten!", 'event');
+        this.gameService.addLog(this.languageService.t('GAME.LOG_REWARD_EP', [400]), 'event');
         break;
       case 3:
         this.triggerNovaBombe();
@@ -315,17 +317,17 @@ export class GameComponent implements OnInit, OnDestroy {
     // Logik für Kometen-Spawn
     if (this.gameService.researchLevel % 3 === 0) {
       this.spawnComet();
-      this.gameService.addLog(`Seltener Energie-Komet gesichtet!`, 'research');
+      this.gameService.addLog(this.languageService.t('GAME.LOG_COMET_SIGHTED'), 'research');
     }
 
     // Logik für Asteroiden-Intensität
     const newThreshold = Math.floor((this.gameService.researchLevel - 1) / 3);
     if (newThreshold > oldThreshold) {
       this.gameService.startSpawning();
-      this.gameService.addLog(`Gefahrenstufe erhöht! Asteroiden-Frequenz gesteigert.`, 'event');
+      this.gameService.addLog(this.languageService.t('GAME.LOG_DANGER_INCREASED'), 'event');
     }
 
-    this.gameService.addLog(`Technologie-Level-Up PunkteBonus +${this.gameService.researchLevel * 10}%.`, 'research');
+    this.gameService.addLog(this.languageService.t('GAME.LOG_TECH_LEVEL_UP', [this.gameService.researchLevel * 10]), 'research');
 
     if (this.gameService.researchLevel % 5 === 0) {
       this.gameService.isPaused = true;
@@ -333,7 +335,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     if (this.gameService.researchLevel === 10) {
-      this.gameService.addLog(`ANTIGRAVITATIONSANTRIEB BEREIT ZUM SPRUNG!`, 'event');
+      this.gameService.addLog(this.languageService.t('GAME.LOG_ANTIGRAV_READY'), 'event');
     }
   }
 
@@ -360,7 +362,7 @@ export class GameComponent implements OnInit, OnDestroy {
       lifespan: 0,
       tail: []
     });
-    this.gameService.addLog("Ein Komet nähert sich der Sonne!", 'event');
+    this.gameService.addLog(this.languageService.t('GAME.LOG_COMET_APPROACH'), 'event');
   }
 
   private gameLoop() {
@@ -472,7 +474,7 @@ export class GameComponent implements OnInit, OnDestroy {
         this.gameService.epOverflowLogged = false;
       } else {
         if (!this.gameService.epOverflowLogged) {
-          this.gameService.addLog("EP-Memory-Stackoverflow, der EP-Memory muss geleert werden.", 'system');
+          this.gameService.addLog(this.languageService.t('GAME.LOG_EP_OVERFLOW'), 'system');
           this.gameService.epOverflowLogged = true;
         }
       }
@@ -615,7 +617,7 @@ export class GameComponent implements OnInit, OnDestroy {
       if (Math.hypot(px - c.x, py - c.y) < 40) {
         const cometValue = Math.floor(100 * this.gameService.researchLevel * 50)
         this.gameService.score += cometValue;
-        this.gameService.addLog("+" + cometValue.toString() + " Pts: Kometen-Staub extrahiert!", 'research');
+        this.gameService.addLog(this.languageService.t('GAME.LOG_COMET_EXTRACTED', [cometValue]), 'research');
         this.gameService.comets.splice(i, 1);
         continue;
       }

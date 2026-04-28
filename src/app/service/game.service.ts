@@ -1,10 +1,12 @@
-import {Injectable, signal} from '@angular/core';
+import {inject, Injectable, signal} from '@angular/core';
 import {Asteroid, Comet, LogEntry, Projectile, ScoreEntry} from '../model/game.model';
+import {LanguageService} from './language.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GameService {
+  private languageService = inject(LanguageService);
 
   gameActive = signal(false);
   winState = signal(false);
