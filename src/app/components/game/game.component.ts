@@ -303,8 +303,8 @@ export class GameComponent implements OnInit, OnDestroy {
         this.gameService.marinesReadyTime = Date.now() + this.marinesCooldown;
         break;
       case 2:
-        this.gameService.ep = Math.min(this.gameService.maxEp, this.gameService.ep + 400);
-        this.gameService.addLog(this.languageService.t('GAME.LOG_REWARD_EP', [400]), 'event');
+        this.gameService.ep = Math.min(this.gameService.maxEp, this.gameService.ep + 300);
+        this.gameService.addLog(this.languageService.t('GAME.LOG_REWARD_EP', [300]), 'event');
         break;
       case 3:
         this.triggerNovaBombe();

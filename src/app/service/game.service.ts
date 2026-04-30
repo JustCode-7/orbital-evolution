@@ -25,7 +25,7 @@ export class GameService {
   startTime: number = 0;
   score = 0;
   ep = 0;
-  maxEp = 4000;
+  maxEp = 2000;
   epOverflowLogged = false;
   researchLevel = 1;
   playerR = 350;
