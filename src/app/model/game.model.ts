@@ -1,3 +1,9 @@
+/**
+ * COPYRIGHT (C) 2026 JustCode-7 (JustCode-7)
+ * ALLE RECHTE VORBEHALTEN. / ALL RIGHTS RESERVED.
+ * Dieses Projekt ist proprietär. Nutzung, Modifikation oder Kopie nur mit schriftlicher Genehmigung.
+ * Siehe LICENSE-Datei im Root-Verzeichnis für Details.
+ */
 export interface Comet {
   x: number;
   y: number;
@@ -30,7 +36,7 @@ export interface LogEntry {
 export interface ScoreEntry {
   score: number;
   time: number; // Spielzeit in Sekunden
-  date: number; // Timestamp für Anzeige
+  date: number; // Timestamp fÃƒÂ¼r Anzeige
 }
 
 export interface Star {

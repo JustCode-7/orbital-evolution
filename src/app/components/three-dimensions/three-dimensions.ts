@@ -1,3 +1,9 @@
+/**
+ * COPYRIGHT (C) 2026 JustCode-7 (JustCode-7)
+ * ALLE RECHTE VORBEHALTEN. / ALL RIGHTS RESERVED.
+ * Dieses Projekt ist proprietär. Nutzung, Modifikation oder Kopie nur mit schriftlicher Genehmigung.
+ * Siehe LICENSE-Datei im Root-Verzeichnis für Details.
+ */
 import {AfterViewInit, Component, ElementRef, HostListener, NgZone, OnDestroy, ViewChild} from '@angular/core';
 import * as THREE from 'three';
 
@@ -22,7 +28,7 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
   onWindowResize() {
     if (!this.camera) return;
 
-    // 1. Sofortiger Resize für ein flüssiges Gefühl
+    // 1. Sofortiger Resize fÃƒÂ¼r ein flÃƒÂ¼ssiges GefÃƒÂ¼hl
     this.updateCameraPosition();
 
     // 2. Erneuter Check nach 100ms, falls sich die UI-Leisten des Handys noch bewegen
@@ -35,7 +41,7 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
   private sunMesh!: THREE.Mesh;
-  private glowMesh!: THREE.Mesh; // NEU: Der Glüheffekt-Layer
+  private glowMesh!: THREE.Mesh; // NEU: Der GlÃƒÂ¼heffekt-Layer
   private clock = new THREE.Timer();
   private animationId?: number;
 
@@ -86,7 +92,7 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
     if (!this.camera || !this.renderer) return;
 
     const canvas = this.canvasRef.nativeElement;
-    // Wir nehmen die Fenstergröße als Fallback, falls das Canvas noch nicht resized wurde
+    // Wir nehmen die FenstergrÃƒÂ¶ÃƒÅ¸e als Fallback, falls das Canvas noch nicht resized wurde
     const width = canvas.clientWidth || window.innerWidth;
     const height = canvas.clientHeight || window.innerHeight;
 
@@ -94,7 +100,7 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
     const vFov = (fov * Math.PI) / 180;
     const desiredUnits = 900;
 
-    // Renderer Größe synchron zum Canvas setzen
+    // Renderer GrÃƒÂ¶ÃƒÅ¸e synchron zum Canvas setzen
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
 
@@ -126,15 +132,15 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
       map: sunTexture, // Die geladene Bild-Textur
       emissive: 0xffddaa, // Grund-Selbstleuchten (Helles Orange/Gelb)
       emissiveMap: sunTexture, // Das Leuchten folgt dem Muster der Textur
-      emissiveIntensity: 1.0, // Stärke des Leuchtens
+      emissiveIntensity: 1.0, // StÃƒÂ¤rke des Leuchtens
     });
 
     this.sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
     this.scene.add(this.sunMesh);
 
-    // --- 3. Der Glüheffekt (Äußere Kugel) ---
-    // Etwas größer als die Sonne (Radius 58 statt 55)
-    const glowGeometry = new THREE.SphereGeometry(sunRadius + 12, 64, 64); // Radius erhöht
+    // --- 3. Der GlÃƒÂ¼heffekt (Ãƒâ€žuÃƒÅ¸ere Kugel) ---
+    // Etwas grÃƒÂ¶ÃƒÅ¸er als die Sonne (Radius 58 statt 55)
+    const glowGeometry = new THREE.SphereGeometry(sunRadius + 12, 64, 64); // Radius erhÃƒÂ¶ht
     const glowMaterial = new THREE.MeshBasicMaterial({
       color: 0xff6600, // Tiefes Orange/Rot
       transparent: true,
@@ -163,10 +169,10 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
         this.clock.update(timestamp);
 
         // 2. Zeitwerte abrufen
-        // Der neue Timer gibt Sekunden zurück.
+        // Der neue Timer gibt Sekunden zurÃƒÂ¼ck.
         // Wir nutzen .getDelta(), um die Zeit seit dem letzten Frame zu bekommen
         const delta = this.clock.getDelta();
-        const elapsed = this.clock.getElapsed(); // Für das Pulsieren
+        const elapsed = this.clock.getElapsed(); // FÃƒÂ¼r das Pulsieren
 
         // 3. Animationen anwenden
         if (this.sunMesh) {
@@ -182,7 +188,7 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
         this.renderer.render(this.scene, this.camera);
       };
 
-      // Den Loop starten und den ersten Timestamp übergeben
+      // Den Loop starten und den ersten Timestamp ÃƒÂ¼bergeben
       this.animationId = requestAnimationFrame(animate);
     });
   }

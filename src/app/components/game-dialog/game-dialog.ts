@@ -1,3 +1,9 @@
+/**
+ * COPYRIGHT (C) 2026 JustCode-7 (JustCode-7)
+ * ALLE RECHTE VORBEHALTEN. / ALL RIGHTS RESERVED.
+ * Dieses Projekt ist proprietÃ¤r. Nutzung, Modifikation oder Kopie nur mit schriftlicher Genehmigung.
+ * Siehe LICENSE-Datei im Root-Verzeichnis fÃ¼r Details.
+ */
 import {Component, inject} from '@angular/core';
 import {DecimalPipe} from '@angular/common';
 import {MatIcon} from '@angular/material/icon';

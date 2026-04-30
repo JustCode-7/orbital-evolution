@@ -1,3 +1,9 @@
+/**
+ * COPYRIGHT (C) 2026 JustCode-7 (JustCode-7)
+ * ALLE RECHTE VORBEHALTEN. / ALL RIGHTS RESERVED.
+ * Dieses Projekt ist proprietär. Nutzung, Modifikation oder Kopie nur mit schriftlicher Genehmigung.
+ * Siehe LICENSE-Datei im Root-Verzeichnis für Details.
+ */
 import {Injectable, NgZone} from '@angular/core';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {BehaviorSubject} from 'rxjs';
@@ -43,7 +49,7 @@ export class PwaInstallService {
   askToInstall() {
     if (!this.deferredPrompt || this.isStandalone()) return;
 
-    const ref = this.snackBar.open('Möchten Sie die App installieren?', 'Ja, gerne.', {
+    const ref = this.snackBar.open('MÃƒÂ¶chten Sie die App installieren?', 'Ja, gerne.', {
       duration: 10000,
       verticalPosition: 'top',
       horizontalPosition: 'center'

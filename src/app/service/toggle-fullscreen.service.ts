@@ -1,3 +1,9 @@
+/**
+ * COPYRIGHT (C) 2026 JustCode-7 (JustCode-7)
+ * ALLE RECHTE VORBEHALTEN. / ALL RIGHTS RESERVED.
+ * Dieses Projekt ist proprietär. Nutzung, Modifikation oder Kopie nur mit schriftlicher Genehmigung.
+ * Siehe LICENSE-Datei im Root-Verzeichnis für Details.
+ */
 import {Injectable, signal} from '@angular/core';
 
 @Injectable({
@@ -6,7 +12,7 @@ import {Injectable, signal} from '@angular/core';
 export class ToggleFullscreenService {
   private wakeLock: WakeLockSentinel | null = null;
   isFullScreen = signal(false)
-  // Auf dem iPhone wird dies meist 'false' sein, außer du bist auf einem iPad
+  // Auf dem iPhone wird dies meist 'false' sein, auÃƒÅ¸er du bist auf einem iPad
   // oder in einem Browser, der es emuliert.
   readonly canFullscreen = !!document.documentElement.requestFullscreen ||
     !!(document.documentElement as any).webkitRequestFullscreen;

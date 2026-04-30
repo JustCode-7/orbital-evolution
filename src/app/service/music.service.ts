@@ -1,3 +1,9 @@
+/**
+ * COPYRIGHT (C) 2026 JustCode-7 (JustCode-7)
+ * ALLE RECHTE VORBEHALTEN. / ALL RIGHTS RESERVED.
+ * Dieses Projekt ist proprietär. Nutzung, Modifikation oder Kopie nur mit schriftlicher Genehmigung.
+ * Siehe LICENSE-Datei im Root-Verzeichnis für Details.
+ */
 import {Injectable, signal} from '@angular/core';
 
 @Injectable({providedIn: 'root'})
@@ -6,9 +12,9 @@ export class MusicService {
   private currentSource: AudioBufferSourceNode | null = null;
   private currentGain: GainNode | null = null;
 
-  // Speicher für MP3-Rohdaten (wenig RAM-Verbrauch)
+  // Speicher fÃƒÂ¼r MP3-Rohdaten (wenig RAM-Verbrauch)
   private rawBuffers = new Map<string, ArrayBuffer>();
-  // Speicher für fertig dekodierte Audio-Daten (hoher RAM-Verbrauch)
+  // Speicher fÃƒÂ¼r fertig dekodierte Audio-Daten (hoher RAM-Verbrauch)
   private audioBuffers = new Map<string, AudioBuffer>();
 
   private playlistIds: string[] = [];
@@ -31,10 +37,6 @@ export class MusicService {
   isMusicOn = signal(false);
   isMusicReady = signal(false);
 
-  /**
-   * SCHRITT 1: Nur die Dateien vom Server laden (Parallel).
-   * Wird vom Resolver aufgerufen. Erzeugt KEINEN AudioContext.
-   */
   async fetchAllTracks(): Promise<void> {
     this.isMusicReady.set(false);
     const fetchPromises = this.playlist.map(async (track) => {
@@ -54,10 +56,6 @@ export class MusicService {
     this.isMusicReady.set(true);
   }
 
-  /**
-   * SCHRITT 2: Dekodieren bei Bedarf.
-   * Erzeugt den AudioContext erst hier (nach User-Interaktion).
-   */
   private async getDecodedBuffer(id: string): Promise<AudioBuffer | null> {
     if (this.audioBuffers.has(id)) return this.audioBuffers.get(id)!;
 
@@ -80,14 +78,11 @@ export class MusicService {
     }
   }
 
-  /**
-   * SCHRITT 3: Abspielen mit Crossfade.
-   */
   async playTrack(id: string, isLooping = false) {
     const buffer = await this.getDecodedBuffer(id);
     if (!buffer || !this.audioCtx) return;
 
-    // Context wecken (zwingend erforderlich für Chrome/Safari)
+    // Context wecken (zwingend erforderlich fÃƒÂ¼r Chrome/Safari)
     if (this.audioCtx.state === 'suspended') {
       await this.audioCtx.resume();
     }
@@ -118,7 +113,7 @@ export class MusicService {
     this.currentGain = newGain;
     this.currentTrackId = id;
 
-    // Wenn es ein neuer Track ist (nicht aus einem Loop), berechnen wir die benötigten Wiederholungen
+    // Wenn es ein neuer Track ist (nicht aus einem Loop), berechnen wir die benÃƒÂ¶tigten Wiederholungen
     if (!isLooping) {
       if (buffer.duration < this.MIN_TRACK_DURATION) {
         this.currentTrackRemainingLoops = Math.ceil(this.MIN_TRACK_DURATION / buffer.duration) - 1;
@@ -127,7 +122,7 @@ export class MusicService {
       }
     }
 
-    // Nächsten Track oder Loop planen
+    // NÃƒÂ¤chsten Track oder Loop planen
     if (this.nextTrackTimer) clearTimeout(this.nextTrackTimer);
 
     this.nextTrackTimer = setTimeout(() => {
@@ -165,7 +160,7 @@ export class MusicService {
   }
 
   stopMusic() {
-    // 1. Ganz wichtig: Den Timer für den nächsten Song stoppen!
+    // 1. Ganz wichtig: Den Timer fÃƒÂ¼r den nÃƒÂ¤chsten Song stoppen!
     if (this.nextTrackTimer) {
       clearTimeout(this.nextTrackTimer);
       this.nextTrackTimer = null;
@@ -183,7 +178,7 @@ export class MusicService {
     // 3. Die Quelle nach dem Fade-Out stoppen
     this.currentSource.stop(now + fadeOutTime);
 
-    // 4. Referenzen aufräumen
+    // 4. Referenzen aufrÃƒÂ¤umen
     this.currentSource = null;
     this.currentGain = null;
 

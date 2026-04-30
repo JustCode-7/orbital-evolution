@@ -56,6 +56,22 @@ Thumbs.db
 # Environment files
 /.env
 
+# --- SENSITIVE ASSETS AND RESOURCES ---
+# Roh-Assets (PSD, Blender, High-Res Grafiken), falls vorhanden
+/assets_raw/
+*.psd
+*.blend
+*.bak
+
+# Lokale Entwicklungs-Konfigurationen oder Secrets
+/config/local.json
+/secrets/
+.env.local
+
+# Build-Logs und Artefakte
+/test-results/
+/playwright-report/
+
 # Angular CLI and build artefacts
 /.angular-cli.json
 /.ng/

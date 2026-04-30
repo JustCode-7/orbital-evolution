@@ -1,3 +1,9 @@
+/**
+ * COPYRIGHT (C) 2026 JustCode-7 (JustCode-7)
+ * ALLE RECHTE VORBEHALTEN. / ALL RIGHTS RESERVED.
+ * Dieses Projekt ist proprietär. Nutzung, Modifikation oder Kopie nur mit schriftlicher Genehmigung.
+ * Siehe LICENSE-Datei im Root-Verzeichnis für Details.
+ */
 import {Component, inject, OnDestroy, signal} from '@angular/core';
 import {PwaInstallService} from './service/pwa-install.service';
 import {ToggleFullscreenService} from './service/toggle-fullscreen.service';
