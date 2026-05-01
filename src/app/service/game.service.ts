@@ -55,7 +55,6 @@ export class GameService {
   asteroids: Asteroid[] = [];
   scienceLog: LogEntry[] = [];
   projectiles: Projectile[] = [];
-  warpParticles: { angle: number, r: number, speed: number, length: number }[] = [];
 
   isColorsInverted = false;
 
@@ -122,7 +121,6 @@ export class GameService {
     this.asteroids = [];
     this.scienceLog = [];
     this.projectiles = [];
-    this.warpParticles = [];
     this.marinesActive = false;
     this.isRecovering = false;
     this.isJumping = false; // Reset Jump Status

@@ -22,6 +22,7 @@ import {GameDialog} from '../game-dialog/game-dialog';
 import {MusicService} from '../../service/music.service';
 import {Star} from '../../model/game.model';
 import {LanguageService} from '../../service/language.service';
+import {WarpAnimationService} from '../../service/warp-animation.service';
 
 @Component({
   selector: 'app-game',
@@ -35,6 +36,7 @@ import {LanguageService} from '../../service/language.service';
 })
 export class GameComponent implements OnInit, OnDestroy {
   protected languageService = inject(LanguageService);
+  private warpAnimationService = inject(WarpAnimationService);
   private _canvas!: ElementRef<HTMLCanvasElement>;
   ctx!: CanvasRenderingContext2D;
 
@@ -120,6 +122,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.playerImg.src = 'assets/ship-skin/ship-default.svg';
+    this.warpAnimationService.setShipImage(this.playerImg.src);
     this.gameLoop();
   }
 
@@ -1319,125 +1322,16 @@ export class GameComponent implements OnInit, OnDestroy {
     const width = window.innerWidth;
     const height = window.innerHeight;
     const now = Date.now();
-    const elapsed = now - this.gameService.warpStart;
-    const progress = Math.min(1, Math.max(0, elapsed / this.gameService.warpDuration));
 
-    // Initialisiere Partikel beim ersten Frame der Animation
-    if (this.gameService.warpParticles.length === 0) {
-      for (let i = 0; i < 150; i++) {
-        this.gameService.warpParticles.push({
-          angle: Math.random() * Math.PI * 2,
-          r: Math.random() * Math.max(width, height),
-          speed: 15 + Math.random() * 25,
-          length: 5 + Math.random() * 10
-        });
-      }
-    }
-
-    this.ctx.save();
-    // Alle Berechnungen relativ zur Bildschirmmitte
-    this.ctx.translate(width / 2, height / 2);
-
-    // 1. ÜBERGANG: Fade-in/Fade-out & Hintergrund
-    // Ein kurzer Blitz zu Beginn, dann verdunkelt sich der Schirm
-    let overlayAlpha = 0;
-    if (progress < 0.1) {
-      overlayAlpha = progress * 10; // Schnelles Fade-in des Hintergrunds
-    } else if (progress > 0.8) {
-      overlayAlpha = (1 - progress) * 5; // Fade-out am Ende
-    } else {
-      overlayAlpha = 1;
-    }
-
-    // Hintergrund (tiefes Blau/Schwarz)
-    this.ctx.fillStyle = `rgba(0, 10, 40, ${overlayAlpha * 0.9})`;
-    this.ctx.fillRect(-width / 2, -height / 2, width, height);
-
-    this.ctx.globalCompositeOperation = 'lighter';
-
-    // 2. TUNNEL-EFFEKT (Warp-Schlieren)
-    this.gameService.warpParticles.forEach(p => {
-      // Bewege Partikel nach außen
-      p.r += p.speed;
-      // Reset Partikel wenn sie den Bildschirm verlassen
-      if (p.r > Math.max(width, height)) {
-        p.r = 20;
-        p.angle = Math.random() * Math.PI * 2;
-      }
-
-      // Berechnung der visuellen Eigenschaften basierend auf Distanz zum Zentrum
-      const x1 = Math.cos(p.angle) * p.r;
-      const y1 = Math.sin(p.angle) * p.r;
-      // Linien werden nach außen hin länger (Gerschwindigkeitssimulation)
-      const currentLen = p.length * (1 + p.r / 100);
-      const x2 = Math.cos(p.angle) * (p.r + currentLen);
-      const y2 = Math.sin(p.angle) * (p.r + currentLen);
-
-      // Linien werden nach außen hin heller und dicker
-      const alpha = Math.min(1, p.r / 300) * overlayAlpha;
-      const thickness = 0.5 + (p.r / 200);
-
-      this.ctx.beginPath();
-      this.ctx.moveTo(x1, y1);
-      this.ctx.lineTo(x2, y2);
-      this.ctx.lineWidth = thickness;
-      this.ctx.strokeStyle = `rgba(150, 230, 255, ${alpha})`;
-      this.ctx.stroke();
-    });
-
-    // 3. EREIGNISHORIZONT (Wasser-Wabern)
-    // Mehrere konzentrische Ringe mit Verzerrung
-    const ringCount = 5;
-    const timeFactor = now * 0.003;
-
-    for (let i = 0; i < ringCount; i++) {
-      const baseRadius = (progress * 800) + (i * 40); // Pulsieren nach außen
-      const ringAlpha = (1 - (i / ringCount)) * 0.6 * overlayAlpha;
-
-      this.ctx.beginPath();
-      for (let a = 0; a <= Math.PI * 2; a += 0.1) {
-        // Verzerrung durch Sinus/Kosinus Kombination
-        // Parameter zum Feintunen der Wellenintensität: 15 (Amplitude), 5 (Frequenz)
-        const wave = Math.sin(a * 5 + timeFactor + i) * 15;
-        const r = baseRadius + wave;
-        const x = Math.cos(a) * r;
-        const y = Math.sin(a) * r;
-
-        if (a === 0) this.ctx.moveTo(x, y);
-        else this.ctx.lineTo(x, y);
-      }
-      this.ctx.closePath();
-      this.ctx.lineWidth = 3;
-      // Farbpalette: Cyan, Blau, Weiß
-      const color = i % 2 === 0 ? `rgba(0, 255, 255, ${ringAlpha})` : `rgba(0, 100, 255, ${ringAlpha})`;
-      this.ctx.strokeStyle = color;
-      this.ctx.stroke();
-
-      // Weißes Highlight auf den inneren Ringen
-      if (i < 2) {
-        this.ctx.lineWidth = 1;
-        this.ctx.strokeStyle = `rgba(255, 255, 255, ${ringAlpha * 0.5})`;
-        this.ctx.stroke();
-      }
-    }
-
-    // 4. ZENTRALER BLITZ (Übergang)
-    // Ein leuchtender Kern, der am Anfang groß ist und dann die Sicht "verschluckt"
-    const flashSize = (progress < 0.2)
-      ? (progress * 5 * Math.max(width, height))
-      : (30 + Math.sin(now * 0.01) * 10);
-
-    const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, flashSize);
-    grad.addColorStop(0, `rgba(255, 255, 255, ${overlayAlpha})`);
-    grad.addColorStop(0.3, `rgba(0, 255, 255, ${overlayAlpha * 0.7})`);
-    grad.addColorStop(1, 'rgba(0, 50, 150, 0)');
-
-    this.ctx.fillStyle = grad;
-    this.ctx.beginPath();
-    this.ctx.arc(0, 0, flashSize, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.restore();
+    this.warpAnimationService.setShipImage(this.playerImg.src);
+    this.warpAnimationService.drawWarp(
+      this.ctx,
+      width,
+      height,
+      now,
+      this.gameService.warpStart,
+      this.gameService.warpDuration
+    );
   }
 
   private drawDamageVignette(ctx: CanvasRenderingContext2D, width: number, height: number) {
