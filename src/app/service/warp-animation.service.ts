@@ -42,7 +42,7 @@ export class WarpAnimationService {
     this.particles = [];
   }
 
-  public drawWarp(ctx: CanvasRenderingContext2D, width: number, height: number, now: number, warpStart: number, warpDuration: number) {
+  public drawWarp(ctx: CanvasRenderingContext2D, width: number, height: number, now: number, warpStart: number, warpDuration: number, shipColor?: string) {
     const elapsed = now - warpStart;
     const progress = Math.min(1, Math.max(0, elapsed / warpDuration));
 
@@ -73,7 +73,7 @@ export class WarpAnimationService {
     this.drawEventHorizon(ctx, progress, overlayAlpha, now);
 
     // 4. Raumschiff-Animation
-    this.drawShip(ctx, progress, overlayAlpha, now, width, height);
+    this.drawShip(ctx, progress, overlayAlpha, now, width, height, shipColor);
 
     // 5. Zentraler Blitz
     this.drawFlash(ctx, progress, overlayAlpha, now, width, height);
@@ -142,7 +142,7 @@ export class WarpAnimationService {
     }
   }
 
-  private drawShip(ctx: CanvasRenderingContext2D, progress: number, overlayAlpha: number, now: number, width: number, height: number) {
+  private drawShip(ctx: CanvasRenderingContext2D, progress: number, overlayAlpha: number, now: number, width: number, height: number, shipColor?: string) {
     if (!this.imageLoaded || !this.shipImage) return;
 
     ctx.save();
@@ -181,19 +181,33 @@ export class WarpAnimationService {
     const shipW = 100;
     const shipH = 100;
 
+    let shipToDraw: HTMLImageElement | HTMLCanvasElement = this.shipImage;
+
+    if (shipColor) {
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = shipW;
+      offCanvas.height = shipH;
+      const offCtx = offCanvas.getContext('2d')!;
+      offCtx.drawImage(this.shipImage, 0, 0, shipW, shipH);
+      offCtx.globalCompositeOperation = 'source-in';
+      offCtx.fillStyle = shipColor;
+      offCtx.fillRect(0, 0, shipW, shipH);
+      shipToDraw = offCanvas;
+    }
+
     // Ghost-Image (Motion Blur)
     ctx.save();
     ctx.globalAlpha = 0.3 * overlayAlpha;
     ctx.translate(0, 25); // Stärker versetzt für größeren Scale
     ctx.scale(scaleX * 1.05, scaleY * 1.05);
-    ctx.drawImage(this.shipImage, -shipW / 2, -shipH / 2, shipW, shipH);
+    ctx.drawImage(shipToDraw, -shipW / 2, -shipH / 2, shipW, shipH);
     ctx.restore();
 
     // Hauptschiff
     ctx.save();
     ctx.scale(scaleX, scaleY);
     ctx.globalAlpha = overlayAlpha;
-    ctx.drawImage(this.shipImage, -shipW / 2, -shipH / 2, shipW, shipH);
+    ctx.drawImage(shipToDraw, -shipW / 2, -shipH / 2, shipW, shipH);
     ctx.restore();
 
     ctx.restore();

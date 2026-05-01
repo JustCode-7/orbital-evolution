@@ -771,7 +771,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   handleHit() {
     if (this.gameService.isRecovering || this.gameService.isJumping) return; // Unsterblich während Rückkehr oder Orbitalsprung
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([20, 80]);
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([40, 160]);
     if (this.gameService.shieldActive && this.gameService.shieldHp > 0) {
       this.gameService.shieldHp -= 34;
       if (this.gameService.shieldHp <= 0) {
@@ -832,7 +832,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const py = cy + Math.sin(this.playerAngle) * (this.gameService.playerR * s);
 
     // Spieler & Einheiten
-    this.drawPlayerShip(s, px, py);
+    this.drawPlayerShip(s, px, py); // Hier könnte eine Farbe übergeben werden
     this.drawSatellites(s, px, py);
     this.drawMarines(s, px, py);
     this.drawShield(s, px, py);
@@ -947,17 +947,35 @@ export class GameComponent implements OnInit, OnDestroy {
     this.ctx.restore();
   }
 
-  private drawPlayerShip(s: number, px: number, py: number) {
-    const shipSize = 20 * s;
+  private drawPlayerShip(s: number, px: number, py: number, color?: string) {
+    const shipSize = 25 * s;
     this.ctx.save();
     this.ctx.translate(px, py);
     this.ctx.rotate(this.shipDirection + Math.PI / 2);
 
     if (this.playerImg.complete) {
-      this.ctx.drawImage(this.playerImg, -shipSize, -shipSize, shipSize * 2, shipSize * 2);
+      if (color) {
+        // SVG umfärben via Offscreen-Canvas
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = shipSize * 2;
+        offCanvas.height = shipSize * 2;
+        const offCtx = offCanvas.getContext('2d')!;
+
+        // 1. Schiff zeichnen
+        offCtx.drawImage(this.playerImg, 0, 0, shipSize * 2, shipSize * 2);
+
+        // 2. Mit Farbe maskieren
+        offCtx.globalCompositeOperation = 'source-in';
+        offCtx.fillStyle = color;
+        offCtx.fillRect(0, 0, offCanvas.width, offCanvas.height);
+
+        this.ctx.drawImage(offCanvas, -shipSize, -shipSize);
+      } else {
+        this.ctx.drawImage(this.playerImg, -shipSize, -shipSize, shipSize * 2, shipSize * 2);
+      }
     } else {
       // Fallback: Dreieck-Schiff
-      this.ctx.fillStyle = '#2277ff';
+      this.ctx.fillStyle = color || '#2277ff';
       this.ctx.beginPath();
       this.ctx.moveTo(0, -shipSize);
       this.ctx.lineTo(-shipSize * 0.8, shipSize);
@@ -1330,7 +1348,8 @@ export class GameComponent implements OnInit, OnDestroy {
       height,
       now,
       this.gameService.warpStart,
-      this.gameService.warpDuration
+      this.gameService.warpDuration,
+      undefined // Hier könnte die Schifffarbe übergeben werden
     );
   }
 
