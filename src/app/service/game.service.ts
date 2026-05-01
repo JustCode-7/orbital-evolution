@@ -20,6 +20,8 @@ export class GameService {
   lastScore = signal(parseInt(localStorage.getItem('orbital_last_score') || '0'));
   scoreHistory = signal<ScoreEntry[]>(JSON.parse(localStorage.getItem('orbital_history') || '[]'));
   resumeCountdown = signal(0);
+  pauseStartTime: number = 0;
+  totalPausedTime: number = 0;
 
   lastTimestamp: number = 0;
   startTime: number = 0;
@@ -32,6 +34,10 @@ export class GameService {
   marinesActive = false;
   isRecovering = false;
   isJumping = false;
+  // Warp/Slipstream Animation State
+  warpActive = false;
+  warpStart = 0;
+  warpDuration = 2000;
   satellitesCount = 0;
   marinesReadyTime = 0;
   novaBombeActive = false;
@@ -49,6 +55,7 @@ export class GameService {
   asteroids: Asteroid[] = [];
   scienceLog: LogEntry[] = [];
   projectiles: Projectile[] = [];
+  warpParticles: { angle: number, r: number, speed: number, length: number }[] = [];
 
   isColorsInverted = false;
 
@@ -115,9 +122,12 @@ export class GameService {
     this.asteroids = [];
     this.scienceLog = [];
     this.projectiles = [];
+    this.warpParticles = [];
     this.marinesActive = false;
     this.isRecovering = false;
     this.isJumping = false; // Reset Jump Status
+    this.warpActive = false;
+    this.warpStart = 0;
     this.satellitesCount = 0;
     this.marinesReadyTime = 0;
     this.novaBombeActive = false;
@@ -129,5 +139,7 @@ export class GameService {
     this.comets = [];
     this.isInsideHabitableZone = false;
     this.flightDirection = 1;
+    this.pauseStartTime = 0;
+    this.totalPausedTime = 0;
   }
 }

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="400" height="400">
+  <defs>
+    <!-- Metallische Panzerung -->
+    <linearGradient id="hullGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f1f5f9"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    
+    <!-- Cockpit-Leuchten -->
+    <linearGradient id="cockpitGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ccffff"/>
+      <stop offset="100%" stop-color="#00ced1"/>
+    </linearGradient>
+
+    <!-- Antrieb -->
+    <linearGradient id="glow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#00ffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Antriebs-Effekt -->
+  <path d="M85 160 L115 160 L100 200 Z" fill="url(#glow)" opacity="0.8" />
+
+  <!-- Haupt-Silhouette mit dickerem Rumpf und Gabelung -->
+  <g stroke="#0f172a" stroke-width="4" stroke-linejoin="round" fill="url(#hullGrad)">
+    
+    <!-- Flügel (ansitzend am hinteren breiten Rumpf) -->
+    <path d="M80 100 L25 140 L40 160 L75 150 L70 170 L90 160 Z" />
+    <path d="M120 100 L175 140 L160 160 L125 150 L130 170 L110 160 Z" />
+
+    <!-- Der gegabelte Rumpf -->
+    <!-- Die Gabelung startet bei Y=10 und geht bis Y=60 -->
+    <path d="M75 10 L92 60 L108 60 L125 10 L135 80 L130 160 L70 160 L65 80 Z" />
+  </g>
+
+  <!-- Cockpit (Startet genau am Ende der Gabelung bei Y=60) -->
+  <path d="M92 60 L108 60 L115 95 L100 120 L85 95 Z" fill="url(#cockpitGrad)" stroke="#0f172a" stroke-width="3" />
+  
+  <!-- Glanz auf dem Cockpit-Glas -->
+  <path d="M96 65 L104 65 L108 90 L100 110 L92 90 Z" fill="#ffffff" opacity="0.5" />
+
+  <!-- Struktur-Details -->
+  <g stroke="#1e293b" stroke-width="2.5" fill="none" stroke-linecap="round">
+    <!-- Panel-Linien auf den Gabel-Zinken -->
+    <path d="M85 30 L88 50" />
+    <path d="M115 30 L112 50" />
+    <!-- Verbreiterung des Hecks -->
+    <path d="M80 120 L120 120" />
+  </g>
+</svg>

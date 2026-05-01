@@ -22,6 +22,7 @@ export class MusicService {
   private nextTrackTimer: any;
   private currentTrackRemainingLoops = 0;
   private currentTrackId: string | null = null;
+  private isPaused = false;
   private readonly MIN_TRACK_DURATION = 600; // 10 Minuten in Sekunden
   private readonly CROSSFADE_TIME = 3.0;
 
@@ -160,7 +161,7 @@ export class MusicService {
   }
 
   stopMusic() {
-    // 1. Ganz wichtig: Den Timer fÃƒÂ¼r den nÃƒÂ¤chsten Song stoppen!
+    // 1. Ganz wichtig: Den Timer für den nächsten Song stoppen!
     if (this.nextTrackTimer) {
       clearTimeout(this.nextTrackTimer);
       this.nextTrackTimer = null;
@@ -168,6 +169,7 @@ export class MusicService {
 
     if (!this.audioCtx || !this.currentSource || !this.currentGain) return;
 
+    this.isPaused = false;
     const now = this.audioCtx.currentTime;
     const fadeOutTime = 1.5; // Kurzer, aber sanfter Fade-Out
 
@@ -184,6 +186,24 @@ export class MusicService {
 
     console.log("Musik gestoppt und Queue geleert.");
     this.isMusicOn.set(false);
+  }
+
+  async pauseMusic() {
+    if (!this.audioCtx || this.isPaused) return;
+    if (this.audioCtx.state === 'running') {
+      await this.audioCtx.suspend();
+      this.isPaused = true;
+      console.log("Musik pausiert.");
+    }
+  }
+
+  async resumeMusic() {
+    if (!this.audioCtx || !this.isPaused) return;
+    if (this.audioCtx.state === 'suspended') {
+      await this.audioCtx.resume();
+      this.isPaused = false;
+      console.log("Musik fortgesetzt.");
+    }
   }
 
 }

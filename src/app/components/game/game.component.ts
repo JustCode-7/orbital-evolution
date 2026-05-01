@@ -119,7 +119,7 @@ export class GameComponent implements OnInit, OnDestroy {
   private lastInvertedState: boolean = false;
 
   ngOnInit() {
-    this.playerImg.src = 'assets/ship.svg';
+    this.playerImg.src = 'assets/ship-skin/ship-default.svg';
     this.gameLoop();
   }
 
@@ -204,6 +204,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.shieldActive = true;
       this.gameService.shieldHp = 100;
       this.gameService.addLog(this.languageService.t('GAME.LOG_SHIELD_ACTIVE'), "system");
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(30);
     }
   }
 
@@ -213,6 +214,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.flightDirection *= -1;
       const dirText = this.gameService.flightDirection === 1 ? this.languageService.t('GAME.LOG_CLOCKWISE') : this.languageService.t('GAME.LOG_COUNTER_CLOCKWISE');
       this.gameService.addLog(this.languageService.t('GAME.LOG_ORBIT_REVERSE', [dirText]), "system");
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(20);
       return;
     }
 
@@ -221,6 +223,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.ep -= 150;
       this.gameService.satellitesCount++;
       this.gameService.addLog(this.languageService.t('GAME.LOG_SATS_LEVEL_UP', [this.gameService.satellitesCount * 10, this.gameService.satellitesCount + "/10 online"]), "system");
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(20);
 
       if (this.gameService.satellitesCount === 10) {
         this.gameService.addLog(this.languageService.t('GAME.LOG_MAX_SATS'), "event");
@@ -234,6 +237,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.ep -= 250;
       this.gameService.marinesActive = true;
       this.gameService.addLog(this.languageService.t('GAME.LOG_MARINES_STARTED'), 'event');
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(30);
 
       setTimeout(() => (this.gameService.marinesActive = false), 10000);
       this.gameService.marinesReadyTime = now + this.marinesCooldown;
@@ -319,6 +323,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const oldThreshold = Math.floor((this.gameService.researchLevel - 1) / 3);
     this.gameService.ep -= 200;
     this.gameService.researchLevel++;
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(20);
 
     // Logik für Kometen-Spawn
     if (this.gameService.researchLevel % 3 === 0) {
@@ -403,6 +408,27 @@ export class GameComponent implements OnInit, OnDestroy {
     // 3. Transformationen (Position, Winkel, Richtung)
     this.applyPlayerPhysics(dr);
 
+    // 3.1 Warp/Slipstream Triggern und Abschluss prüfen
+    if (this.gameService.isJumping) {
+      const s = Math.min(window.innerWidth, window.innerHeight) / 900;
+      const maxVisibleR = (Math.max(window.innerWidth, window.innerHeight) / 2) / s;
+      // Starte Warp, sobald das Schiff den sichtbaren Bereich verlassen hat
+      if (!this.gameService.warpActive && this.gameService.playerR > maxVisibleR + 30) {
+        this.gameService.warpActive = true;
+        this.gameService.warpStart = Date.now();
+      }
+      // Beende nach Ablauf der Animation
+      if (this.gameService.warpActive) {
+        const elapsed = Date.now() - this.gameService.warpStart;
+        if (elapsed >= this.gameService.warpDuration) {
+          this.gameService.warpActive = false;
+          this.gameService.isJumping = false;
+          this.endGame(true);
+          return; // Update hier beenden, Dialog erscheint anschließend
+        }
+      }
+    }
+
     // 4. Weltraum-Hintergrund & Neutrale Objekte
     const px = Math.cos(this.playerAngle) * this.gameService.playerR;
     const py = Math.sin(this.playerAngle) * this.gameService.playerR;
@@ -430,7 +456,6 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private calculatePlayerRadiusDelta(): number {
     if (this.gameService.isJumping) {
-      if (this.gameService.playerR > 1500) this.endGame(true);
       return 15.0; // Sprung-Geschwindigkeit
     }
 
@@ -743,6 +768,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   handleHit() {
     if (this.gameService.isRecovering || this.gameService.isJumping) return; // Unsterblich während Rückkehr oder Orbitalsprung
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([20, 80]);
     if (this.gameService.shieldActive && this.gameService.shieldHp > 0) {
       this.gameService.shieldHp -= 34;
       if (this.gameService.shieldHp <= 0) {
@@ -769,7 +795,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     // Historie aktualisieren
-    const playtime = Math.floor((Date.now() - this.gameService.startTime) / 1000);
+    const playtime = Math.floor((Date.now() - this.gameService.startTime - this.gameService.totalPausedTime) / 1000);
     const newEntry = {
       score: finalScore,
       time: playtime,
@@ -817,6 +843,11 @@ export class GameComponent implements OnInit, OnDestroy {
 
     this.drawGlassCracks(this.ctx, window.innerWidth, window.innerHeight);
     this.drawDamageVignette(this.ctx, window.innerWidth, window.innerHeight);
+
+    // Warp/Slipstream Overlay auf oberster Ebene
+    if (this.gameService.warpActive) {
+      this.drawWarpOverlay();
+    }
   }
 
   /**
@@ -930,13 +961,13 @@ export class GameComponent implements OnInit, OnDestroy {
       this.ctx.lineTo(0, shipSize * 0.6);
       this.ctx.lineTo(shipSize * 0.8, shipSize);
       this.ctx.fill();
+      // Cockpit
+      this.ctx.fillStyle = '#88ccff';
+      this.ctx.beginPath();
+      this.ctx.arc(0, -shipSize * 0.2, shipSize * 0.3, 0, Math.PI * 2);
+      this.ctx.fill();
     }
 
-    // Cockpit
-    this.ctx.fillStyle = '#88ccff';
-    this.ctx.beginPath();
-    this.ctx.arc(0, -shipSize * 0.2, shipSize * 0.3, 0, Math.PI * 2);
-    this.ctx.fill();
 
     // Triebwerke
     if (this.isPressing) {
@@ -1118,12 +1149,20 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (!this.gameService.gameActive() || this.gameService.winState() || this.gameService.resumeCountdown() > 0) return;
     this.gameService.isPaused = true;
+    this.gameService.pauseStartTime = Date.now();
+    this.musicservice.pauseMusic();
   }
 
   // Methode zum Fortsetzen mit Countdown
   resumeGame() {
+    document.getElementById('game-container')?.click(); // focus before fullscreen
     this.fullscreenService.toggleTabFullScreenModeGame()
     this.gameService.isPaused = false;
+    if (this.gameService.pauseStartTime > 0) {
+      this.gameService.totalPausedTime += (Date.now() - this.gameService.pauseStartTime);
+      this.gameService.pauseStartTime = 0;
+    }
+    this.musicservice.resumeMusic();
     this.gameService.resumeCountdown.set(3);
 
     const interval = setInterval(() => {
@@ -1227,21 +1266,24 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     // --- Zeichnen ---
-    // Durchgang 1: Die dunkle Basisstruktur (Start-Stärke 2.5)
+    // Durchgang 1: Die dunkle Basisstruktur (Stärke erhöht auf 3.5)
     offCtx.save();
     offCtx.strokeStyle = darkLine;
     seed = 12345;
     spawnPoints.forEach(p => {
-      this.drawStaticBranch(offCtx, p.x, p.y, p.angle + (random() - 0.5) * 0.8, maxReach, random, 2.5);
+      this.drawStaticBranch(offCtx, p.x, p.y, p.angle + (random() - 0.5) * 0.8, maxReach, random, 3.5);
     });
     offCtx.restore();
 
-    // Durchgang 2: Die feine rote Bruchlinie (Start-Stärke 1.2)[cite: 7]
+    // Durchgang 2: Die feine rote Bruchlinie (Stärke erhöht auf 2.0)
     offCtx.save();
     offCtx.strokeStyle = glassColor;
+    // Glow-Effekt hinzufügen
+    offCtx.shadowBlur = 4 * this.scale;
+    offCtx.shadowColor = glassColor;
     seed = 12345;
     spawnPoints.forEach(p => {
-      this.drawStaticBranch(offCtx, p.x, p.y, p.angle + (random() - 0.5) * 0.8, maxReach, random, 1.2);
+      this.drawStaticBranch(offCtx, p.x, p.y, p.angle + (random() - 0.5) * 0.8, maxReach, random, 2.0);
     });
     offCtx.restore();
   }
@@ -1270,6 +1312,132 @@ export class GameComponent implements OnInit, OnDestroy {
       const splitAngle = (rng() > 0.5 ? 1 : -1) * (Math.PI / 2.5 + rng() * Math.PI / 4);
       this.drawStaticBranch(ctx, nextX, nextY, angle + splitAngle, (length - segmentLength) * 0.35, rng, nextWidth * 0.6);
     }
+  }
+
+  private drawWarpOverlay() {
+    if (!this.ctx) return;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const now = Date.now();
+    const elapsed = now - this.gameService.warpStart;
+    const progress = Math.min(1, Math.max(0, elapsed / this.gameService.warpDuration));
+
+    // Initialisiere Partikel beim ersten Frame der Animation
+    if (this.gameService.warpParticles.length === 0) {
+      for (let i = 0; i < 150; i++) {
+        this.gameService.warpParticles.push({
+          angle: Math.random() * Math.PI * 2,
+          r: Math.random() * Math.max(width, height),
+          speed: 15 + Math.random() * 25,
+          length: 5 + Math.random() * 10
+        });
+      }
+    }
+
+    this.ctx.save();
+    // Alle Berechnungen relativ zur Bildschirmmitte
+    this.ctx.translate(width / 2, height / 2);
+
+    // 1. ÜBERGANG: Fade-in/Fade-out & Hintergrund
+    // Ein kurzer Blitz zu Beginn, dann verdunkelt sich der Schirm
+    let overlayAlpha = 0;
+    if (progress < 0.1) {
+      overlayAlpha = progress * 10; // Schnelles Fade-in des Hintergrunds
+    } else if (progress > 0.8) {
+      overlayAlpha = (1 - progress) * 5; // Fade-out am Ende
+    } else {
+      overlayAlpha = 1;
+    }
+
+    // Hintergrund (tiefes Blau/Schwarz)
+    this.ctx.fillStyle = `rgba(0, 10, 40, ${overlayAlpha * 0.9})`;
+    this.ctx.fillRect(-width / 2, -height / 2, width, height);
+
+    this.ctx.globalCompositeOperation = 'lighter';
+
+    // 2. TUNNEL-EFFEKT (Warp-Schlieren)
+    this.gameService.warpParticles.forEach(p => {
+      // Bewege Partikel nach außen
+      p.r += p.speed;
+      // Reset Partikel wenn sie den Bildschirm verlassen
+      if (p.r > Math.max(width, height)) {
+        p.r = 20;
+        p.angle = Math.random() * Math.PI * 2;
+      }
+
+      // Berechnung der visuellen Eigenschaften basierend auf Distanz zum Zentrum
+      const x1 = Math.cos(p.angle) * p.r;
+      const y1 = Math.sin(p.angle) * p.r;
+      // Linien werden nach außen hin länger (Gerschwindigkeitssimulation)
+      const currentLen = p.length * (1 + p.r / 100);
+      const x2 = Math.cos(p.angle) * (p.r + currentLen);
+      const y2 = Math.sin(p.angle) * (p.r + currentLen);
+
+      // Linien werden nach außen hin heller und dicker
+      const alpha = Math.min(1, p.r / 300) * overlayAlpha;
+      const thickness = 0.5 + (p.r / 200);
+
+      this.ctx.beginPath();
+      this.ctx.moveTo(x1, y1);
+      this.ctx.lineTo(x2, y2);
+      this.ctx.lineWidth = thickness;
+      this.ctx.strokeStyle = `rgba(150, 230, 255, ${alpha})`;
+      this.ctx.stroke();
+    });
+
+    // 3. EREIGNISHORIZONT (Wasser-Wabern)
+    // Mehrere konzentrische Ringe mit Verzerrung
+    const ringCount = 5;
+    const timeFactor = now * 0.003;
+
+    for (let i = 0; i < ringCount; i++) {
+      const baseRadius = (progress * 800) + (i * 40); // Pulsieren nach außen
+      const ringAlpha = (1 - (i / ringCount)) * 0.6 * overlayAlpha;
+
+      this.ctx.beginPath();
+      for (let a = 0; a <= Math.PI * 2; a += 0.1) {
+        // Verzerrung durch Sinus/Kosinus Kombination
+        // Parameter zum Feintunen der Wellenintensität: 15 (Amplitude), 5 (Frequenz)
+        const wave = Math.sin(a * 5 + timeFactor + i) * 15;
+        const r = baseRadius + wave;
+        const x = Math.cos(a) * r;
+        const y = Math.sin(a) * r;
+
+        if (a === 0) this.ctx.moveTo(x, y);
+        else this.ctx.lineTo(x, y);
+      }
+      this.ctx.closePath();
+      this.ctx.lineWidth = 3;
+      // Farbpalette: Cyan, Blau, Weiß
+      const color = i % 2 === 0 ? `rgba(0, 255, 255, ${ringAlpha})` : `rgba(0, 100, 255, ${ringAlpha})`;
+      this.ctx.strokeStyle = color;
+      this.ctx.stroke();
+
+      // Weißes Highlight auf den inneren Ringen
+      if (i < 2) {
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = `rgba(255, 255, 255, ${ringAlpha * 0.5})`;
+        this.ctx.stroke();
+      }
+    }
+
+    // 4. ZENTRALER BLITZ (Übergang)
+    // Ein leuchtender Kern, der am Anfang groß ist und dann die Sicht "verschluckt"
+    const flashSize = (progress < 0.2)
+      ? (progress * 5 * Math.max(width, height))
+      : (30 + Math.sin(now * 0.01) * 10);
+
+    const grad = this.ctx.createRadialGradient(0, 0, 0, 0, 0, flashSize);
+    grad.addColorStop(0, `rgba(255, 255, 255, ${overlayAlpha})`);
+    grad.addColorStop(0.3, `rgba(0, 255, 255, ${overlayAlpha * 0.7})`);
+    grad.addColorStop(1, 'rgba(0, 50, 150, 0)');
+
+    this.ctx.fillStyle = grad;
+    this.ctx.beginPath();
+    this.ctx.arc(0, 0, flashSize, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.restore();
   }
 
   private drawDamageVignette(ctx: CanvasRenderingContext2D, width: number, height: number) {

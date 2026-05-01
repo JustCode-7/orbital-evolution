@@ -15,7 +15,10 @@ export class UpdatePwa {
 
   constructor(private swUpdate: SwUpdate) {
     if (this.swUpdate.isEnabled) {
-      // PrÃƒÂ¼ft alle 6 Stunden manuell, falls die App offen bleibt
+      // Prüft sofort beim Aufruf der App
+      this.swUpdate.checkForUpdate();
+
+      // Prüft zusätzlich alle 6 Stunden manuell, falls die App offen bleibt
       setInterval(() => {
         this.swUpdate.checkForUpdate();
       }, 6 * 60 * 60 * 1000);
@@ -30,10 +33,8 @@ export class UpdatePwa {
         filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY')
       )
       .subscribe(() => {
-        if (confirm("Eine neue Version von Deep Space Orbit ist verfÃƒÂ¼gbar. Jetzt aktualisieren?")) {
-          // LÃƒÂ¤dt die Seite neu und aktiviert den neuen Service Worker
-          window.location.reload();
-        }
+        // Lädt die Seite neu und aktiviert den neuen Service Worker ohne Bestätigung (silent)
+        window.location.reload();
       });
   }
 }

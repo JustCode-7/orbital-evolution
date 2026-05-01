@@ -3,7 +3,7 @@
     <app-game-dialog></app-game-dialog>
   </div>
 } @else {
-  <div class="game-container" (mousedown)="onDown($event);"
+  <div id="game-container" class="game-container" (mousedown)="onDown($event);"
        (touchstart)="onDown($event)"
        (mouseup)="onUp()" (touchend)="onUp()" (mouseleave)="onUp()"
        [class.invert-colors]="gameService.isColorsInverted"
