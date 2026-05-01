@@ -121,8 +121,7 @@ export class GameComponent implements OnInit, OnDestroy {
   private lastInvertedState: boolean = false;
 
   ngOnInit() {
-    this.playerImg.src = 'assets/ship-skin/ship-default.svg';
-    this.warpAnimationService.setShipImage(this.playerImg.src);
+    this.setShipSkin('assets/ship-skin/elite-interceptor-skin.svg');
     this.gameLoop();
 
     // Listener für Visibility Change hinzufügen
@@ -135,6 +134,11 @@ export class GameComponent implements OnInit, OnDestroy {
         window.focus()
       }
     });
+  }
+
+  private setShipSkin(skin: string) {
+    this.playerImg.src = skin;
+    this.warpAnimationService.setShipImage(this.playerImg.src);
   }
 
   ngOnDestroy() {
@@ -175,6 +179,9 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   onDown(e: Event) {
+    if (!this.fullscreenService.isFullScreen().valueOf()) {
+      this.fullscreenService.toggleTabFullScreenModeGame()
+    }
     this.isPressing = true;
     e.preventDefault();
   }
@@ -218,7 +225,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.shieldActive = true;
       this.gameService.shieldHp = 100;
       this.gameService.addLog(this.languageService.t('GAME.LOG_SHIELD_ACTIVE'), "system");
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(30);
+      this.gameService.vibrateAction(30)
     }
   }
 
@@ -228,7 +235,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.flightDirection *= -1;
       const dirText = this.gameService.flightDirection === 1 ? this.languageService.t('GAME.LOG_CLOCKWISE') : this.languageService.t('GAME.LOG_COUNTER_CLOCKWISE');
       this.gameService.addLog(this.languageService.t('GAME.LOG_ORBIT_REVERSE', [dirText]), "system");
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(20);
+      this.gameService.vibrateAction(20)
       return;
     }
 
@@ -237,7 +244,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.ep -= 150;
       this.gameService.satellitesCount++;
       this.gameService.addLog(this.languageService.t('GAME.LOG_SATS_LEVEL_UP', [this.gameService.satellitesCount * 10, this.gameService.satellitesCount + "/10 online"]), "system");
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(20);
+      this.gameService.vibrateAction(20)
 
       if (this.gameService.satellitesCount === 10) {
         this.gameService.addLog(this.languageService.t('GAME.LOG_MAX_SATS'), "event");
@@ -251,7 +258,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.ep -= 250;
       this.gameService.marinesActive = true;
       this.gameService.addLog(this.languageService.t('GAME.LOG_MARINES_STARTED'), 'event');
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(30);
+      this.gameService.vibrateAction(30)
 
       setTimeout(() => (this.gameService.marinesActive = false), 10000);
       this.gameService.marinesReadyTime = now + this.marinesCooldown;
@@ -337,7 +344,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const oldThreshold = Math.floor((this.gameService.researchLevel - 1) / 3);
     this.gameService.ep -= 200;
     this.gameService.researchLevel++;
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(20);
+    this.gameService.vibrateAction(20)
 
     // Logik für Kometen-Spawn
     if (this.gameService.researchLevel % 3 === 0) {
@@ -722,7 +729,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private checkDeathConditions() {
     if (this.gameService.playerR < 65) {
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([120, 160]);
+      this.gameService.vibrateAction(240)
       this.endGame(false);
     }
   }
@@ -783,7 +790,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   handleHit() {
     if (this.gameService.isRecovering || this.gameService.isJumping) return; // Unsterblich während Rückkehr oder Orbitalsprung
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([60, 160]);
+    this.gameService.vibrateAction(80)
     if (this.gameService.shieldActive && this.gameService.shieldHp > 0) {
       this.gameService.shieldHp -= 34;
       if (this.gameService.shieldHp <= 0) {
@@ -960,31 +967,13 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private drawPlayerShip(s: number, px: number, py: number, color?: string) {
-    const shipSize = 25 * s;
+    const shipSize = 35 * s;
     this.ctx.save();
     this.ctx.translate(px, py);
     this.ctx.rotate(this.shipDirection + Math.PI / 2);
 
     if (this.playerImg.complete) {
-      if (color) {
-        // SVG umfärben via Offscreen-Canvas
-        const offCanvas = document.createElement('canvas');
-        offCanvas.width = shipSize * 2;
-        offCanvas.height = shipSize * 2;
-        const offCtx = offCanvas.getContext('2d')!;
-
-        // 1. Schiff zeichnen
-        offCtx.drawImage(this.playerImg, 0, 0, shipSize * 2, shipSize * 2);
-
-        // 2. Mit Farbe maskieren
-        offCtx.globalCompositeOperation = 'source-in';
-        offCtx.fillStyle = color;
-        offCtx.fillRect(0, 0, offCanvas.width, offCanvas.height);
-
-        this.ctx.drawImage(offCanvas, -shipSize, -shipSize);
-      } else {
-        this.ctx.drawImage(this.playerImg, -shipSize, -shipSize, shipSize * 2, shipSize * 2);
-      }
+      this.ctx.drawImage(this.playerImg, -shipSize, -shipSize, shipSize * 2, shipSize * 2);
     } else {
       // Fallback: Dreieck-Schiff
       this.ctx.fillStyle = color || '#2277ff';

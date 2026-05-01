@@ -140,4 +140,9 @@ export class GameService {
     this.pauseStartTime = 0;
     this.totalPausedTime = 0;
   }
+
+
+  vibrateAction(duration: number) {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([duration, 160]);
+  }
 }
