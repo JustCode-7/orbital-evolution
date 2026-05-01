@@ -722,6 +722,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private checkDeathConditions() {
     if (this.gameService.playerR < 65) {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([120, 160]);
       this.endGame(false);
     }
   }
@@ -782,7 +783,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   handleHit() {
     if (this.gameService.isRecovering || this.gameService.isJumping) return; // Unsterblich während Rückkehr oder Orbitalsprung
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([40, 160]);
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([60, 160]);
     if (this.gameService.shieldActive && this.gameService.shieldHp > 0) {
       this.gameService.shieldHp -= 34;
       if (this.gameService.shieldHp <= 0) {
