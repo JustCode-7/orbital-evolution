@@ -3,7 +3,7 @@
   <header class="main-header">
     <h1>{{ languageService.t('INTRO.TITLE') }}</h1>
     <p class="tagline">{{ languageService.t('INTRO.TAGLINE') }}</p>
-    <p class="control-hint">beta - 1.6</p>
+    <p class="control-hint">beta - 1.7</p>
   </header>
 
   <section class="story-section">
@@ -20,6 +20,7 @@
     </div>
 
     <div class="language-selector mt-3 d-flex justify-content-center">
+      <span class="pt-2">🌐</span>
       <select class="form-select w-auto bg-dark text-white border-secondary"
               [ngModel]="languageService.currentLang()"
               (ngModelChange)="languageService.setLanguage($event)">

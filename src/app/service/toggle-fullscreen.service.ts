@@ -41,6 +41,9 @@ export class ToggleFullscreenService {
           .catch(reason => {
             console.warn("Fullscreen error: ", reason)
           });
+      } else {
+        // Falls wir bereits im Fullscreen sind, stellen wir sicher, dass das Signal korrekt ist
+        this.isFullScreen.set(true);
       }
     }
   }

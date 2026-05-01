@@ -124,6 +124,17 @@ export class GameComponent implements OnInit, OnDestroy {
     this.playerImg.src = 'assets/ship-skin/ship-default.svg';
     this.warpAnimationService.setShipImage(this.playerImg.src);
     this.gameLoop();
+
+    // Listener für Visibility Change hinzufügen
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this.gameService.isPaused) {
+        // Wenn die App wieder in den Vordergrund kommt und pausiert ist,
+        // stellen wir sicher, dass der Fullscreen-Status korrekt reflektiert wird.
+        // Wir setzen isFullScreen auf false, damit resumeGame() erneut requestFullscreen aufrufen kann.
+        this.fullscreenService.isFullScreen.set(!!document.fullscreenElement);
+        window.focus()
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -1174,9 +1185,12 @@ export class GameComponent implements OnInit, OnDestroy {
     this.musicservice.pauseMusic();
   }
 
-  // Methode zum Fortsetzen mit Countdown
+  /**
+   * Methode zum Fortsetzen mit Countdown
+   */
   resumeGame() {
-    document.getElementById('game-container')?.click(); // focus before fullscreen
+    // 1. Zuerst das Fenster fokussieren (hilft manchen Android-Browsern)
+    window.focus();
     this.fullscreenService.toggleTabFullScreenModeGame()
     this.gameService.isPaused = false;
     if (this.gameService.pauseStartTime > 0) {
