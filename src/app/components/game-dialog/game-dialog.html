@@ -32,12 +32,13 @@
 
     <button class="start-btn fw-bold" routerLink="">{{ languageService.t('DIALOG.INTRO') }}</button>
 
-    <button class="start-btn fw-bold text-nowrap" (click)="gameService.toggleInversion()">
+    <button class="start-btn fw-bold mode-toggle" (click)="gameService.toggleInversion()">
+      <mat-icon class="me-2">{{ gameService.isColorsInverted ? 'dark_mode' : 'light_mode' }}</mat-icon>
       {{ gameService.isColorsInverted ? 'Dark-Mode' : 'Light-Mode' }}
     </button>
     <div class="music-box fw-bold">
       <mat-slide-toggle
-        (toggleChange)="musicservice.isMusicOn() ?  musicservice.stopMusic() : musicservice.startAutoplay()"
+        (toggleChange)="toggleMusic()"
         [checked]="musicservice.isMusicOn()"
         labelPosition="before">
           <span class="fw-bold me-2">

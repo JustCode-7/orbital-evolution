@@ -36,6 +36,14 @@ export class GameDialog {
   protected musicservice = inject(MusicService)
   protected languageService = inject(LanguageService);
 
+  toggleMusic() {
+    if (this.musicservice.isMusicOn()) {
+      this.musicservice.stopMusic();
+    } else {
+      this.musicservice.startAutoplay();
+    }
+  }
+
   protected clearHighScore() {
     localStorage.removeItem('orbital_hs');
     localStorage.removeItem('orbital_history');

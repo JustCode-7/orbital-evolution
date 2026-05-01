@@ -9,12 +9,14 @@
   display: flex;
   flex-direction: column;
   padding: 1rem;
+  min-width: 280px; // Mindestbreite für Mobile
 }
 
 @media (min-width: 768px) {
   .menu-modal-content {
     flex-direction: row;
     padding: 2rem;
+    min-width: 600px; // Konsistente Breite basierend auf "Mission Erfolgreich"
   }
 }
 
@@ -125,15 +127,42 @@ h1 {
   pointer-events: auto !important;
 }
 
+.mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1e293b;
+  color: #00fbff;
+  border: 1px solid #00fbff;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #334155;
+    box-shadow: 0 0 10px rgba(0, 251, 255, 0.3);
+  }
+}
+
 .music-box {
-  background: #00fbff;
-  color: black;
+  background: #1e293b;
+  color: #00fbff;
   padding: 8px 15px;
-  border: none;
+  border: 1px solid #00fbff;
   font-size: clamp(0.8rem, 2vw, 1rem);
   border-radius: 5px;
   margin-top: 10px;
   width: 100%;
   display: flex;
   justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #334155;
+    box-shadow: 0 0 10px rgba(0, 251, 255, 0.3);
+  }
+
+  ::ng-deep .mat-mdc-slide-toggle .mdc-label {
+    color: #00fbff !important;
+  }
 }
