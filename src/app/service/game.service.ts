@@ -137,7 +137,7 @@ export class GameService {
     this.score = 0;
     this.ep = 100;
     this.epOverflowLogged = false;
-    this.researchLevel = 10;
+    this.researchLevel = 1;
     this.playerR = 350;
     this.asteroids = [];
     this.scienceLog = [];
