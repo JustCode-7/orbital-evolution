@@ -64,7 +64,9 @@ export class GameService {
 
   startSpawning() {
     this.cleanup();
-    const interval = Math.max(400, 1500 - Math.floor((this.researchLevel - 1) / 3) * 250);
+    // Alle 3 Level sinkt das Intervall um 70ms.
+    // Level 1: 1500ms | Level 25: ca. 940ms | Level 49: 450ms | Level 50: 400ms (Cap)
+    const interval = Math.max(400, 1500 - Math.floor((this.researchLevel - 1) / 3) * 70);
     this.spawnInterval = setInterval(() => {
       if (Date.now() < this.stopSpawningUntil) return;
       this.spawnAsteroid();
@@ -73,27 +75,46 @@ export class GameService {
 
   private spawnAsteroid() {
     if (this.isPaused || this.resumeCountdown() > 0 || !this.gameActive()) return;
-    const angle = Math.random() * Math.PI * 2;
-    const vx = -Math.cos(angle) * (2 + Math.random() * 2.5);
-    const vy = -Math.sin(angle) * (2 + Math.random() * 2.5);
 
-    const size = 12 + Math.random() * 15;
-    const points = [];
-    const numPoints = 7 + Math.floor(Math.random() * 5);
-    const hp = Math.ceil(size / 3);
-    for (let i = 0; i < numPoints; i++) {
-      const a = (i / numPoints) * Math.PI * 2;
-      const r = size * (0.8 + Math.random() * 0.4);
-      points.push({x: Math.cos(a) * r, y: Math.sin(a) * r});
+    // Anzahl bestimmen: 1 Asteroid bis Level 50.
+    // Ab Level 51 alle 25 Level einen weiteren (Level 51 = 2, Level 76 = 3, etc.).
+    const spawnCount = 1 + Math.floor(Math.max(0, this.researchLevel - 26) / 25);
+
+    for (let i = 0; i < spawnCount; i++) {
+      // Basis-Winkel zufällig bestimmen
+      const baseAngle = Math.random() * Math.PI * 2;
+
+      // Versatz für Cluster: Jeder zusätzliche Asteroid wird um ca. 15 Grad (0.26 Radiant) verschoben
+      const angle = baseAngle + (i * 0.26);
+
+      // Geschwindigkeit berechnen
+      const vx = -Math.cos(angle) * (2 + Math.random() * 2.5);
+      const vy = -Math.sin(angle) * (2 + Math.random() * 2.5);
+
+      // Größe und HP bestimmen
+      const size = 12 + Math.random() * 15;
+      const hp = Math.ceil(size / 3);
+
+      // Geometrie (Punkte) erstellen
+      const points = [];
+      const numPoints = 7 + Math.floor(Math.random() * 5);
+      for (let j = 0; j < numPoints; j++) {
+        const a = (j / numPoints) * Math.PI * 2;
+        const r = size * (0.8 + Math.random() * 0.4);
+        points.push({x: Math.cos(a) * r, y: Math.sin(a) * r});
+      }
+
+      const colors = ['#8B4513', 'rgb(97 55 7)', 'rgb(202 103 1.3)', '#8B4513'];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      // Asteroid dem Array hinzufügen
+      this.asteroids.push({
+        x: Math.cos(angle) * 900,
+        y: Math.sin(angle) * 900,
+        vx, vy, ovx: vx, ovy: vy,
+        size, color, points, hp
+      });
     }
-    const colors = ['#8B4513', 'rgb(97 55 7)', 'rgb(202 103 1.3)', '#8B4513'];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-
-    this.asteroids.push({
-      x: Math.cos(angle) * 900, y: Math.sin(angle) * 900,
-      vx, vy, ovx: vx, ovy: vy,
-      size, color: color, points, hp
-    });
   }
 
   cleanup() {

@@ -105,6 +105,7 @@ export class GameComponent implements OnInit, OnDestroy {
     vy: number,
     alpha: number,
     color: string,
+    text: string,
     life: number
   }[] = [];
   stars: Star[] = [];
@@ -158,10 +159,12 @@ export class GameComponent implements OnInit, OnDestroy {
   get jumpBonus(): number {
     if (this.gameService.researchLevel < 10) return 0;
 
-    // Wir nehmen 5% pro Research-Level als Basis
-    // Level 10 -> 0.5 (50%)
-    // Level 20 -> 1.0 (100%)
-    const percentage = this.gameService.researchLevel * 0.05;
+    // Bonus-Skalierungsfaktor 0.212:
+    // Level 10: sqrt(10) * 0.212 ≈ 0.67 (67% Bonus)
+    // Level 30: sqrt(30) * 0.212 ≈ 1.16 (116% Bonus)
+    // Level 50: sqrt(50) * 0.212 ≈ 1.50 (150% Bonus) - Das "Lohnenswerte Ziel"
+    // Level 100: sqrt(100) * 0.212 = 2.12 (212% Bonus) - Flacht spürbar ab
+    const percentage = Math.sqrt(this.gameService.researchLevel) * 0.212;
 
     return Math.floor(this.gameService.score * percentage);
   }
@@ -341,20 +344,26 @@ export class GameComponent implements OnInit, OnDestroy {
   private buyResearch() {
     if (this.gameService.ep < 200) return;
 
+    // 1. Schwellenwert auf Basis des 3er-Intervalls vor dem Upgrade
     const oldThreshold = Math.floor((this.gameService.researchLevel - 1) / 3);
+
     this.gameService.ep -= 200;
     this.gameService.researchLevel++;
-    this.gameService.vibrateAction(20)
+    this.gameService.vibrateAction(20);
 
-    // Logik für Kometen-Spawn
+    // Logik für Kometen-Spawn (bleibt bei jedem 3. Level für die Abwechslung)[cite: 2]
     if (this.gameService.researchLevel % 3 === 0) {
       this.spawnComet();
       this.gameService.addLog(this.languageService.t('GAME.LOG_COMET_SIGHTED'), 'research');
     }
 
-    // Logik für Asteroiden-Intensität
+    // 2. Logik für Asteroiden-Intensität (Intervall-Anpassung)
     const newThreshold = Math.floor((this.gameService.researchLevel - 1) / 3);
-    if (newThreshold > oldThreshold) {
+
+    // Wir starten das Spawning nur neu, wenn:
+    // - Ein neuer 3er-Schwellenwert erreicht wurde
+    // - UND wir noch nicht über Level 50 sind (da das Intervall dort sein Maximum von 400ms erreicht)
+    if (newThreshold > oldThreshold && this.gameService.researchLevel <= 50) {
       this.gameService.startSpawning();
       this.gameService.addLog(this.languageService.t('GAME.LOG_DANGER_INCREASED'), 'event');
     }
@@ -565,24 +574,40 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
-  private spawnPlusParticle(color: 'orange' | 'green') {
-    if (Math.random() > 0.15) return; // Nicht jeden Frame
+  private spawnPlusParticle(color: 'orange' | 'green', isMarineKill: boolean = false) {
+    // Wenn es ein Marine-Kill ist, erzwingen wir den Spawn (kein Random)
+    if (!isMarineKill && Math.random() > 0.15) return;
 
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;
     const s = this.scale;
-    const px = cx + Math.cos(this.playerAngle) * (this.gameService.playerR * s);
-    const py = cy + Math.sin(this.playerAngle) * (this.gameService.playerR * s);
 
-    this.plusParticles.push({
-      x: px,
-      y: py,
-      vx: (Math.random() - 0.5) * 1,
-      vy: -1 - Math.random() * 2,
-      alpha: 1,
-      color: color === 'orange' ? '#ffcc00' : '#00ff00',
-      life: 1.0
-    });
+    let amount = 1;
+    if (this.isInsideCoronaZone) {
+      amount = 5; // Maximale Intensität im Kern (r: 85)
+    } else if (this.isInsideRedZone) {
+      amount = 2; // Mittlere Intensität (r: 150)
+    } else if (this.isInsideYellowZone) {
+      amount = 1; // Leichtes Feedback (r: 250)
+    }
+
+    // Position am Schiff
+    const pxBase = cx + Math.cos(this.playerAngle) * (this.gameService.playerR * s);
+    const pyBase = cy + Math.sin(this.playerAngle) * (this.gameService.playerR * s);
+
+    for (let i = 0; i < amount; i++) {
+      this.plusParticles.push({
+        x: pxBase + (Math.random() - 0.5) * 15,
+        y: pyBase + (Math.random() - 0.5) * 15,
+        vx: (Math.random() - 0.5) * 1.2,
+        vy: -1 - Math.random() * 2,
+        alpha: 1,
+        color: color === 'orange' ? '#ffcc00' : '#00ff00',
+        // Nur das allererste Partikel zeigt den Text "EP+", der Rest sind schicke Pluszeichen
+        text: (isMarineKill && i === 0) ? 'EP+' : '+',
+        life: 1.0
+      });
+    }
   }
 
   private updatePlusParticles() {
@@ -603,10 +628,23 @@ export class GameComponent implements OnInit, OnDestroy {
     this.ctx.font = `${Math.floor(20 * this.scale)}px Arial`;
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'middle';
-    this.plusParticles.forEach(p => {
-      this.ctx.fillStyle = p.color;
+    this.plusParticles.forEach((p, index) => {
+      this.ctx.save();
       this.ctx.globalAlpha = p.alpha;
-      this.ctx.fillText('+', p.x, p.y);
+      this.ctx.fillStyle = p.color;
+      this.ctx.font = p.text === 'EP+' ? 'bold 18px Arial' : 'bold 14px Arial'; // EP+ etwas größer
+
+      this.ctx.fillText(p.text, p.x, p.y);
+
+      // Physik-Update für die Partikel
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha -= 0.02;
+
+      if (p.alpha <= 0) {
+        this.plusParticles.splice(index, 1);
+      }
+      this.ctx.restore();
     });
     this.ctx.globalAlpha = 1.0;
   }
@@ -761,30 +799,44 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private updateProjectiles() {
     const impactFactor = 0.55;
+
+    // Rückwärts durch Projektile ist korrekt!
     for (let i = this.gameService.projectiles.length - 1; i >= 0; i--) {
       const p = this.gameService.projectiles[i];
       p.x += p.vx;
       p.y += p.vy;
 
+      let hit = false; // Flag hinzufügen
+
       for (let j = this.gameService.asteroids.length - 1; j >= 0; j--) {
         const a = this.gameService.asteroids[j];
+
         if (Math.hypot(p.x - a.x, p.y - a.y) < a.size + 6) {
-          // 1. Verlangsamen (wie bisher)
           a.vx *= impactFactor;
           a.vy *= impactFactor;
-
-          // 2. Schaden zufügen
           a.hp--;
 
-          // 3. Zerstören bei 0 HP
           if (a.hp <= 0) {
-            this.gameService.score += Math.floor(a.size * 10);
+            const rawEpGain = Math.floor(a.size * 2);
+            const spaceLeft = this.gameService.maxEp - this.gameService.ep;
+            const actualGain = Math.max(0, Math.min(rawEpGain, spaceLeft));
+
+            this.gameService.ep += actualGain;
+
+            if (actualGain > 0) {
+              this.spawnPlusParticle('green', true);
+            }
             this.gameService.asteroids.splice(j, 1);
           }
 
-          this.gameService.projectiles.splice(i, 1);
-          break;
+          hit = true; // Treffer registrieren
+          break; // Innere Schleife verlassen
         }
+      }
+
+      // Erst HIER das Projektil löschen, nachdem die Asteroiden-Prüfung beendet ist
+      if (hit) {
+        this.gameService.projectiles.splice(i, 1);
       }
     }
   }

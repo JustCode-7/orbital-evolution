@@ -253,29 +253,27 @@ button:disabled {
 
 .marine-btn {
   position: relative;
+  overflow: hidden;
 }
 
-.cooldown-overlay {
+.cooldown-overlay-mini {
   position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: end;
-}
-
-.cooldown-bar {
-  width: 4px;
-  height: 60%;
-  background: rgba(255, 255, 255, 0.2);
-  position: relative;
-}
-
-.cooldown-bar .fill {
+  top: 0;
+  left: 0;
   width: 100%;
-  background: #ffcc00;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4); /* Abdunkelung des Buttons während des Cooldowns */
+  pointer-events: none; /* Klicks gehen durch das Overlay hindurch */
+  z-index: 1;
+}
+
+.cooldown-overlay-mini .fill {
   position: absolute;
-  bottom: 0;
+  bottom: 0; /* Animation von unten nach oben */
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.2); /* Ein heller Schleier, der sich leert */
+  transition: height 0.1s linear; /* Sorgt für eine flüssige Bewegung */
 }
 
 .pause-control {
