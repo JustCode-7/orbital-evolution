@@ -367,8 +367,10 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.startSpawning();
       this.gameService.addLog(this.languageService.t('GAME.LOG_DANGER_INCREASED'), 'event');
     }
+    // Berechnung des aktuellen Prozentwertes für den Log (z.B. 150 für 150%)
+    const currentBonusPercent = Math.floor(Math.sqrt(this.gameService.researchLevel) * 0.212 * 100);
 
-    this.gameService.addLog(this.languageService.t('GAME.LOG_TECH_LEVEL_UP', [this.gameService.researchLevel * 10]), 'research');
+    this.gameService.addLog(this.languageService.t('GAME.LOG_TECH_LEVEL_UP', [currentBonusPercent]), 'research');
 
     if (this.gameService.researchLevel % 5 === 0) {
       this.gameService.isPaused = true;
