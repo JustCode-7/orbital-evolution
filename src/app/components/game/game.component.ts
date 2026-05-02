@@ -441,7 +441,8 @@ export class GameComponent implements OnInit, OnDestroy {
       // Beende nach Ablauf der Animation
       if (this.gameService.warpActive) {
         const elapsed = Date.now() - this.gameService.warpStart;
-        if (elapsed >= this.gameService.warpDuration) {
+        const crossfadeDiff = 500 // für den besseren Übergang zwischen warp und enddialog
+        if (elapsed >= this.gameService.warpDuration - crossfadeDiff) {
           this.gameService.warpActive = false;
           this.gameService.isJumping = false;
           this.endGame(true);
@@ -543,7 +544,7 @@ export class GameComponent implements OnInit, OnDestroy {
       let efficiency = 0.4; // Standardwert außerhalb der Zonen (Fallback)
 
       if (this.isInsideCoronaZone) {
-        efficiency = 1.0; // 100% der Punkte ganz nah dran
+        efficiency = 1.4; // 140% der Punkte ganz nah dran
       } else if (this.isInsideRedZone) {
         efficiency = 0.8; // 80% der Punkte in der mittleren Zone
       } else if (this.isInsideYellowZone) {
@@ -729,7 +730,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private checkDeathConditions() {
     if (this.gameService.playerR < 65) {
-      this.gameService.vibrateAction(240)
+      this.gameService.vibrateAction(1000)
       this.endGame(false);
     }
   }
@@ -851,7 +852,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const py = cy + Math.sin(this.playerAngle) * (this.gameService.playerR * s);
 
     // Spieler & Einheiten
-    this.drawPlayerShip(s, px, py); // Hier könnte eine Farbe übergeben werden
+    this.drawPlayerShip(s, px, py);
     this.drawSatellites(s, px, py);
     this.drawMarines(s, px, py);
     this.drawShield(s, px, py);
@@ -1154,7 +1155,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private drawShield(s: number, px: number, py: number) {
     if (!this.gameService.shieldActive) return;
-    const shipSize = 15 * s;
+    const shipSize = 22 * s;
     this.ctx.strokeStyle = `rgba(0, 255, 255, ${this.gameService.shieldHp / 100})`;
     this.ctx.lineWidth = 3 * s;
     this.ctx.beginPath();
@@ -1353,7 +1354,6 @@ export class GameComponent implements OnInit, OnDestroy {
       now,
       this.gameService.warpStart,
       this.gameService.warpDuration,
-      undefined // Hier könnte die Schifffarbe übergeben werden
     );
   }
 

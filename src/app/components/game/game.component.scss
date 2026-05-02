@@ -43,6 +43,11 @@
   .hud,
   .bottom-controls {
     pointer-events: auto;
+
+    // Power-Ups durchklickbar wenn nicht aktiviert
+    button:disabled {
+      pointer-events: none; // Deaktivierte Buttons werden "unsichtbar" für Klicks
+    }
   }
 }
 

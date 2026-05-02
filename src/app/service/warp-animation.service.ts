@@ -27,12 +27,12 @@ export class WarpAnimationService {
 
   public initParticles(width: number, height: number) {
     if (this.particles.length === 0) {
-      for (let i = 0; i < 150; i++) {
+      for (let i = 0; i < 350; i++) {
         this.particles.push({
           angle: Math.random() * Math.PI * 2,
           r: Math.random() * Math.max(width, height),
           speed: 15 + Math.random() * 25,
-          length: 5 + Math.random() * 10
+          length: 15 + Math.random() * 10
         });
       }
     }
@@ -42,7 +42,7 @@ export class WarpAnimationService {
     this.particles = [];
   }
 
-  public drawWarp(ctx: CanvasRenderingContext2D, width: number, height: number, now: number, warpStart: number, warpDuration: number, shipColor?: string) {
+  public drawWarp(ctx: CanvasRenderingContext2D, width: number, height: number, now: number, warpStart: number, warpDuration: number) {
     const elapsed = now - warpStart;
     const progress = Math.min(1, Math.max(0, elapsed / warpDuration));
 
@@ -73,7 +73,7 @@ export class WarpAnimationService {
     this.drawEventHorizon(ctx, progress, overlayAlpha, now);
 
     // 4. Raumschiff-Animation
-    this.drawShip(ctx, progress, overlayAlpha, now, width, height, shipColor);
+    this.drawShip(ctx, progress, overlayAlpha, now, width, height);
 
     // 5. Zentraler Blitz
     this.drawFlash(ctx, progress, overlayAlpha, now, width, height);
@@ -82,6 +82,11 @@ export class WarpAnimationService {
   }
 
   private drawTunnel(ctx: CanvasRenderingContext2D, width: number, height: number, overlayAlpha: number, now: number) {
+    // 1. Berechnung der aktuellen Kurven-Intensität basierend auf der Zeit
+    // Wir nutzen Sinus für eine sanfte links-rechts Bewegung
+    const globalCurveX = Math.sin(now * 0.001) * 10;
+    const globalCurveY = Math.cos(now * 0.0008) * 7;
+
     this.particles.forEach(p => {
       p.r += p.speed;
       if (p.r > Math.max(width, height)) {
@@ -89,13 +94,25 @@ export class WarpAnimationService {
         p.angle = Math.random() * Math.PI * 2;
       }
 
-      // Organischere Bewegung durch leichten Sinus-Versatz im Winkel
+      // Organischere Bewegung
       const waveAngle = p.angle + Math.sin(p.r * 0.01 + now * 0.002) * 0.1;
-      const x1 = Math.cos(waveAngle) * p.r;
-      const y1 = Math.sin(waveAngle) * p.r;
+
+      // 2. Kurven-Offset berechnen:
+      // Je größer r, desto stärker wirkt sich die Kurve aus (Parabel-Effekt)
+      const curveFactor = Math.pow(p.r / 200, 2);
+      const offsetX = globalCurveX * curveFactor;
+      const offsetY = globalCurveY * curveFactor;
+
+      // 3. Positionen mit Kurven-Versatz berechnen
+      const x1 = Math.cos(waveAngle) * p.r + offsetX;
+      const y1 = Math.sin(waveAngle) * p.r + offsetY;
+
       const currentLen = p.length * (1 + p.r / 100);
-      const x2 = Math.cos(waveAngle) * (p.r + currentLen);
-      const y2 = Math.sin(waveAngle) * (p.r + currentLen);
+
+      // Auch der Endpunkt des Partikels muss den (leicht gesteigerten) Offset erhalten
+      const nextCurveFactor = Math.pow((p.r + currentLen) / 200, 2);
+      const x2 = Math.cos(waveAngle) * (p.r + currentLen) + (globalCurveX * nextCurveFactor);
+      const y2 = Math.sin(waveAngle) * (p.r + currentLen) + (globalCurveY * nextCurveFactor);
 
       const alpha = Math.min(1, p.r / 300) * overlayAlpha;
       const thickness = 0.5 + (p.r / 200);
@@ -110,8 +127,8 @@ export class WarpAnimationService {
   }
 
   private drawEventHorizon(ctx: CanvasRenderingContext2D, progress: number, overlayAlpha: number, now: number) {
-    const ringCount = 5;
-    const timeFactor = now * 0.003;
+    const ringCount = 7;
+    const timeFactor = now * 0.113;
 
     for (let i = 0; i < ringCount; i++) {
       const baseRadius = (progress * 800) + (i * 40);
@@ -120,7 +137,7 @@ export class WarpAnimationService {
       ctx.beginPath();
       for (let a = 0; a <= Math.PI * 2; a += 0.1) {
         // Intensivere Wasser-Wellen
-        const wave = Math.sin(a * 5 + timeFactor + i) * 20 + Math.cos(a * 3 - timeFactor * 0.5) * 10;
+        const wave = Math.sin(a * 5 + timeFactor + i) * 5 + Math.cos(a * 3 - timeFactor * 0.5) * 5;
         const r = baseRadius + wave;
         const x = Math.cos(a) * r;
         const y = Math.sin(a) * r;
@@ -129,12 +146,12 @@ export class WarpAnimationService {
         else ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 5;
       const color = i % 2 === 0 ? `rgba(0, 255, 255, ${ringAlpha})` : `rgba(0, 100, 255, ${ringAlpha})`;
       ctx.strokeStyle = color;
       ctx.stroke();
 
-      if (i < 2) {
+      if (i < 3) {
         ctx.lineWidth = 1;
         ctx.strokeStyle = `rgba(255, 255, 255, ${ringAlpha * 0.5})`;
         ctx.stroke();
@@ -142,15 +159,15 @@ export class WarpAnimationService {
     }
   }
 
-  private drawShip(ctx: CanvasRenderingContext2D, progress: number, overlayAlpha: number, now: number, width: number, height: number, shipColor?: string) {
+  private drawShip(ctx: CanvasRenderingContext2D, progress: number, overlayAlpha: number, now: number, width: number, height: number) {
     if (!this.imageLoaded || !this.shipImage) return;
 
     ctx.save();
 
     // Positionieren am unteren rechten Rand (relativ zum Zentrum 0,0)
     // Wir wählen einen Punkt, der weit genug außen liegt, aber noch sichtbar ist.
-    const posX = width * 0.35;
-    const posY = height * 0.35;
+    const posX = width * 0.25;
+    const posY = height * 0.15;
 
     // Rotation: Das Schiff soll zum Mittelpunkt (0,0) zeigen.
     // Die Standard-Ausrichtung des SVGs scheint nach oben zu sein (0 Grad).
@@ -183,18 +200,6 @@ export class WarpAnimationService {
 
     let shipToDraw: HTMLImageElement | HTMLCanvasElement = this.shipImage;
 
-    if (shipColor) {
-      const offCanvas = document.createElement('canvas');
-      offCanvas.width = shipW;
-      offCanvas.height = shipH;
-      const offCtx = offCanvas.getContext('2d')!;
-      offCtx.drawImage(this.shipImage, 0, 0, shipW, shipH);
-      offCtx.globalCompositeOperation = 'source-in';
-      offCtx.fillStyle = shipColor;
-      offCtx.fillRect(0, 0, shipW, shipH);
-      shipToDraw = offCanvas;
-    }
-
     // Ghost-Image (Motion Blur)
     ctx.save();
     ctx.globalAlpha = 0.3 * overlayAlpha;
@@ -214,9 +219,9 @@ export class WarpAnimationService {
   }
 
   private drawFlash(ctx: CanvasRenderingContext2D, progress: number, overlayAlpha: number, now: number, width: number, height: number) {
-    const flashSize = (progress < 0.2)
-      ? (progress * 5 * Math.max(width, height))
-      : (30 + Math.sin(now * 0.01) * 10);
+    const flashSize = (progress < 0.3)
+      ? (30 + Math.sin(now * 0.01) * 10)
+      : (progress * 5 * Math.max(width, height));
 
     const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, flashSize);
     grad.addColorStop(0, `rgba(255, 255, 255, ${overlayAlpha})`);

@@ -37,7 +37,7 @@ export class GameService {
   // Warp/Slipstream Animation State
   warpActive = false;
   warpStart = 0;
-  warpDuration = 2000;
+  warpDuration = 3000;
   satellitesCount = 0;
   marinesReadyTime = 0;
   novaBombeActive = false;
