@@ -528,8 +528,11 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.gameService.isInsideHabitableZone) {
       this.isScoreZone = false;
 
-      // EP Gewinn: ca. 15 EP pro Sekunde als Basis
-      const epPerSecond = 15 * (1 + (this.gameService.satellitesCount * 0.1));
+      // EP Gewinn: ca. 15 EP pro Sekunde als Basis ab Level 50 wird silent leicht erhoeht
+      let epPerSecond = 15 * (1 + (this.gameService.satellitesCount * 0.1));
+      if (this.gameService.researchLevel >= 50) {
+        epPerSecond *= (1 + (this.gameService.researchLevel - 49) * 0.05);
+      }
       const gain = epPerSecond * this.lastDelta;
 
       if (this.gameService.ep < this.gameService.maxEp) {
