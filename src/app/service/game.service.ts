@@ -64,9 +64,15 @@ export class GameService {
 
   startSpawning() {
     this.cleanup();
-    // Alle 3 Level sinkt das Intervall um 70ms.
-    // Level 1: 1500ms | Level 25: ca. 940ms | Level 49: 450ms | Level 50: 400ms (Cap)
-    const interval = Math.max(400, 1500 - Math.floor((this.researchLevel - 1) / 3) * 70);
+
+    // Die Rate erhöht sich alle 15 Level, aber um 7 Level versetzt (8, 23, 38...)
+    const speedSteps = Math.floor((this.researchLevel + 7) / 15);
+
+    // Wir starten bei 2000ms und ziehen pro Schritt 250ms ab.
+    // Ab Level 60 nutzen wir eine flachere Kurve (Math.max), um das Spiel spielbar zu halten.
+    const interval = Math.max(600, 2000 - (speedSteps * 250));
+
+
     this.spawnInterval = setInterval(() => {
       if (Date.now() < this.stopSpawningUntil) return;
       this.spawnAsteroid();
@@ -76,9 +82,9 @@ export class GameService {
   private spawnAsteroid() {
     if (this.isPaused || this.resumeCountdown() > 0 || !this.gameActive()) return;
 
-    // Anzahl bestimmen: 1 Asteroid bis Level 50.
-    // Ab Level 51 alle 25 Level einen weiteren (Level 51 = 2, Level 76 = 3, etc.).
-    const spawnCount = 1 + Math.floor(Math.max(0, this.researchLevel - 26) / 25);
+    // Erhöhung der Anzahl alle 15 Level (1, 16, 31, 46...)
+    // Wir deckeln die Menge bei 5 Asteroiden, damit der Bildschirm nicht flutet.
+    const spawnCount = Math.min(5, 1 + Math.floor((this.researchLevel - 1) / 15));
 
     for (let i = 0; i < spawnCount; i++) {
       // Basis-Winkel zufällig bestimmen
