@@ -11,7 +11,7 @@ export interface Comet {
   vy: number;
   hue: number;
   lifespan: number;
-  tail: { x: number, y: number }[]; // NEU: Schweif-Positionen
+  tail: { x: number, y: number }[];
 }
 
 export interface Asteroid {

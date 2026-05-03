@@ -13,6 +13,12 @@ import {LanguageService} from './language.service';
 })
 export class GameService {
   private languageService = inject(LanguageService);
+  /**
+   // 900 = Kamera ist weiter weg (Sonne kleiner)
+   // 600 = Kamera ist näher dran (Sonne größer)
+   */
+  readonly COORDINATE_BASE = 900;
+  readonly SUN_3D_DESIRED_UNITS_CORRECTION = 200
 
   gameActive = signal(false);
   winState = signal(false);

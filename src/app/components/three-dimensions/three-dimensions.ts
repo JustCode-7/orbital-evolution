@@ -4,8 +4,9 @@
  * Dieses Projekt ist proprietär. Nutzung, Modifikation oder Kopie nur mit schriftlicher Genehmigung.
  * Siehe LICENSE-Datei im Root-Verzeichnis für Details.
  */
-import {AfterViewInit, Component, ElementRef, HostListener, NgZone, OnDestroy, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, HostListener, inject, NgZone, OnDestroy, ViewChild} from '@angular/core';
 import * as THREE from 'three';
+import {GameService} from '../../service/game.service';
 
 @Component({
   selector: 'app-3d',
@@ -27,21 +28,18 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
   @HostListener('window:orientationchange')
   onWindowResize() {
     if (!this.camera) return;
-
-    // 1. Sofortiger Resize fÃƒÂ¼r ein flÃƒÂ¼ssiges GefÃƒÂ¼hl
     this.updateCameraPosition();
-
-    // 2. Erneuter Check nach 100ms, falls sich die UI-Leisten des Handys noch bewegen
     setTimeout(() => {
       this.updateCameraPosition();
     }, 100);
   }
 
+  gameService = inject(GameService)
   private renderer!: THREE.WebGLRenderer;
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
   private sunMesh!: THREE.Mesh;
-  private glowMesh!: THREE.Mesh; // NEU: Der GlÃƒÂ¼heffekt-Layer
+  private glowMesh!: THREE.Mesh;
   private clock = new THREE.Timer();
   private animationId?: number;
 
@@ -50,8 +48,11 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.initThree();
-    this.createRealisticSun(); // Aktualisierte Methode
+    this.createRealisticSun();
+    this.updateCameraPosition();
     this.startAnimation();
+
+    // Kleiner Puffer fÃ¼r den Initialen Start
     setTimeout(() => this.onWindowResize(), 50);
   }
 
@@ -64,13 +65,6 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
     (this.sunMesh.material as THREE.Material).dispose();
     this.glowMesh.geometry.dispose();
     (this.glowMesh.material as THREE.Material).dispose();
-  }
-
-  @HostListener('window:resize')
-  onResize(): void {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
   private initThree(): void {
@@ -89,26 +83,23 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
   }
 
   private updateCameraPosition(): void {
-    if (!this.camera || !this.renderer) return;
+    if (!this.camera || !this.renderer || !this.canvasRef) return;
 
     const canvas = this.canvasRef.nativeElement;
-    // Wir nehmen die FenstergrÃƒÂ¶ÃƒÅ¸e als Fallback, falls das Canvas noch nicht resized wurde
     const width = canvas.clientWidth || window.innerWidth;
     const height = canvas.clientHeight || window.innerHeight;
 
     const fov = 75;
     const vFov = (fov * Math.PI) / 180;
-    const desiredUnits = 900;
 
-    // Renderer GrÃƒÂ¶ÃƒÅ¸e synchron zum Canvas setzen
-    this.renderer.setSize(width, height, false);
+    const desiredUnits = this.gameService.COORDINATE_BASE + this.gameService.SUN_3D_DESIRED_UNITS_CORRECTION
+
     this.camera.aspect = width / height;
+    this.renderer.setSize(width, height, false);
 
     if (width > height) {
-      // Landscape
       this.camera.position.z = desiredUnits / (2 * Math.tan(vFov / 2));
     } else {
-      // Portrait
       const hFov = 2 * Math.atan(Math.tan(vFov / 2) * this.camera.aspect);
       this.camera.position.z = desiredUnits / (2 * Math.tan(hFov / 2));
     }
@@ -118,31 +109,29 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
   }
 
   private createRealisticSun(): void {
-    const sunRadius = 55; // Passend zum alten 2D-Radius
+    // Da wir den Zoom nun wieder auf 900 standardisiert haben,
+    // machen wir das OBJEKT grÃ¶ÃŸer, um das 70er 2D-Loch zu fÃ¼llen!
+    const sunRadius = 68; // Vorher 55. Passt jetzt perfekt zum 2D-Cutout (70)
 
-    // --- 1. Textur laden ---
     const textureLoader = new THREE.TextureLoader();
-    // WICHTIG: Stelle sicher, dass die Datei unter src/assets/sun-surface.jpg existiert!
     const sunTexture = textureLoader.load('assets/sun-surface.jpg');
     sunTexture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
 
-    // --- 2. Die feste Sonne (Innere Kugel) ---
     const sunGeometry = new THREE.SphereGeometry(sunRadius, 64, 64);
     const sunMaterial = new THREE.MeshStandardMaterial({
-      map: sunTexture, // Die geladene Bild-Textur
-      emissive: 0xffddaa, // Grund-Selbstleuchten (Helles Orange/Gelb)
-      emissiveMap: sunTexture, // Das Leuchten folgt dem Muster der Textur
-      emissiveIntensity: 1.0, // StÃƒÂ¤rke des Leuchtens
+      map: sunTexture,
+      emissive: 0xffddaa,
+      emissiveMap: sunTexture,
+      emissiveIntensity: 1.0,
     });
 
     this.sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
     this.scene.add(this.sunMesh);
 
-    // --- 3. Der GlÃƒÂ¼heffekt (Ãƒâ€žuÃƒÅ¸ere Kugel) ---
-    // Etwas grÃƒÂ¶ÃƒÅ¸er als die Sonne (Radius 58 statt 55)
-    const glowGeometry = new THREE.SphereGeometry(sunRadius + 12, 64, 64); // Radius erhÃƒÂ¶ht
+    // Der GlÃ¼heffekt etwas Ã¼ber den Radius hinaus
+    const glowGeometry = new THREE.SphereGeometry(sunRadius + 15, 64, 64);
     const glowMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff6600, // Tiefes Orange/Rot
+      color: 0xff6600,
       transparent: true,
       opacity: 0.3,
       side: THREE.BackSide,
@@ -169,10 +158,10 @@ export class ThreeDimensions implements AfterViewInit, OnDestroy {
         this.clock.update(timestamp);
 
         // 2. Zeitwerte abrufen
-        // Der neue Timer gibt Sekunden zurÃƒÂ¼ck.
+        // Der neue Timer gibt Sekunden zurueck
         // Wir nutzen .getDelta(), um die Zeit seit dem letzten Frame zu bekommen
         const delta = this.clock.getDelta();
-        const elapsed = this.clock.getElapsed(); // FÃƒÂ¼r das Pulsieren
+        const elapsed = this.clock.getElapsed(); // fuer das Pulsieren
 
         // 3. Animationen anwenden
         if (this.sunMesh) {

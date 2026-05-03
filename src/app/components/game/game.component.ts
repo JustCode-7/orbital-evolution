@@ -70,7 +70,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     this._canvas.nativeElement.width = window.innerWidth;
     this._canvas.nativeElement.height = window.innerHeight;
-    this.scale = Math.min(window.innerWidth, window.innerHeight) / 900;
+    this.scale = Math.min(window.innerWidth, window.innerHeight) / this.gameService.COORDINATE_BASE;
     this.initStars();
   }
 
@@ -87,8 +87,9 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private cdr = inject(ChangeDetectorRef);
   protected readonly fullscreenService = inject(ToggleFullscreenService);
-
   gameService = inject(GameService)
+  private musicservice = inject(MusicService);
+
   isPressing = false;
   playerAngle = 0;
   playerRotation = 0;
@@ -115,7 +116,6 @@ export class GameComponent implements OnInit, OnDestroy {
   isInsideCoronaZone = false;  // Direkt vor der Sonne (Extrem)
   private playerImg = new Image();
   private animFrame: any;
-  private musicservice = inject(MusicService);
   private scale = 1;
   private cachedGlassCanvas: HTMLCanvasElement | null = null;
   private lastShieldHpForCracks: number = -1;
@@ -212,7 +212,7 @@ export class GameComponent implements OnInit, OnDestroy {
         break;
       case 'sats':
         this.handleSatelliteAction();
-        break; // Geänderter Name für neue Logik
+        break;
       case 'marines':
         this.buyMarines();
         break;
@@ -360,10 +360,10 @@ export class GameComponent implements OnInit, OnDestroy {
     // 2. Logik für Asteroiden-Intensität (Intervall-Anpassung)
     const newThreshold = Math.floor((this.gameService.researchLevel - 1) / 3);
 
+
     // Wir starten das Spawning nur neu, wenn:
     // - Ein neuer 3er-Schwellenwert erreicht wurde
-    // - UND wir noch nicht über Level 50 sind (da das Intervall dort sein Maximum von 400ms erreicht)
-    if (newThreshold > oldThreshold && this.gameService.researchLevel <= 50) {
+    if (newThreshold > oldThreshold) {
       this.gameService.startSpawning();
       this.gameService.addLog(this.languageService.t('GAME.LOG_DANGER_INCREASED'), 'event');
     }
@@ -442,7 +442,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // 3.1 Warp/Slipstream Triggern und Abschluss prüfen
     if (this.gameService.isJumping) {
-      const s = Math.min(window.innerWidth, window.innerHeight) / 900;
+      const s = Math.min(window.innerWidth, window.innerHeight) / this.gameService.COORDINATE_BASE;
       const maxVisibleR = (Math.max(window.innerWidth, window.innerHeight) / 2) / s;
       // Starte Warp, sobald das Schiff den sichtbaren Bereich verlassen hat
       if (!this.gameService.warpActive && this.gameService.playerR > maxVisibleR + 30) {
@@ -493,7 +493,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     // Normale Bewegung & Recovery-Logik
-    const s = Math.min(window.innerWidth, window.innerHeight) / 900;
+    const s = Math.min(window.innerWidth, window.innerHeight) / this.gameService.COORDINATE_BASE;
     const maxVisibleR = (Math.max(window.innerWidth, window.innerHeight) / 2) / s;
 
     if (this.gameService.playerR > maxVisibleR + 50) this.gameService.isRecovering = true;
@@ -890,7 +890,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (!this.ctx) return; // Abbruch, wenn das Canvas (noch) nicht existiert
     this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-    const s = Math.min(window.innerWidth, window.innerHeight) / 900;
+    const s = Math.min(window.innerWidth, window.innerHeight) / this.gameService.COORDINATE_BASE;
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;
 
@@ -935,13 +935,24 @@ export class GameComponent implements OnInit, OnDestroy {
    * @private
    */
   private cutFor3dSun(cx: number, cy: number, s: number) {
-    // --- NEU:  ---
     // Alles was wir jetzt zeichnen, "löscht" Pixel statt sie zu färben
     this.ctx.save();
-    this.ctx.globalCompositeOperation = 'destination-out';
+    // 'destination-out' löscht existierende Pixel basierend auf der Alpha-Stärke
+    this.ctx.globalCompositeOperation = 'destination-out'
+    // Wir wählen einen Radius, der auch das Glühen abdeckt (z.B. 85-90)
+    const cutRadius = 70 * s;
+    const grad = this.ctx.createRadialGradient(cx, cy, 55 * s, cx, cy, cutRadius);
+
+    // 0.0 (Mitte): 100% löschen
+    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    // 0.7 (Kern-Rand): Immer noch fast alles löschen
+    grad.addColorStop(0.2, 'rgba(255, 50, 50, 0)');
+    // // // 1.0 (Äußerer Glow): Sanft auslaufen lassen
+    grad.addColorStop(1, 'rgba(255, 50, 50, 0)');
+
+    this.ctx.fillStyle = grad;
     this.ctx.beginPath();
-    // Radius etwas kleiner als der Sonnen-Radius (65), damit der Rand weich bleibt
-    this.ctx.arc(cx, cy, 60 * s, 0, Math.PI * 2);
+    this.ctx.arc(cx, cy, cutRadius, 0, Math.PI * 2);
     this.ctx.fill();
     this.ctx.restore();
     // ---------------------------------------
@@ -985,7 +996,7 @@ export class GameComponent implements OnInit, OnDestroy {
         r: 85, w: (this.isInsideCoronaZone ? 50 : 40),
         // Bei Corona nutzen wir im Inverted Mode eine rgba statt des festen Hex-Codes
         c: this.isInsideCoronaZone
-          ? (isInverted ? `rgba(251, 147, 49, 0.6)` : '#fb9331')
+          ? (isInverted ? `rgba(251, 147, 49, 0.6)` : '#cd6727')
           : `rgba(255, 200, 0, ${0.2 * alphaMult})`
       }
     ];
@@ -1266,19 +1277,16 @@ export class GameComponent implements OnInit, OnDestroy {
   private drawGlassCracks(ctx: CanvasRenderingContext2D, width: number, height: number) {
     const shieldPercent = this.gameService.shieldHp / 100;
 
-    // NEU: Startet jetzt bei 35%
     if (shieldPercent >= 0.35) return;
 
-    // NEU: Intensität berechnen (0.35 - 0 = 0.35 Bereich)
     // 1 / 0.35 ≈ 2.857. Damit erreichen wir bei 0% HP genau die Intensität 1.
     const intensity = (0.35 - shieldPercent) * 2.857;
 
-    // ERWEITERTE PRÜFUNG:
     // Wir prüfen jetzt auch, ob die Breite oder Höhe des Caches noch zur Fenstergröße passt
     if (
       !this.cachedGlassCanvas ||
-      this.cachedGlassCanvas.width !== width || // NEU: Check auf Breitenänderung
-      this.cachedGlassCanvas.height !== height || // NEU: Check auf Höhenänderung
+      this.cachedGlassCanvas.width !== width ||
+      this.cachedGlassCanvas.height !== height ||
       this.gameService.shieldHp !== this.lastShieldHpForCracks ||
       this.gameService.isColorsInverted !== this.lastInvertedState
     ) {

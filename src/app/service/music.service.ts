@@ -114,7 +114,7 @@ export class MusicService {
     this.currentGain = newGain;
     this.currentTrackId = id;
 
-    // Wenn es ein neuer Track ist (nicht aus einem Loop), berechnen wir die benÃƒÂ¶tigten Wiederholungen
+    // Wenn es ein neuer Track ist (nicht aus einem Loop), berechnen wir die noetigen Wiederholungen
     if (!isLooping) {
       if (buffer.duration < this.MIN_TRACK_DURATION) {
         this.currentTrackRemainingLoops = Math.ceil(this.MIN_TRACK_DURATION / buffer.duration) - 1;
