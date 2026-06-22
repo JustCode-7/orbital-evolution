@@ -234,7 +234,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private handleSatelliteAction() {
     // Wenn bereits 10 Satelliten da sind: Richtungswechsel (kostenlos)
-    if (this.gameService.satellitesCount >= 10) {
+    if (this.gameService.satellitesCount >= 5) {
       this.gameService.flightDirection *= -1;
       const dirText = this.gameService.flightDirection === 1 ? this.languageService.t('GAME.LOG_CLOCKWISE') : this.languageService.t('GAME.LOG_COUNTER_CLOCKWISE');
       this.gameService.addLog(this.languageService.t('GAME.LOG_ORBIT_REVERSE', [dirText]), "system");
@@ -246,10 +246,10 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.gameService.ep >= 150) {
       this.gameService.ep -= 150;
       this.gameService.satellitesCount++;
-      this.gameService.addLog(this.languageService.t('GAME.LOG_SATS_LEVEL_UP', [this.gameService.satellitesCount * 10, this.gameService.satellitesCount + "/10 online"]), "system");
+      this.gameService.addLog(this.languageService.t('GAME.LOG_SATS_LEVEL_UP', [this.gameService.satellitesCount * 10, this.gameService.satellitesCount + "/5 online"]), "system");
       this.gameService.vibrateAction(20)
 
-      if (this.gameService.satellitesCount === 10) {
+      if (this.gameService.satellitesCount === 5) {
         this.gameService.addLog(this.languageService.t('GAME.LOG_MAX_SATS'), "event");
       }
     }
@@ -528,8 +528,8 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.gameService.isInsideHabitableZone) {
       this.isScoreZone = false;
 
-      // EP Gewinn: ca. 15 EP pro Sekunde als Basis ab Level 50 wird silent leicht erhoeht
-      let epPerSecond = 15 * (1 + (this.gameService.satellitesCount * 0.1));
+      // EP Gewinn: ca. 30 EP pro Sekunde als Basis ab Level 50 wird silent leicht erhoeht
+      let epPerSecond = 30 * (1 + (this.gameService.satellitesCount * 0.1));
       if (this.gameService.researchLevel >= 50) {
         epPerSecond *= (1 + (this.gameService.researchLevel - 49) * 0.05);
       }

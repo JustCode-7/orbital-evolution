@@ -74,7 +74,7 @@
 
                 🛡️ {{ languageService.t('GAME.BUY_SHIELD') }}<span>(100 EP)</span>
               </button>
-              @if (gameService.satellitesCount >= 10) {
+              @if (gameService.satellitesCount >= 5) {
                 <button class="power-up-button orbit-change-btn-color fw-bold pt-2"
                         (mousedown)="buy('sats', $event)"
                         (touchstart)="buy('sats', $event)">⇄ {{ languageService.t('GAME.BUY_ORBIT') }}
