@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" width="400" height="500">
+  <defs>
+    <!-- Glänzendes Metall -->
+    <linearGradient id="metal" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="40%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    
+    <!-- Dunkle mechanische Zwischenräume -->
+    <linearGradient id="internal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <!-- Energie-Kern -->
+    <radialGradient id="cyanCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ccffff"/>
+      <stop offset="100%" stop-color="#00ffff"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Haupt-Triebwerksstrahl -->
+  <path d="M85 190 L115 190 L100 245 Z" fill="url(#cyanCore)" opacity="0.6" />
+  <path d="M92 190 L108 190 L100 220 Z" fill="#ffffff" />
+
+  <!-- Schatten-Basis (für Tiefe) -->
+  <path d="M100 15 L130 110 L125 190 L75 190 L70 110 Z" fill="#0f172a" />
+
+  <!-- RECHTE SEITE (Gespiegelt für Links) -->
+  <g stroke="#0f172a" stroke-width="1.5" stroke-linejoin="round">
+    <!-- Äußerer Flügel-Layer -->
+    <path d="M125 110 L185 160 L170 195 L130 180 L135 205 L110 190 Z" fill="url(#metal)" />
+    <!-- Flügel-Inlay (Cyan-Leuchten) -->
+    <path d="M135 130 L165 155 L140 155 Z" fill="#00ffff" opacity="0.4" stroke="none" />
+    
+    <!-- Rumpf-Segment Rechts (Gabel-Spitze) -->
+    <path d="M105 10 L118 10 L125 100 L115 120 L105 120 Z" fill="url(#metal)" />
+    <!-- Mittleres Rumpf-Panel -->
+    <path d="M105 125 L125 135 L120 185 L105 185 Z" fill="url(#metal)" />
+    <!-- Kleiner mechanischer "Zahn" -->
+    <path d="M125 100 L135 110 L130 130 L125 125 Z" fill="url(#metal)" />
+  </g>
+
+  <!-- LINKE SEITE (Gespiegelt) -->
+  <g stroke="#0f172a" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M75 110 L15 160 L30 195 L70 180 L65 205 L90 190 Z" fill="url(#metal)" />
+    <path d="M65 130 L35 155 L60 155 Z" fill="#00ffff" opacity="0.4" stroke="none" />
+    
+    <path d="M95 10 L82 10 L75 100 L85 120 L95 120 Z" fill="url(#metal)" />
+    <path d="M95 125 L75 135 L80 185 L95 185 Z" fill="url(#metal)" />
+    <path d="M75 100 L65 110 L70 130 L75 125 Z" fill="url(#metal)" />
+  </g>
+
+  <!-- ZENTRALE ELEMENTE -->
+  <!-- Energie-Schacht in der Gabelung -->
+  <path d="M95 60 L105 60 L100 120 Z" fill="#00ffff" opacity="0.8" stroke="none" />
+
+  <!-- Cockpit (Komplexer geschichtet) -->
+  <path d="M92 80 L108 80 L115 125 L100 155 L85 125 Z" fill="#0f172a" stroke="#0f172a" stroke-width="2" />
+  <path d="M95 85 L105 85 L110 120 L100 145 L90 120 Z" fill="url(#cyanCore)" />
+  <!-- Cockpit-Glanz -->
+  <path d="M98 88 L102 88 L105 110 L100 130 L95 110 Z" fill="#ffffff" opacity="0.5" stroke="none" />
+
+  <!-- FEINDETAILS (Panel-Lines & Greebles) -->
+  <g stroke="#1e293b" stroke-width="0.8" fill="none" stroke-linecap="round">
+    <!-- Linien auf den Gabeln -->
+    <path d="M92 20 L94 50 M108 20 L106 50" />
+    <path d="M85 35 L88 55 M115 35 L112 55" />
+    <!-- Mechanik am Heck -->
+    <path d="M90 170 L110 170 M88 178 L112 178" />
+    <!-- Vertiefungen an den Flügeln -->
+    <path d="M45 165 L65 155 M155 165 L135 155" />
+  </g>
+
+  <!-- Kleine Positionslichter -->
+  <circle cx="85" cy="15" r="1.2" fill="#00ffff" />
+  <circle cx="115" cy="15" r="1.2" fill="#00ffff" />
+  <circle cx="100" cy="50" r="1.5" fill="#ffffff" opacity="0.8" />
+</svg>
