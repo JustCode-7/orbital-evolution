@@ -47,8 +47,10 @@ export class GameDialog {
   protected clearHighScore() {
     localStorage.removeItem('orbital_hs');
     localStorage.removeItem('orbital_history');
+    localStorage.removeItem('orbital_best_entry');
     this.gameService.highScore.set(0);
     this.gameService.scoreHistory.set([]);
+    this.gameService.bestEntry.set(null);
   }
 
   protected formatTime(seconds: number): string {

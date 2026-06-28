@@ -37,6 +37,7 @@ export interface ScoreEntry {
   score: number;
   time: number; // Spielzeit in Sekunden
   date: number; // Timestamp fÃƒÂ¼r Anzeige
+  level: number;
 }
 
 export interface Star {

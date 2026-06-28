@@ -55,7 +55,18 @@ h1 {
   color: #ffcc00;
   font-weight: bold;
   font-size: 1.1rem;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
+}
+
+.best-entry-highlight {
+  background: rgba(255, 204, 0, 0.1);
+  border: 1px solid rgba(255, 204, 0, 0.3);
+  padding: 5px 10px;
+  border-radius: 6px;
+
+  .history-score {
+    color: #ffcc00;
+  }
 }
 
 .history-list {
@@ -83,12 +94,40 @@ h1 {
 
 .history-item {
   display: flex;
-  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
   font-size: 0.85rem;
   margin-bottom: 3px;
   color: #e2e8f0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   padding-bottom: 2px;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  border-bottom: 1px solid rgba(0, 251, 255, 0.2);
+  padding-bottom: 2px;
+}
+
+.history-item > span, .history-header > span {
+  flex: 1;
+}
+
+.header-time, .history-time {
+  text-align: left;
+}
+
+.header-level, .history-level {
+  text-align: center;
+}
+
+.header-score, .history-score {
+  text-align: right;
 }
 
 .history-item:last-child {
@@ -103,12 +142,16 @@ h1 {
 .history-score {
   font-weight: bold;
   color: #00fbff;
-  flex-grow: 1;
 }
 
 .history-time {
   color: #94a3b8;
   font-style: italic;
+}
+
+.history-level {
+  color: #fb7185; // Ein leicht rötlicher/pinker Ton für Abwechslung
+  font-weight: 500;
 }
 
 .start-btn {

@@ -23,6 +23,7 @@ export class GameService {
   gameActive = signal(false);
   winState = signal(false);
   highScore = signal(parseInt(localStorage.getItem('orbital_hs') || '0'));
+  bestEntry = signal<ScoreEntry | null>(JSON.parse(localStorage.getItem('orbital_best_entry') || 'null'));
   lastScore = signal(parseInt(localStorage.getItem('orbital_last_score') || '0'));
   scoreHistory = signal<ScoreEntry[]>(JSON.parse(localStorage.getItem('orbital_history') || '[]'));
   resumeCountdown = signal(0);

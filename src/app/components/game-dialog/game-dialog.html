@@ -7,14 +7,35 @@
     }
     <div class="scores">
       @if (gameService.scoreHistory().length > 0) {
-        <p class="score-display high text-center text-md-start">{{ languageService.t('DIALOG.BEST_SCORE') }}
-          : {{ gameService.highScore() | number:'1.0-0' }}</p>
+        <div class="best-score-container mb-3">
+          <p class="score-display high text-center text-md-start mb-1">
+            {{ languageService.t('DIALOG.BEST_SCORE') }}
+          </p>
+          @if (gameService.bestEntry(); as best) {
+            <div class="history-item best-entry-highlight">
+              <span class="history-time">{{ formatTime(best.time) }}</span>
+              <span class="history-level">LV {{ best.level || 1 }}</span>
+              <span class="history-score">{{ best.score | number:'1.0-0' }}</span>
+            </div>
+          } @else {
+            <p class="score-display high text-center text-md-start">
+              {{ gameService.highScore() | number:'1.0-0' }}
+            </p>
+          }
+        </div>
+
         <div class="history-list">
           <p class="history-title">{{ languageService.t('DIALOG.HISTORY_TITLE') }}</p>
+          <div class="history-header">
+            <span class="header-time">{{ languageService.t('GAME.TIME', []) }}</span>
+            <span class="header-level">{{ languageService.t('GAME.RESEARCH_LVL') }}</span>
+            <span class="header-score">{{ languageService.t('GAME.SCORE') }}</span>
+          </div>
           @for (entry of gameService.scoreHistory(); track entry.date) {
             <div class="history-item">
-              <span class="history-time">({{ formatTime(entry.time) }} min)</span>
-              <span class="history-score">{{ entry.score | number:'1.0-0' }} PTS</span>
+              <span class="history-time">{{ formatTime(entry.time) }}</span>
+              <span class="history-level">LV {{ entry.level || 1 }}</span>
+              <span class="history-score">{{ entry.score | number:'1.0-0' }}</span>
             </div>
           }
         </div>

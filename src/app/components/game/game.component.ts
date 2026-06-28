@@ -869,18 +869,21 @@ export class GameComponent implements OnInit, OnDestroy {
     this.gameService.lastScore.set(finalScore);
     localStorage.setItem('orbital_last_score', finalScore.toString());
 
-    if (finalScore > this.gameService.highScore()) {
-      this.gameService.highScore.set(finalScore);
-      localStorage.setItem('orbital_hs', finalScore.toString());
-    }
-
     // Historie aktualisieren
     const playtime = Math.floor((Date.now() - this.gameService.startTime - this.gameService.totalPausedTime) / 1000);
     const newEntry = {
       score: finalScore,
       time: playtime,
-      date: Date.now()
+      date: Date.now(),
+      level: this.gameService.researchLevel
     };
+
+    if (finalScore > this.gameService.highScore()) {
+      this.gameService.highScore.set(finalScore);
+      localStorage.setItem('orbital_hs', finalScore.toString());
+      this.gameService.bestEntry.set(newEntry);
+      localStorage.setItem('orbital_best_entry', JSON.stringify(newEntry));
+    }
 
     const history = [newEntry, ...this.gameService.scoreHistory()];
     if (history.length > 5) history.pop();
