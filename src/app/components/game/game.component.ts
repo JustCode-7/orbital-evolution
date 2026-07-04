@@ -434,6 +434,9 @@ export class GameComponent implements OnInit, OnDestroy {
     // 1. Zeitliche Abläufe & Cooldowns
     this.updateCooldowns(now);
 
+    // Einführung prüfen
+    this.checkPowerUpIntroduction();
+
     // 2. Spieler-Radius berechnen (dr = Delta Radius)
     const dr = this.calculatePlayerRadiusDelta();
 
@@ -476,6 +479,24 @@ export class GameComponent implements OnInit, OnDestroy {
 
     // 6. Gefahrenprüfung
     this.checkDeathConditions();
+  }
+
+  private checkPowerUpIntroduction() {
+    if (this.gameService.ep >= 100 && !this.gameService.shieldActive && this.gameService.shieldHp === 0) {
+      this.checkAndShowIntroduction('SHIELD');
+    }
+    if (this.gameService.ep >= 150 && this.gameService.satellitesCount === 0) {
+      this.checkAndShowIntroduction('SATS');
+    }
+    if (this.gameService.ep >= 250 && this.marinesCooldownProgress === 100) {
+      this.checkAndShowIntroduction('MARINES');
+    }
+    if (this.gameService.ep >= 200) {
+      this.checkAndShowIntroduction('RESEARCH');
+    }
+    if (this.gameService.researchLevel >= 10 && !this.gameService.isJumping) {
+      this.checkAndShowIntroduction('JUMP');
+    }
   }
 
 // --- HELPER METHODS ---
@@ -1235,39 +1256,17 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
 
-  // Methode zum Pausieren
-  togglePause(e?: Event) {
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    if (!this.gameService.gameActive() || this.gameService.winState() || this.gameService.resumeCountdown() > 0) return;
-    this.gameService.isPaused = true;
-    this.gameService.pauseStartTime = Date.now();
-    this.musicservice.pauseMusic();
+  protected closeIntroduction() {
+    this.gameService.showIntroduction.set(null);
+    this.gameService.resumeGame();
   }
 
-  /**
-   * Methode zum Fortsetzen mit Countdown
-   */
-  resumeGame() {
-    // 1. Zuerst das Fenster fokussieren (hilft manchen Android-Browsern)
-    window.focus();
-    this.fullscreenService.toggleTabFullScreenModeGame()
-    this.gameService.isPaused = false;
-    if (this.gameService.pauseStartTime > 0) {
-      this.gameService.totalPausedTime += (Date.now() - this.gameService.pauseStartTime);
-      this.gameService.pauseStartTime = 0;
+  private checkAndShowIntroduction(type: string) {
+    if (this.gameService.introductionEnabled() && !this.gameService.shownIntroductions().includes(type)) {
+      this.gameService.isPaused = true;
+      this.gameService.showIntroduction.set(type);
+      this.gameService.markIntroductionShown(type);
     }
-    this.musicservice.resumeMusic();
-    this.gameService.resumeCountdown.set(3);
-
-    const interval = setInterval(() => {
-      this.gameService.resumeCountdown.set(this.gameService.resumeCountdown() - 1);
-      if (this.gameService.resumeCountdown() <= 0) {
-        clearInterval(interval);
-      }
-    }, 1000);
   }
 
   getShieldDashOffset(): number {

@@ -7,12 +7,16 @@
 import {inject, Injectable, signal} from '@angular/core';
 import {Asteroid, Comet, LogEntry, Projectile, ScoreEntry} from '../model/game.model';
 import {LanguageService} from './language.service';
+import {MusicService} from './music.service';
+import {ToggleFullscreenService} from './toggle-fullscreen.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GameService {
   private languageService = inject(LanguageService);
+  private musicservice = inject(MusicService);
+  private fullscreenService = inject(ToggleFullscreenService)
   /**
    // 900 = Kamera ist weiter weg (Sonne kleiner)
    // 600 = Kamera ist näher dran (Sonne größer)
@@ -57,6 +61,24 @@ export class GameService {
   private spawnInterval: any;
   isPaused = false;
   showRewardDialog = signal(false);
+  showIntroduction = signal<string | null>(null);
+  introductionEnabled = signal(localStorage.getItem('orbital_intro_enabled') !== 'false');
+  shownIntroductions = signal<string[]>(JSON.parse(localStorage.getItem('orbital_shown_intros') || '[]'));
+
+  toggleIntroduction() {
+    this.introductionEnabled.set(!this.introductionEnabled());
+    localStorage.setItem('orbital_intro_enabled', this.introductionEnabled().toString());
+  }
+
+  markIntroductionShown(type: string) {
+    const shown = this.shownIntroductions();
+    if (!shown.includes(type)) {
+      const newShown = [...shown, type];
+      this.shownIntroductions.set(newShown);
+      localStorage.setItem('orbital_shown_intros', JSON.stringify(newShown));
+    }
+  }
+
   flightDirection = 1; // 1 = Uhrzeigersinn, -1 = gegen den Uhrzeigersinn
 
   asteroids: Asteroid[] = [];
@@ -173,10 +195,51 @@ export class GameService {
     this.flightDirection = 1;
     this.pauseStartTime = 0;
     this.totalPausedTime = 0;
+    this.shownIntroductions.set([])
+    this.togglePause()
+    this.resumeGame()
   }
 
 
   vibrateAction(duration: number) {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([duration, 160]);
+  }
+
+
+  /**
+   * Methode zum Pausieren
+   */
+  togglePause(e?: Event) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    if (!this.gameActive() || this.winState() || this.resumeCountdown() > 0) return;
+    this.isPaused = true;
+    this.pauseStartTime = Date.now();
+    this.musicservice.pauseMusic();
+  }
+
+  /**
+   * Methode zum Fortsetzen mit Countdown
+   */
+  resumeGame() {
+    // 1. Zuerst das Fenster fokussieren (hilft manchen Android-Browsern)
+    window.focus();
+    this.fullscreenService.toggleTabFullScreenModeGame()
+    this.isPaused = false;
+    if (this.pauseStartTime > 0) {
+      this.totalPausedTime += (Date.now() - this.pauseStartTime);
+      this.pauseStartTime = 0;
+    }
+    this.musicservice.resumeMusic();
+    this.resumeCountdown.set(3);
+
+    const interval = setInterval(() => {
+      this.resumeCountdown.set(this.resumeCountdown() - 1);
+      if (this.resumeCountdown() <= 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
   }
 }

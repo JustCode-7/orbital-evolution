@@ -131,13 +131,13 @@
 
       @if (gameService.isPaused && !gameService.showRewardDialog()) {
         <button class="resume-btn"
-                (mousedown)="resumeGame()"
-                (touchstart)="resumeGame()">{{ languageService.t('GAME.RESUME') }}
+                (mousedown)="gameService.resumeGame()"
+                (touchstart)="gameService.resumeGame()">{{ languageService.t('GAME.RESUME') }}
         </button>
       } @else if (!gameService.showRewardDialog()) {
         <button class="pause-btn float-end"
-                (mousedown)="togglePause($event)"
-                (touchstart)="togglePause($event)">
+                (mousedown)="gameService.togglePause($event)"
+                (touchstart)="gameService.togglePause($event)">
           <div class="pause-icon"></div>
         </button>
       }
@@ -150,7 +150,7 @@
         <h2 class="reward-title">{{ languageService.t('GAME.REWARD_TITLE') }}</h2>
         <p class="reward-subtitle">{{ languageService.t('GAME.REWARD_SUBTITLE') }}</p>
         <div class="reward-options">
-          <button class="reward-option-btn" (click)="selectReward(1)">
+          <button class="reward-option-btn" [disabled]="marinesCooldownProgress < 100" (click)="selectReward(1)">
             <div class="reward-icon">🎖️</div>
             <div class="reward-name">{{ languageService.t('GAME.REWARD_MARINES') }}</div>
             <div class="reward-desc">{{ languageService.t('GAME.REWARD_MARINES_DESC') }}</div>
@@ -166,6 +166,73 @@
             <div class="reward-name">{{ languageService.t('GAME.REWARD_NOVA') }}</div>
             <div class="reward-desc">{{ languageService.t('GAME.REWARD_NOVA_DESC') }}</div>
           </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (gameService.showIntroduction(); as type) {
+    <div class="dialog-overlay intro-overlay vh-100">
+      <div class="reward-dialog introduction-dialog">
+        <h2 class="reward-title">{{ languageService.t('POWERUP_INTRO.' + type + '_TITLE') }}</h2>
+        <div class="introduction-content p-3 text-white text-center justify-content-center">
+          <div class="intro-hint-large mb-3">
+            @switch (type) {
+              @case ('JUMP') {
+                <button class="jump-btn">
+                  {{ languageService.t('GAME.ORBITAL_JUMP') }} {{ jumpBounsLevel | number:'1.0-0' }}
+                  <span>(+{{ jumpBonus | number:'1.0-0' }} PTS)</span>
+                </button>
+              }
+            }
+          </div>
+          <p class="mb-4">{{ languageService.t('POWERUP_INTRO.' + type + '_TEXT') }}</p>
+          <div class="intro-hint-large mb-3">
+            @switch (type) {
+              @case ('SHIELD') {
+                <button class="power-up-button"
+                        [class.shield-active]="gameService.shieldHp > 0"
+                        [class.critical]="gameService.shieldHp < 35"
+                        (mousedown)="buy('shield', $event); closeIntroduction()"
+                        (touchstart)="buy('shield', $event); closeIntroduction()"
+                        [disabled]="gameService.ep < 100 || gameService.shieldHp === 100">
+                  🛡️ {{ languageService.t('GAME.BUY_SHIELD') }}<span>(100 EP)</span>
+                </button>
+              }
+              @case ('SATS') {
+                <button class="power-up-button"
+                        (mousedown)="buy('sats', $event); closeIntroduction()"
+                        (touchstart)="buy('sats', $event); closeIntroduction()"
+                        [class.power-active]="gameService.ep >= 150"
+                        [disabled]="gameService.ep < 150">
+                  🛰️ {{ languageService.t('GAME.BUY_SATS') }} {{ gameService.satellitesCount }}<span>(150 EP)</span>
+                </button>
+              }
+              @case ('MARINES') {
+                <button class="power-up-button marine-btn"
+                        (mousedown)="buy('marines', $event); closeIntroduction()"
+                        (touchstart)="buy('marines', $event); closeIntroduction()"
+                        [disabled]="gameService.ep < 250 || marinesCooldownProgress < 100"
+                        [class.power-active]="gameService.ep >= 250 && marinesCooldownProgress === 100">
+                  🎖️ {{ languageService.t('GAME.BUY_MARINES') }} <span>(250 EP)</span>
+                </button>
+              }
+              @case ('RESEARCH') {
+                <button class="power-up-button"
+                        (mousedown)="buy('research', $event); closeIntroduction()"
+                        (touchstart)="buy('research', $event); closeIntroduction()"
+                        [disabled]="gameService.ep < 200"
+                        [class.power-active]="gameService.ep >= 200"
+                >🔬 {{ languageService.t('GAME.RESEARCH_LVL') }} {{ gameService.researchLevel }} <span>(200 EP)</span>
+                </button>
+              }
+              @case ('JUMP') {
+                <button class="resume-btn mx-auto" (click)="closeIntroduction()">
+                  {{ languageService.t('DIALOG.CLOSE') }}
+                </button>
+              }
+            }
+          </div>
         </div>
       </div>
     </div>

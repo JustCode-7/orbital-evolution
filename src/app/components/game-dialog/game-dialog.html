@@ -57,6 +57,16 @@
       <mat-icon class="me-2">{{ gameService.isColorsInverted ? 'dark_mode' : 'light_mode' }}</mat-icon>
       {{ gameService.isColorsInverted ? 'Dark-Mode' : 'Light-Mode' }}
     </button>
+    <div class="music-box fw-bold mb-2">
+      <mat-slide-toggle
+        (toggleChange)="gameService.toggleIntroduction()"
+        [checked]="gameService.introductionEnabled()"
+        labelPosition="before">
+          <span class="fw-bold me-2">
+          {{ languageService.t('DIALOG.ENABLE_INTRO') }} {{ gameService.introductionEnabled() ? 'ON' : 'OFF' }}
+            </span>
+      </mat-slide-toggle>
+    </div>
     <div class="music-box fw-bold">
       <mat-slide-toggle
         (toggleChange)="toggleMusic()"

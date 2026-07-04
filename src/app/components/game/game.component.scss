@@ -348,6 +348,33 @@ button:disabled {
   justify-content: center;
   align-items: center;
   padding: 1rem;
+
+  &.intro-overlay {
+    background: rgba(0, 0, 0, 0.4); // Weniger Abdunkelung damit Buttons sichtbar bleiben
+    backdrop-filter: blur(2px);
+    pointer-events: none; // Damit man "durchsieht" aber der Dialog fängt es wieder ab
+
+    .reward-dialog {
+      pointer-events: auto;
+    }
+  }
+}
+
+.intro-hint-large {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.6));
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: center;
+  color: #ffcc00;
+  pointer-events: auto;
+  z-index: 1000;
+  position: relative;
+
 }
 
 .reward-dialog {
