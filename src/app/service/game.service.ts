@@ -153,6 +153,7 @@ export class GameService {
   }
 
   cleanup() {
+    this.cancelVibration();
     if (this.spawnInterval) {
       clearInterval(this.spawnInterval)
     }
@@ -165,6 +166,7 @@ export class GameService {
 
 
   initGameVariables() {
+    this.cancelVibration();
     this.lastTimestamp = performance.now();
     this.startTime = Date.now();
     this.gameActive.set(true);
@@ -205,6 +207,33 @@ export class GameService {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([duration, 160]);
   }
 
+  vibrateProximity(duration: number) {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(duration);
+    }
+  }
+
+  vibrateSunCrash() {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      // 3 Sekunden sehr schnelles Vibrieren (30ms Puls, 20ms Pause über 3000ms)
+      const pattern: number[] = [];
+      const pulse = 30;
+      const pause = 20;
+      const total = 3000;
+      const count = Math.floor(total / (pulse + pause));
+      for (let i = 0; i < count; i++) {
+        pattern.push(pulse, pause);
+      }
+      navigator.vibrate(pattern);
+    }
+  }
+
+  cancelVibration() {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(0);
+    }
+  }
+
 
   /**
    * Methode zum Pausieren
@@ -215,6 +244,7 @@ export class GameService {
       e.preventDefault();
     }
     if (!this.gameActive() || this.winState() || this.resumeCountdown() > 0) return;
+    this.cancelVibration();
     this.isPaused = true;
     this.pauseStartTime = Date.now();
     this.musicservice.pauseMusic();

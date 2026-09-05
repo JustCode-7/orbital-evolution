@@ -120,6 +120,7 @@ export class GameComponent implements OnInit, OnDestroy {
   private cachedGlassCanvas: HTMLCanvasElement | null = null;
   private lastShieldHpForCracks: number = -1;
   private lastInvertedState: boolean = false;
+  private lastSunProximityVibeTime: number = 0;
 
   ngOnInit() {
     this.setShipSkin('assets/ship-skin/elite-interceptor-skin.svg');
@@ -143,6 +144,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.gameService.cancelVibration();
     this.gameService.cleanup();
     cancelAnimationFrame(this.animFrame);
     this.musicservice.stopMusic();
@@ -476,6 +478,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.updateCombat(now, px, py);
     this.updateNovaBombe();
     this.updatePlusParticles();
+    this.updateSunProximityVibration(now);
 
     // 6. Gefahrenprüfung
     this.checkDeathConditions();
@@ -792,9 +795,34 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
+  private updateSunProximityVibration(now: number) {
+    if (
+      !this.gameService.gameActive() ||
+      this.gameService.isPaused ||
+      this.gameService.winState() ||
+      this.gameService.isJumping ||
+      this.gameService.resumeCountdown() > 0
+    ) {
+      return;
+    }
+
+    // Ab den letzten 20 % der mittleren Punktezone (Rote Zone: 110 bis 190, Breite 80, 20% = 16 => r <= 126)
+    if (this.gameService.playerR <= 126 && this.gameService.playerR >= 65) {
+      const proximity = Math.min(1, Math.max(0, (126 - this.gameService.playerR) / (126 - 65)));
+      // Je näher an der Sonne (playerR -> 65), desto schneller (kürzeres Intervall) und intensiver (längerer Puls)
+      const interval = 500 - proximity * 430; // 500ms bei Eintritt (r=126) bis 70ms am Sonnenrand (r=65)
+      const duration = Math.round(15 + proximity * 30); // 15ms bei r=126 bis 45ms bei r=65
+
+      if (now - this.lastSunProximityVibeTime >= interval) {
+        this.lastSunProximityVibeTime = now;
+        this.gameService.vibrateProximity(duration);
+      }
+    }
+  }
+
   private checkDeathConditions() {
     if (this.gameService.playerR < 65) {
-      this.gameService.vibrateAction(1000)
+      this.gameService.vibrateSunCrash();
       this.endGame(false);
     }
   }
