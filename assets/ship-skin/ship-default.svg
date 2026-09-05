@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="400" height="400">
+  <defs>
+    <!-- Metallische weiße Panzerung -->
+    <linearGradient id="armorGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    
+    <!-- Cyan-Leuchten -->
+    <linearGradient id="energyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ccffff"/>
+      <stop offset="100%" stop-color="#00ced1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Triebwerkseffekte -->
+  <path d="M94 165 L106 165 L100 195 Z" fill="url(#energyGrad)" opacity="0.8" />
+  <path d="M70 148 L76 145 L73 165 Z" fill="url(#energyGrad)" opacity="0.4" />
+  <path d="M130 148 L124 145 L127 165 Z" fill="url(#energyGrad)" opacity="0.4" />
+
+  <!-- Schiffskörper: Schmal zulaufend mit feiner Gabelung -->
+  <g stroke="#0f172a" stroke-width="3" stroke-linejoin="round" fill="url(#armorGrad)">
+    
+    <!-- Flügel (Ansatz weit hinten) -->
+    <path d="M88 110 L35 150 L45 162 L75 155 L72 172 L92 165 Z" />
+    <path d="M112 110 L165 150 L155 162 L125 155 L128 172 L108 165 Z" />
+
+    <!-- Der Rumpf: Konvergiert zur Spitze hin -->
+    <!-- Spitzen (L: 90,10 | R: 110,10) - Deutlich schmaler -->
+    <path d="M90 10 L97 65 L103 65 L110 10 L120 95 L112 165 L88 165 L80 95 Z" />
+  </g>
+
+  <!-- Cockpit (Schmaler Übergang ab Y=65) -->
+  <path d="M97 65 L103 65 L108 95 L100 120 L92 95 Z" fill="url(#energyGrad)" stroke="#0f172a" stroke-width="2" />
+  
+  <!-- Highlight auf dem Cockpit -->
+  <path d="M99 70 L101 70 L103 90 L100 105 L97 90 Z" fill="#ffffff" opacity="0.6" />
+
+  <!-- Struktur-Details -->
+  <g stroke="#1e293b" stroke-width="1" fill="none" stroke-linecap="round">
+    <path d="M92 30 L94 50" />
+    <path d="M108 30 L106 50" />
+    <path d="M90 140 L110 140" />
+  </g>
+</svg>

@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" width="400" height="500">
+  <defs>
+    <!-- Armor: Metall-Glanz -->
+    <linearGradient id="hull" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    
+    <!-- Dynamische Farbe (Primary) -->
+    <!-- Ändere diesen Wert für verschiedene Versionen -->
+    <style>
+      .primary { fill: #00ffff; } /* Cyan Standard */
+      .primary-glow { stop-color: #00ffff; }
+      .secondary-glow { stop-color: #0044aa; }
+    </style>
+
+    <radialGradient id="energy" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" class="primary-glow"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Triebwerk -->
+  <path d="M92 195 L108 195 L100 240 Z" class="primary" opacity="0.6" />
+
+  <!-- Struktur & Schatten-Basis -->
+  <path d="M100 5 L135 120 L125 195 L75 195 L65 120 Z" fill="#0f172a" />
+
+  <!-- RECHTE HÄLFTE -->
+  <g stroke="#0f172a" stroke-width="1.2" stroke-linejoin="round">
+    <!-- Flügel-Layer -->
+    <path d="M125 120 L190 165 L175 195 L130 185 L135 210 L110 195 Z" fill="url(#hull)" />
+    <path d="M135 140 L170 160 L140 165 Z" class="primary" opacity="0.4" stroke="none" />
+    
+    <!-- Gabel-Spitze (Extrem spitz zulaufend) -->
+    <path d="M102 5 L112 5 L120 100 L110 120 L102 120 Z" fill="url(#hull)" />
+    
+    <!-- Zusätzliche Rumpf-Details -->
+    <path d="M102 125 L122 135 L118 160 L102 160 Z" fill="url(#hull)" />
+    <path d="M118 165 L115 190 L102 190 Z" fill="url(#hull)" />
+  </g>
+
+  <!-- LINKE HÄLFTE -->
+  <g stroke="#0f172a" stroke-width="1.2" stroke-linejoin="round">
+    <path d="M75 120 L10 165 L25 195 L70 185 L65 210 L90 195 Z" fill="url(#hull)" />
+    <path d="M65 140 L30 160 L60 165 Z" class="primary" opacity="0.4" stroke="none" />
+    
+    <path d="M98 5 L88 5 L80 100 L90 120 L98 120 Z" fill="url(#hull)" />
+    
+    <path d="M98 125 L78 135 L82 160 L98 160 Z" fill="url(#hull)" />
+    <path d="M82 165 L85 190 L98 190 Z" fill="url(#hull)" />
+  </g>
+
+  <!-- Cockpit & Kern -->
+  <path d="M95 85 L105 85 L110 130 L100 155 L90 130 Z" fill="url(#energy)" stroke="#0f172a" stroke-width="2" />
+
+  <!-- Greebles & Panel-Lines (Für den "Detaillierten Look") -->
+  <g stroke="#1e293b" stroke-width="0.7" fill="none" stroke-linecap="round">
+    <path d="M92 25 L94 50 M108 25 L106 50" />
+    <path d="M85 45 L88 70 M115 45 L112 70" />
+    <path d="M80 145 L120 145" />
+    <path d="M80 155 L120 155" />
+    <path d="M85 175 L115 175" />
+  </g>
+</svg>

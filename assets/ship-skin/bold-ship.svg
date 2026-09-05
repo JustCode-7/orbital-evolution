@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="400" height="400">
+  <defs>
+    <!-- Metallischer Farbverlauf für die Hülle -->
+    <linearGradient id="hull" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    
+    <!-- Leuchtendes Cyan für das Cockpit -->
+    <linearGradient id="cockpit" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ccffff"/>
+      <stop offset="40%" stop-color="#00ffff"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    
+    <!-- Triebwerks-Flamme (Cyan zu Transparent) -->
+    <linearGradient id="thrust" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#00ffff"/>
+      <stop offset="100%" stop-color="#0044aa" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Dunkler Farbverlauf für Triebwerks-Düsen -->
+    <linearGradient id="darkMetal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Haupt-Triebwerksflamme -->
+  <path d="M85 155 L115 155 L108 190 L100 200 L92 190 Z" fill="url(#thrust)" />
+  <!-- Seiten-Triebwerksflammen -->
+  <path d="M55 135 L70 130 L62 175 Z" fill="url(#thrust)" />
+  <path d="M145 135 L130 130 L138 175 Z" fill="url(#thrust)" />
+
+  <!-- Basis-Struktur des Schiffs mit dicken schwarzen Rändern (Icon-Style) -->
+  <g stroke="#0f172a" stroke-width="4.5" stroke-linejoin="round" fill="url(#hull)">
+    
+    <!-- Linker Flügel -->
+    <path d="M100 30 L35 110 L45 135 L75 120 L70 145 L100 135 Z" />
+    
+    <!-- Rechter Flügel -->
+    <path d="M100 30 L165 110 L155 135 L125 120 L130 145 L100 135 Z" />
+
+    <!-- Haupt-Rumpf (übelappt die Flügel für Tiefe) -->
+    <path d="M100 15 L115 70 L125 135 L110 155 L90 155 L75 135 L85 70 Z" />
+  </g>
+
+  <!-- Panel-Linien (Feine Details für den Tech-Look) -->
+  <g stroke="#0f172a" stroke-width="2.5" fill="none" stroke-linecap="round">
+    <!-- Mittellinie -->
+    <path d="M100 15 L100 155" /> 
+    <!-- Flügel-Details Links -->
+    <path d="M85 70 L55 105" /> 
+    <path d="M75 135 L80 110 L45 135" />
+    <!-- Flügel-Details Rechts -->
+    <path d="M115 70 L145 105" /> 
+    <path d="M125 135 L120 110 L155 135" />
+    <!-- Querstreben Rumpf -->
+    <path d="M85 110 L115 110" />
+    <path d="M90 135 L110 135" />
+  </g>
+
+  <!-- Düsen / Triebwerksblock hinten -->
+  <path d="M85 155 L95 165 L105 165 L115 155 Z" fill="url(#darkMetal)" stroke="#0f172a" stroke-width="3" stroke-linejoin="round" />
+  
+  <!-- Kleine Seiten-Düsen -->
+  <path d="M55 135 L62 142 L68 135 Z" fill="url(#darkMetal)" stroke="#0f172a" stroke-width="2" />
+  <path d="M145 135 L138 142 L132 135 Z" fill="url(#darkMetal)" stroke="#0f172a" stroke-width="2" />
+
+  <!-- Cockpit (Leuchtend) -->
+  <path d="M100 45 L110 80 L100 115 L90 80 Z" fill="url(#cockpit)" stroke="#0f172a" stroke-width="3.5" stroke-linejoin="round"/>
+  
+  <!-- Cockpit Highlight (für den Glas-Effekt) -->
+  <path d="M100 52 L105 80 L100 108 L95 80 Z" fill="#ffffff" opacity="0.6" />
+  <path d="M100 58 L102 75 L100 90 Z" fill="#ffffff" opacity="0.9" />
+
+</svg>
