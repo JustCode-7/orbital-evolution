@@ -217,16 +217,8 @@ export class GameService {
 
   vibrateSunCrash() {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      // 3 Sekunden sehr schnelles und durchgängiges Vibrieren
-      const pattern: number[] = [];
-      const pulse = 280;
-      const pause = 20;
-      const total = 3000;
-      const count = Math.floor(total / (pulse + pause));
-      for (let i = 0; i < count; i++) {
-        pattern.push(pulse, pause);
-      }
-      navigator.vibrate(pattern);
+      // 3 Sekunden komplett durchgängige Vibration
+      navigator.vibrate(3000);
     }
   }
 

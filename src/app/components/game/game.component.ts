@@ -810,12 +810,13 @@ export class GameComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Ab den letzten 20 % der mittleren Punktezone (Rote Zone: 110 bis 190, Breite 80, 20% = 16 => r <= 126)
-    if (this.gameService.playerR <= 126 && this.gameService.playerR >= 65) {
-      const proximity = Math.min(1, Math.max(0, (126 - this.gameService.playerR) / (126 - 65)));
-      // Je näher an der Sonne (playerR -> 65), desto schneller, intensiver und durchgängiger
-      const interval = Math.round(400 - proximity * 340); // 400ms (bei r=126) bis 60ms (bei r=65)
-      const duration = Math.round(15 + proximity * 165); // 15ms (sanfter Tick) bis 180ms (Dauervibration)
+    // Warnung vor der Sonne: Beginn in der roten Gefahrenzone (r <= 170 bis 65)
+    if (this.gameService.playerR <= 170 && this.gameService.playerR >= 65) {
+      const proximity = Math.min(1, Math.max(0, (170 - this.gameService.playerR) / (170 - 65)));
+      // Kürzere Intervalle für schnellere und frühere Warnung: 220ms bis 50ms
+      const interval = Math.round(220 - proximity * 170);
+      // Vibrationsdauer: 25ms bis 180ms (geht bei maximaler Annäherung in Dauervibration über)
+      const duration = Math.round(25 + proximity * 155);
 
       if (now - this.lastSunProximityVibeTime >= interval) {
         this.lastSunProximityVibeTime = now;
@@ -829,6 +830,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private checkDeathConditions() {
     if (this.gameService.playerR < 65) {
+      this.lastSunProximityVibeTime = 0;
       this.gameService.vibrateSunCrash();
       this.endGame(false);
     }
