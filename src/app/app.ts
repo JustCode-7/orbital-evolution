@@ -5,10 +5,8 @@
  * Siehe LICENSE-Datei im Root-Verzeichnis für Details.
  */
 import {Component, inject, OnDestroy, signal} from '@angular/core';
-import {PwaInstallService} from './service/pwa-install.service';
 import {ToggleFullscreenService} from './service/toggle-fullscreen.service';
 import {NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet} from '@angular/router';
-import {UpdatePwa} from './service/update-pwa';
 
 @Component({
   selector: 'app-root',
@@ -20,9 +18,7 @@ import {UpdatePwa} from './service/update-pwa';
 export class App implements OnDestroy {
 
   protected readonly title = signal('orbital-evolution');
-  private pwaInstallService = inject(PwaInstallService);
   protected readonly fullscreenService = inject(ToggleFullscreenService);
-  private readonly updateService = inject(UpdatePwa);
   private readonly router = inject(Router);
 
   isLoading = signal(false);

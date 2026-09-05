@@ -146,7 +146,7 @@
 
   @if (gameService.showRewardDialog()) {
     <div class="dialog-overlay vh-100">
-      <div class="reward-dialog">
+      <div class="reward-dialog" [class.invert-colors]="gameService.isColorsInverted">
         <h2 class="reward-title">{{ languageService.t('GAME.REWARD_TITLE') }}</h2>
         <p class="reward-subtitle">{{ languageService.t('GAME.REWARD_SUBTITLE') }}</p>
         <div class="reward-options">
@@ -173,7 +173,7 @@
 
   @if (gameService.showIntroduction(); as type) {
     <div class="dialog-overlay intro-overlay vh-100">
-      <div class="reward-dialog introduction-dialog">
+      <div class="reward-dialog introduction-dialog" [class.invert-colors]="gameService.isColorsInverted">
         <h2 class="reward-title">{{ languageService.t('POWERUP_INTRO.' + type + '_TITLE') }}</h2>
         <div class="introduction-content p-3 text-white text-center justify-content-center">
           <div class="intro-hint-large mb-3">
