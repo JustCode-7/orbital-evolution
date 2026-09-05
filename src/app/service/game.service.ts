@@ -204,7 +204,9 @@ export class GameService {
 
 
   vibrateAction(duration: number) {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate([duration, 160]);
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(duration);
+    }
   }
 
   vibrateProximity(duration: number) {
@@ -215,9 +217,9 @@ export class GameService {
 
   vibrateSunCrash() {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      // 3 Sekunden sehr schnelles Vibrieren (30ms Puls, 20ms Pause über 3000ms)
+      // 3 Sekunden sehr schnelles und durchgängiges Vibrieren
       const pattern: number[] = [];
-      const pulse = 30;
+      const pulse = 280;
       const pause = 20;
       const total = 3000;
       const count = Math.floor(total / (pulse + pause));

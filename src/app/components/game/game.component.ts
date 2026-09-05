@@ -803,20 +803,27 @@ export class GameComponent implements OnInit, OnDestroy {
       this.gameService.isJumping ||
       this.gameService.resumeCountdown() > 0
     ) {
+      if (this.lastSunProximityVibeTime !== 0) {
+        this.lastSunProximityVibeTime = 0;
+        this.gameService.cancelVibration();
+      }
       return;
     }
 
     // Ab den letzten 20 % der mittleren Punktezone (Rote Zone: 110 bis 190, Breite 80, 20% = 16 => r <= 126)
     if (this.gameService.playerR <= 126 && this.gameService.playerR >= 65) {
       const proximity = Math.min(1, Math.max(0, (126 - this.gameService.playerR) / (126 - 65)));
-      // Je näher an der Sonne (playerR -> 65), desto schneller (kürzeres Intervall) und intensiver (längerer Puls)
-      const interval = 500 - proximity * 430; // 500ms bei Eintritt (r=126) bis 70ms am Sonnenrand (r=65)
-      const duration = Math.round(15 + proximity * 30); // 15ms bei r=126 bis 45ms bei r=65
+      // Je näher an der Sonne (playerR -> 65), desto schneller, intensiver und durchgängiger
+      const interval = Math.round(250 - proximity * 190); // 250ms (bei r=126) bis 60ms (bei r=65)
+      const duration = Math.round(180 + proximity * 120); // 180ms bis 300ms
 
       if (now - this.lastSunProximityVibeTime >= interval) {
         this.lastSunProximityVibeTime = now;
         this.gameService.vibrateProximity(duration);
       }
+    } else if (this.lastSunProximityVibeTime !== 0) {
+      this.lastSunProximityVibeTime = 0;
+      this.gameService.cancelVibration();
     }
   }
 
