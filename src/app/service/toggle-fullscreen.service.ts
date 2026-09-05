@@ -64,7 +64,7 @@ export class ToggleFullscreenService {
   }
 
   releaseDisplayAlwaysOnMode() {
-    this.wakeLock!.release().then(() => {
+    this.wakeLock?.release().then(() => {
       this.wakeLock = null;
     });
   }

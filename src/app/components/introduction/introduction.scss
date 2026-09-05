@@ -152,6 +152,16 @@
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 0 10px rgba(0, 251, 255, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+
+  .spinner-border {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-width: 0.2em;
+  }
 }
 
 .start-button:hover {

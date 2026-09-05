@@ -4,7 +4,7 @@
  * Dieses Projekt ist proprietÃ¤r. Nutzung, Modifikation oder Kopie nur mit schriftlicher Genehmigung.
  * Siehe LICENSE-Datei im Root-Verzeichnis fÃ¼r Details.
  */
-import {Component, inject} from '@angular/core';
+import {Component, inject, OnDestroy, signal} from '@angular/core';
 import {DecimalPipe} from '@angular/common';
 import {MatIcon} from '@angular/material/icon';
 import {RouterLink} from '@angular/router';
@@ -29,12 +29,21 @@ import {LanguageService} from '../../service/language.service';
   templateUrl: './game-dialog.html',
   styleUrl: './game-dialog.scss',
 })
-export class GameDialog {
+export class GameDialog implements OnDestroy {
 
   protected readonly fullscreenService = inject(ToggleFullscreenService);
   gameService = inject(GameService)
   protected musicservice = inject(MusicService)
   protected languageService = inject(LanguageService);
+  isShowSpinner = signal(false);
+
+  showSpinner() {
+    this.isShowSpinner.set(true);
+  }
+
+  ngOnDestroy(): void {
+    this.isShowSpinner.set(false);
+  }
 
   toggleMusic() {
     if (this.musicservice.isMusicOn()) {

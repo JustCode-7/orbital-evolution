@@ -7,7 +7,7 @@
 import {Component, inject, OnDestroy, signal} from '@angular/core';
 import {PwaInstallService} from './service/pwa-install.service';
 import {ToggleFullscreenService} from './service/toggle-fullscreen.service';
-import {RouterOutlet} from '@angular/router';
+import {NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet} from '@angular/router';
 import {UpdatePwa} from './service/update-pwa';
 
 @Component({
@@ -23,7 +23,23 @@ export class App implements OnDestroy {
   private pwaInstallService = inject(PwaInstallService);
   protected readonly fullscreenService = inject(ToggleFullscreenService);
   private readonly updateService = inject(UpdatePwa);
+  private readonly router = inject(Router);
 
+  isLoading = signal(false);
+
+  constructor() {
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        this.isLoading.set(true);
+      } else if (
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
+        this.isLoading.set(false);
+      }
+    });
+  }
 
   ngOnDestroy(): void {
     this.fullscreenService.releaseDisplayAlwaysOnMode()

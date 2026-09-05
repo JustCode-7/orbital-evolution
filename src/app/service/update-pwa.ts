@@ -4,7 +4,7 @@
  * Dieses Projekt ist proprietär. Nutzung, Modifikation oder Kopie nur mit schriftlicher Genehmigung.
  * Siehe LICENSE-Datei im Root-Verzeichnis für Details.
  */
-import {Injectable} from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {SwUpdate, VersionReadyEvent} from '@angular/service-worker';
 import {filter} from 'rxjs';
 
@@ -12,15 +12,16 @@ import {filter} from 'rxjs';
   providedIn: 'root',
 })
 export class UpdatePwa {
+  private swUpdate = inject(SwUpdate, { optional: true });
 
-  constructor(private swUpdate: SwUpdate) {
-    if (this.swUpdate.isEnabled) {
+  constructor() {
+    if (this.swUpdate?.isEnabled) {
       // Prüft sofort beim Aufruf der App
       this.swUpdate.checkForUpdate();
 
       // Prüft zusätzlich alle 6 Stunden manuell, falls die App offen bleibt
       setInterval(() => {
-        this.swUpdate.checkForUpdate();
+        this.swUpdate?.checkForUpdate();
       }, 6 * 60 * 60 * 1000);
 
       this.subscribeToUpdates();
@@ -28,6 +29,7 @@ export class UpdatePwa {
   }
 
   private subscribeToUpdates() {
+    if (!this.swUpdate) return;
     this.swUpdate.versionUpdates
       .pipe(
         filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY')

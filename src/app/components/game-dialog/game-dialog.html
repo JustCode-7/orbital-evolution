@@ -51,7 +51,15 @@
       {{ gameService.winState() ? languageService.t('DIALOG.START_NEW') : languageService.t('DIALOG.START') }}
     </button>
 
-    <button class="start-btn fw-bold" routerLink="">{{ languageService.t('DIALOG.INTRO') }}</button>
+    <button class="start-btn fw-bold d-flex align-items-center justify-content-center gap-2"
+            routerLink=""
+            (click)="showSpinner()">
+      <span>{{ languageService.t('DIALOG.INTRO') }}</span>
+      @if (isShowSpinner()) {
+        <div class="spinner-border spinner-border-sm" role="status">
+        </div>
+      }
+    </button>
 
     <button class="start-btn fw-bold mode-toggle" (click)="gameService.toggleInversion()">
       <mat-icon class="me-2">{{ gameService.isColorsInverted ? 'dark_mode' : 'light_mode' }}</mat-icon>
