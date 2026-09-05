@@ -814,8 +814,8 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.gameService.playerR <= 126 && this.gameService.playerR >= 65) {
       const proximity = Math.min(1, Math.max(0, (126 - this.gameService.playerR) / (126 - 65)));
       // Je näher an der Sonne (playerR -> 65), desto schneller, intensiver und durchgängiger
-      const interval = Math.round(250 - proximity * 190); // 250ms (bei r=126) bis 60ms (bei r=65)
-      const duration = Math.round(180 + proximity * 120); // 180ms bis 300ms
+      const interval = Math.round(400 - proximity * 340); // 400ms (bei r=126) bis 60ms (bei r=65)
+      const duration = Math.round(15 + proximity * 165); // 15ms (sanfter Tick) bis 180ms (Dauervibration)
 
       if (now - this.lastSunProximityVibeTime >= interval) {
         this.lastSunProximityVibeTime = now;
