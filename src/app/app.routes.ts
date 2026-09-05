@@ -22,7 +22,12 @@ export const languageResolver: ResolveFn<void> = () => {
 
 
 export const routes: Routes = [
-  {path: '', component: Introduction, resolve: {lang: languageResolver}, pathMatch: 'full'},
-  {path: 'game', component: GameComponent, resolve: {music: gameMusicResolver}, pathMatch: 'full'},
-  {path: '**', redirectTo: ''},
+  {
+    path: '',
+    component: Introduction,
+    resolve: { lang: languageResolver, music: gameMusicResolver },
+    pathMatch: 'full',
+  },
+  { path: 'game', component: GameComponent, pathMatch: 'full' },
+  { path: '**', redirectTo: '' },
 ];
